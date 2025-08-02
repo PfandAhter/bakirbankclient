@@ -1,62 +1,115 @@
 import { create } from 'zustand';
+import { login, register, logout, getCurrentUser } from '@/app/lib/api/services/authService';
 
-type User = {
+interface User {
     id: string;
     name: string;
     email: string;
-};
+}
 
-type AuthState = {
+interface RegisterData {
+    name: string;
+    email: string;
+    password: string;
+}
+
+interface AuthState {
     user: User | null;
     isLoading: boolean;
+    error: string | null;
+    isAuthenticated: boolean;
     login: (email: string, password: string) => Promise<void>;
-    register: (data: { username: string; email: string; password: string; firstName: string; lastName: string }) => Promise<void>;
-    logout: () => void;
-};
+    register: (userData: RegisterData) => Promise<void>;
+    logout: () => Promise<void>;
+    checkAuth: () => Promise<void>;
+    clearError: () => void;
+}
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
     user: null,
     isLoading: false,
+    error: null,
+    isAuthenticated: false,
 
     login: async (email, password) => {
-        set({ isLoading: true });
+        set({ isLoading: true, error: null });
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-                method: 'POST',
-                body: JSON.stringify({ email, password }),
-                headers: { 'Content-Type': 'application/json' }
+            const data = await login(email, password);
+            set({
+                user: data.user,
+                isLoading: false,
+                isAuthenticated: true,
+                error: null
             });
-            const data = await res.json();
-            if (res.ok) {
-                set({ user: data.user });
-            } else {
-                alert(data.message || 'Giriş başarısız');
-            }
-        } finally {
-            set({ isLoading: false });
+        } catch (error: unknown) {
+            const err = error as { message?: string };
+            set({
+                error: err.message || 'Giriş başarısız',
+                isLoading: false,
+                isAuthenticated: false,
+                user: null
+            });
+            throw error;
         }
     },
 
-    register: async (userData) => {
-        set({ isLoading: true });
+    register: async (userData: RegisterData) => {
+        set({ isLoading: true, error: null });
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
-                method: 'POST',
-                body: JSON.stringify(userData),
-                headers: { 'Content-Type': 'application/json' }
+            await register(userData);
+            set({ isLoading: false, error: null });
+        } catch (error: unknown) {
+            const err = error as { message?: string };
+            set({
+                error: err.message || 'Kayıt başarısız',
+                isLoading: false
             });
-            const data = await res.json();
-            if (res.ok) {
-                set({ user: data.user });
-            } else {
-                alert(data.message || 'Kayıt başarısız');
-            }
-        } finally {
-            set({ isLoading: false });
+            throw error;
         }
     },
 
-    logout: () => {
-        set({ user: null });
-    }
+    logout: async () => {
+        set({ isLoading: true });
+        try {
+            await logout();
+            set({
+                user: null,
+                isAuthenticated: false,
+                isLoading: false,
+                error: null
+            });
+        } catch (error) {
+            // Logout hatası olsa bile state'i temizle
+            console.error('Logout error:', error);
+            set({
+                user: null,
+                isAuthenticated: false,
+                isLoading: false,
+                error: null
+            });
+        }
+    },
+
+    checkAuth: async () => {
+        set({ isLoading: true });
+        try {
+            const user = await getCurrentUser();
+            set({
+                user,
+                isAuthenticated: true,
+                isLoading: false,
+                error: null
+            });
+        } catch (error) {
+            console.error('Check auth error:', error);
+            set({
+                user: null,
+                isAuthenticated: false,
+                isLoading: false,
+                error: null
+            });
+        }
+    },
+
+    clearError: () => set({ error: null }),
 }));
