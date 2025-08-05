@@ -4,9 +4,15 @@ import React, {useState} from 'react';
 import {useAuth} from '@/app/lib/hooks/useAuth';
 import {Input} from '@/app/components/ui/Input';
 import {Button} from '@/app/components/ui/Button';
-import {Mail, Lock, Eye, EyeOff, ShoppingBag} from 'lucide-react';
+import {Mail, Lock, Eye, EyeOff, User} from 'lucide-react';
 
-const LoginForm = ({ onSwitchToRegister }: { onSwitchToRegister?: () => void }) => {
+const LoginForm = ({
+                       onSwitchToRegister,
+                       onSuccessfulLogin
+                   }: {
+    onSwitchToRegister?: () => void;
+    onSuccessfulLogin?: () => void;
+}) => {
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({email: '', password: ''});
     const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
@@ -17,7 +23,7 @@ const LoginForm = ({ onSwitchToRegister }: { onSwitchToRegister?: () => void }) 
     const validateForm = () => {
         const newErrors: { email?: string; password?: string } = {};
 
-        if (!formData.email) {
+        /*if (!formData.email) {
             newErrors.email = 'E-posta adresi gereklidir';
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
             newErrors.email = 'Geçerli bir e-posta adresi giriniz';
@@ -27,7 +33,7 @@ const LoginForm = ({ onSwitchToRegister }: { onSwitchToRegister?: () => void }) 
             newErrors.password = 'Şifre gereklidir';
         } else if (formData.password.length < 6) {
             newErrors.password = 'Şifre en az 6 karakter olmalıdır';
-        }
+        }*/
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -39,7 +45,9 @@ const LoginForm = ({ onSwitchToRegister }: { onSwitchToRegister?: () => void }) 
 
         if (validateForm()) {
             try {
+                console.log('Test giris basarizi error code:', error);
                 await login(formData.email, formData.password);
+                onSuccessfulLogin?.(); // Başarılı login sonrası callback
             } catch {
                 setFormError('Giriş yapılamadı, lütfen tekrar deneyin.');
             }
@@ -62,8 +70,8 @@ const LoginForm = ({ onSwitchToRegister }: { onSwitchToRegister?: () => void }) 
                 <div className="text-center mb-8">
                     <div className="flex justify-center mb-4">
                         <div
-                            className="w-16 h-16 bg-blue-900 rounded-full flex items-center justify-center border border-blue-700">
-                            <ShoppingBag className="w-8 h-8 text-blue-400"/>
+                            className="w-16 h-16 bg-green-900 rounded-full flex items-center justify-center border border-green-700">
+                            <User className="w-8 h-8 text-green-400"/>
                         </div>
                     </div>
                     <h1 className="text-3xl font-bold text-white mb-2">BAKIRBANK`a Hoş Geldiniz</h1>
@@ -74,7 +82,7 @@ const LoginForm = ({ onSwitchToRegister }: { onSwitchToRegister?: () => void }) 
                     {/* Email Input */}
                     <Input
                         label="E-posta Adresi"
-                        type="email"
+                        type="username"
                         name="email"
                         value={formData.email}
                         onChange={handleChange}

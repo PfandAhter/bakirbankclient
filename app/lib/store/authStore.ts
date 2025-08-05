@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { login, register, logout, getCurrentUser } from '@/app/lib/api/services/authService';
+import {login, register, logout, getCurrentUser, getToken} from '@/app/lib/api/services/authService';
 
 interface User {
     id: string;
@@ -23,11 +23,12 @@ interface AuthState {
     logout: () => Promise<void>;
     checkAuth: () => Promise<void>;
     clearError: () => void;
+    setLoading: (loading: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
     user: null,
-    isLoading: false,
+    isLoading: true,
     error: null,
     isAuthenticated: false,
 
@@ -42,7 +43,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 error: null
             });
         } catch (error: unknown) {
-            const err = error as { message?: string };
+            console.log('Login error:', error);
+            debugger;
+            const err = error as { message?: string, status?: number };
+            console.log('error codetest', err.status);
             set({
                 error: err.message || 'Giriş başarısız',
                 isLoading: false,
@@ -69,39 +73,71 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     logout: async () => {
-        set({ isLoading: true });
         try {
+            set({ isLoading: true });
+
+            // API logout çağrısı
             await logout();
+
+            // State'i tamamen temizle
             set({
                 user: null,
                 isAuthenticated: false,
                 isLoading: false,
                 error: null
             });
+
+            // Sayfa yenile - bu sayede tüm component'ler temizlenir
+            window.location.href = '/';
+
         } catch (error) {
-            // Logout hatası olsa bile state'i temizle
             console.error('Logout error:', error);
+
+            // Hata olsa bile state'i temizle
             set({
                 user: null,
                 isAuthenticated: false,
                 isLoading: false,
                 error: null
             });
+
+            // Sayfa yenile
+            window.location.href = '/';
         }
     },
 
     checkAuth: async () => {
-        set({ isLoading: true });
         try {
-            const user = await getCurrentUser();
+            set({ isLoading: true, error: null });
+
+            // İlk olarak token kontrolü yap
+            const token = getToken();
+
+            if (!token) {
+                // Token yoksa authenticated değil
+                set({
+                    user: null,
+                    isAuthenticated: false,
+                    isLoading: false,
+                    error: null
+                });
+                return;
+            }
+
+            // Token varsa user bilgilerini al
+            //const user = await getCurrentUser();
+
             set({
-                user,
+                //user,
                 isAuthenticated: true,
                 isLoading: false,
                 error: null
             });
-        } catch (error) {
-            console.error('Check auth error:', error);
+
+        } catch (error: any) {
+            console.log('Auth check failed:', error.message);
+
+            // Auth check başarısız - state temizle
             set({
                 user: null,
                 isAuthenticated: false,
@@ -111,5 +147,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
     },
 
-    clearError: () => set({ error: null }),
+    clearError: () => {
+        set({ error: null });
+    },
+
+    setLoading: (loading: boolean) => {
+        set({ isLoading: loading });
+    }
 }));
