@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Auth gerektiren sayfalar
-    const protectedPaths = ['/dashboard', '/profile', '/orders', '/admin'];
+    const protectedPaths = ['/dashboard', '/profile', '/orders', '/admin','/atmfinder'];
     // Auth sayfaları
     const authPaths = ['/sign-in', '/sign-up'];
 
@@ -30,10 +30,7 @@ export function middleware(request: NextRequest) {
     }
 
     // Auth sayfasında token varsa dashboard'a yönlendir
-    console.log(`Auth Path: ${isAuthPath}, Token: ${!!token}`);
-    console.log('token info:', token);
     if (isAuthPath && token) {
-        console.log('test')
         const redirectTo = request.nextUrl.searchParams.get('redirect') || '/dashboard';
         const url = request.nextUrl.clone();
         url.pathname = redirectTo;
