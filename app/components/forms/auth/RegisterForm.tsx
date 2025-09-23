@@ -4,7 +4,13 @@ import {useAuth} from '@/app/lib/hooks/useAuth';
 import {Input} from '@/app/components/ui/Input';
 import {Button} from '@/app/components/ui/Button';
 
-const RegisterForm = ({ onSwitchToLogin }: { onSwitchToLogin?: () => void}) => {
+const RegisterForm = ({
+                          onSwitchToLogin,
+                          onSuccessfulRegister
+                     }: {
+    onSwitchToLogin?: () => void;
+    onSuccessfulRegister?: () => void;
+}) => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [formData, setFormData] = useState({
@@ -63,6 +69,8 @@ const RegisterForm = ({ onSwitchToLogin }: { onSwitchToLogin?: () => void}) => {
         e.preventDefault();
         if (validateForm()) {
             register(formData);
+            onSuccessfulRegister?.(); // Başarılı kayıt sonrası callback
+            onSwitchToLogin?.();
         }
     };
 

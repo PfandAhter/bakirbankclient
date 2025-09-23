@@ -87,7 +87,7 @@ const LoginForm = ({
                         value={formData.email}
                         onChange={handleChange}
                         icon={Mail}
-                        placeholder="ornek@email.com"
+                        placeholder="ornek@email.com veya 11 haneli TCKN"
                         error={errors.email}
                     />
 

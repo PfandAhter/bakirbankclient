@@ -14,9 +14,16 @@ interface Notification {
 
 interface NotificationPanelProps {
     userId: string | number;
+    position?: React.CSSProperties;
+    dropDirection?: 'left' | 'right' | 'center';
 }
 
-const NotificationPanel: React.FC<NotificationPanelProps & { position?: React.CSSProperties }> = ({ userId, position }) => {
+const NotificationPanel: React.FC<NotificationPanelProps> = ({
+                                                                 userId,
+                                                                 position,
+                                                                 dropDirection = 'right' // Varsayılan değer
+                                                             }) => {
+
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -63,6 +70,18 @@ const NotificationPanel: React.FC<NotificationPanelProps & { position?: React.CS
         };
     }, [userId]);
 
+    const getDropdownPosition = () => {
+        switch (dropDirection) {
+            case 'left':
+                return 'absolute top-full left-0 mt-2';
+            case 'center':
+                return 'absolute top-full left-1/2 transform -translate-x-1/2 mt-2';
+            case 'right':
+            default:
+                return 'absolute top-full right-0 mt-2';
+        }
+    }
+
     const handleDelete = (id: string | number) => {
         setNotifications(prev => prev.filter(notif => notif.id !== id));
     };
@@ -97,9 +116,9 @@ const NotificationPanel: React.FC<NotificationPanelProps & { position?: React.CS
             </button>
 
             {isOpen && (
-                <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 animate-fade-in">
+                <div className={`${getDropdownPosition()} w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 animate-fade-in`}>
                     <h3 className="text-lg font-semibold mb-3 text-gray-800 flex items-center gap-2">
-                        <span>Bildirimler</span>
+                    <span>Bildirimler</span>
                         <span className="ml-auto text-xs text-gray-400">{notifications.length} toplam</span>
                     </h3>
                     <ul className="space-y-3 max-h-96 overflow-y-auto">
