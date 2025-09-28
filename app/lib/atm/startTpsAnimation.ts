@@ -1,5 +1,5 @@
 // startTPSAnimation.ts
-import { MutableRefObject } from "react";
+import {MutableRefObject} from "react";
 import mapboxgl from "mapbox-gl";
 
 export interface Coordinates {
@@ -60,6 +60,10 @@ export const startTPSAnimation = ({
         animationRef.current = null;
     }
 
+
+
+
+
     const ANIMATION_FPS = 60;
     const FRAME_INTERVAL = 1000 / ANIMATION_FPS;
     const animationDuration = 10000; // ms
@@ -68,12 +72,16 @@ export const startTPSAnimation = ({
     const startTime = performance.now();
     lastFrameTimeRef.current = startTime;
 
+    let smoothBearing = 0;
+    let interpolatedLng = coordinates[0][0];
+    let interpolatedLat = coordinates[0][1];
+
     const firstPoint = coordinates[0];
     const secondPoint = coordinates[1];
 
     setViewTPS(true);
     setFollowingRoute(true);
-    previousViewStateRef.current = { ...viewState };
+    previousViewStateRef.current = {...viewState};
     setAnimationProgress(0);
     setAnimationInProgress(true);
     routeDataRef.current = routeData;
@@ -120,6 +128,55 @@ export const startTPSAnimation = ({
         if (onAnimationStopped) onAnimationStopped();
     };
 
+    const prepareCameraPosition = (bearing?: number, lng?: number, lat?: number) => {
+        if (mapRef.current) {
+            const centerLng = lng ?? firstPoint[0];
+            const centerLat = lat ?? firstPoint[1];
+            const cameraBearing = bearing ?? prevBearing;
+
+            mapRef.current.easeTo({
+                center: [centerLng, centerLat],
+                zoom: 18,         // başlangıç zoom
+                pitch: 60,        // eğim
+                bearing: cameraBearing,
+                duration: 1000    // 2 saniyelik geçiş
+            });
+        }
+    }
+
+    const setViewStateAfterAnimation = () => {
+        setAnimationInProgress(false);
+        setFollowingRoute(false);
+        setViewTPS(false);
+        if (userMarkerRef?.current && userPosition) {
+            userMarkerRef.current.setLngLat([userPosition.longitude, userPosition.latitude]);
+        }
+        setTimeout(() => {
+            if (previousViewStateRef.current) {
+                setViewState({
+                    ...previousViewStateRef.current,
+                    zoom: previousViewStateRef.current.zoom < 15 ? 15 :
+                        previousViewStateRef.current.zoom,
+                });
+            }
+            // ➡️ Rotayı kapsayacak şekilde ortala
+            if (routeDataRef.current?.geometry?.coordinates) {
+                const bounds = new mapboxgl.LngLatBounds();
+                routeDataRef.current.geometry.coordinates.forEach((coord: [number, number]) => {
+                    bounds.extend(coord);
+                }); // Biraz padding ekle ki rota kenara yapışmasın
+
+                mapRef.current?.fitBounds(bounds,
+                    {
+                        padding: 300,
+                        pitch: 60,
+                        bearing: 30,
+                        duration: 2000
+                    });
+            }
+        }, 1000);
+    }
+
     const animate = (timestamp: number) => {
         if (timestamp - lastFrameTimeRef.current < FRAME_INTERVAL) {
             animationRef.current = requestAnimationFrame(animate);
@@ -148,8 +205,8 @@ export const startTPSAnimation = ({
         const segmentProgress = (progress * (coordinates.length - 1)) - pointIndex;
         const easeSegmentProgress = easeInOutCubic(segmentProgress);
 
-        const interpolatedLng = currentPoint[0] + (nextPoint[0] - currentPoint[0]) * easeSegmentProgress;
-        const interpolatedLat = currentPoint[1] + (nextPoint[1] - currentPoint[1]) * easeSegmentProgress;
+        interpolatedLng = currentPoint[0] + (nextPoint[0] - currentPoint[0]) * easeSegmentProgress;
+        interpolatedLat = currentPoint[1] + (nextPoint[1] - currentPoint[1]) * easeSegmentProgress;
 
         const lookAheadIndex = Math.min(pointIndex + 2, coordinates.length - 1);
         const lookAheadPoint = coordinates[lookAheadIndex];
@@ -160,11 +217,11 @@ export const startTPSAnimation = ({
         if (bearingDiff < -180) bearingDiff += 360;
 
         const maxRotationPerFrame = 3.5;
-        const smoothBearing = prevBearing + Math.max(-maxRotationPerFrame, Math.min(maxRotationPerFrame, bearingDiff * easeSegmentProgress));
+        smoothBearing = prevBearing + Math.max(-maxRotationPerFrame, Math.min(maxRotationPerFrame, bearingDiff * easeSegmentProgress));
         prevBearing = smoothBearing;
 
         // Camera güncelle, sadece değişmişse
-        const updatedCameraPosition = { longitude: interpolatedLng, latitude: interpolatedLat };
+        const updatedCameraPosition = {longitude: interpolatedLng, latitude: interpolatedLat};
         if (!cameraPositionRef ||
             cameraPositionRef.latitude !== updatedCameraPosition.latitude ||
             cameraPositionRef.longitude !== updatedCameraPosition.longitude
@@ -205,8 +262,62 @@ export const startTPSAnimation = ({
             animationRef.current = requestAnimationFrame(animate);
         } else {
             stopAnimation();
+
+            setViewStateAfterAnimation();
         }
     };
+    prepareCameraPosition(smoothBearing, interpolatedLng, interpolatedLat);
 
-    animationRef.current = requestAnimationFrame(animate);
-};
+    setTimeout(() =>{
+        animationRef.current = requestAnimationFrame(animate);
+    },1000);
+}
+
+export function setViewStateAfterAnimationUtil({
+                                                   setAnimationInProgress,
+                                                   setFollowingRoute,
+                                                   setViewTPS,
+                                                   userMarkerRef,
+                                                   userPosition,
+                                                   previousViewStateRef,
+                                                   setViewState,
+                                                   routeDataRef,
+                                                   mapRef
+                                               }: {
+    setAnimationInProgress: (v: boolean) => void;
+    setFollowingRoute: (v: boolean) => void;
+    setViewTPS: (v: boolean) => void;
+    userMarkerRef: MutableRefObject<mapboxgl.Marker | null>;
+    userPosition: Coordinates | null;
+    previousViewStateRef: MutableRefObject<any>;
+    setViewState: (view: any) => void;
+    routeDataRef: MutableRefObject<any>;
+    mapRef: MutableRefObject<mapboxgl.Map | null>;
+}) {
+    setAnimationInProgress(false);
+    setFollowingRoute(false);
+    setViewTPS(false);
+    if (userMarkerRef?.current && userPosition) {
+        userMarkerRef.current.setLngLat([userPosition.longitude, userPosition.latitude]);
+    }
+    setTimeout(() => {
+        if (previousViewStateRef.current) {
+            setViewState({
+                ...previousViewStateRef.current,
+                zoom: previousViewStateRef.current.zoom < 15 ? 15 : previousViewStateRef.current.zoom,
+            });
+        }
+        if (routeDataRef.current?.geometry?.coordinates) {
+            const bounds = new mapboxgl.LngLatBounds();
+            routeDataRef.current.geometry.coordinates.forEach((coord: [number, number]) => {
+                bounds.extend(coord);
+            });
+            mapRef.current?.fitBounds(bounds, {
+                padding: 300,
+                pitch: 60,
+                bearing: 30,
+                duration: 2000
+            });
+        }
+    }, 1000);
+}

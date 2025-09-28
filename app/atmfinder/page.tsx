@@ -4,30 +4,26 @@ import {useState, useEffect, useRef, useCallback, useMemo} from 'react';
 import {useAuth} from '@/app/lib/hooks/useAuth';
 import {useRouter} from "next/navigation";
 
-import AtmFinderContent from '@/app/components/atmui/AtmFinderContent';
-import {useMapView} from '@/app/lib/hooks/useMapView';
-import {addCustomIconsAndImagesToMap} from "@/app/lib/atm/customIconsAndImageAdd";
-import {fetchAtmLocations} from '@/app/lib/atm/getAtmLocations';
-import {useTPSAnimation} from '@/app/lib/hooks/useTPSAnimation';
 import ControlPanel from '@/app/components/atmui/ControlPanel';
 import {useATM} from '@/app/lib/hooks/useATM';
-import {BarChart3, Landmark, LogOut, RefreshCw, User} from "lucide-react";
+import {Landmark, LogOut, User} from "lucide-react";
 import NotificationPanel from "@/app/components/atmui/NotificationPanel";
-
 import MapLoadingScreen from "@/app/lib/loadingScreen/MapLoadingScreen";
 import axios from "axios";
-
-
-import dynamic from "next/dynamic";
-
 import {TripsLayer} from "@deck.gl/geo-layers";
-import {Map, DraggableControl} from "react-map-gl";
-import DeckGL from "@deck.gl/react";
+
 import MapCanvas from "@/app/maptestv2/page";
 import RouteTypeSelector from "@/app/components/atmui/RouteTypeSelector";
+import DirectionsPanel from "@/app/components/atmui/DirectionsPanel";
+import MiniMapPanel from "@/app/components/atmui/MiniMapPanel";
 
 
 // Define types
+
+interface Coordinates {
+    latitude: number;
+    longitude: number;
+}
 
 interface Atm {
     id: string;
@@ -63,7 +59,7 @@ interface RouteStep {
 }
 
 
-const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || "pk.eyJ1IjoicGZhbmQwMCIsImEiOiJjbTlrMWV3eDYwYm1pMnZzYjVsdGJiYjllIn0.DMGe0r4wr1B7051y5Z5-Yw";
+const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN;
 
 export default function AtmFinderPage() {
 
@@ -71,6 +67,7 @@ export default function AtmFinderPage() {
     const {atms, loading, error, updateATM} = useATM();
     const {user, isAuthenticated, checkAuth, logout} = useAuth();
     const [isLoading, setIsLoading] = useState(true);
+    const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
 
     const [viewState, setViewState] = useState({
         latitude: 38.024050,
@@ -91,6 +88,7 @@ export default function AtmFinderPage() {
     const [filterWithdrawStatus, setFilterWithdrawStatus] = useState('all');
     const [searchText, setSearchText] = useState('');
     const [selectedAtm, setSelectedAtm] = useState<Atm | null>(null);
+    const [isSelectedAtmChanged, setIsSelectedAtmChanged] = useState(false);
 
     const [routeType, setRouteType] = useState('walking');
     const [selectedRouteType, setSelectedRouteType] = useState('walking');
@@ -99,7 +97,8 @@ export default function AtmFinderPage() {
     //Panel states
     const [isQrCodePanelOpen, setIsQrCodePanelOpen] = useState(false);
     const [isControlPanelDisabled, setIsControlPanelDisabled] = useState(false);
-    const [directionsPanelVisible, setDirectionsPanelVisible] = useState(false);
+    const [isDirectionsPanelVisible, setIsDirectionsPanelVisible] = useState(false);
+    const [isMinimapPanelVisible, setIsMinimapPanelVisible] = useState(false);
     const [sendButtonVisibility, setSendButtonVisibility] = useState(true);
 
     const [isSendMoneyPanelOpen, setIsSendMoneyPanelOpen] = useState(false);
@@ -108,112 +107,37 @@ export default function AtmFinderPage() {
     const [animationInProgress, setAnimationInProgress] = useState(false);
     const [animationProgress, setAnimationProgress] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
-    const [routeData, setRouteData] = useState(null);
+
+    //Route Calculating
+    const [routeData, setRouteData] = useState<any>(null);
+    const mapCanvasRef = useRef<{
+        handleStartAnimation: () => void;
+        stopAnimation: () => void;
+        clearRoute: () => void;
+    } | null>(null);
+
+    const [shouldStopAnimation, setShouldStopAnimation] = useState(false);
+    const [routeSteps, setRouteSteps] = useState([]); // Rota adımları
     const [followingRoute, setFollowingRoute] = useState(false);
     const [viewTPS, setViewTPS] = useState(false);
+    const previousViewStateRef = useRef(null);
     const [is3D, setIs3D] = useState(false);
+    const [cameraPosition, setCameraPosition] = useState<Coordinates | null>(null);
     const mapRef = useRef(null);
     const animationRef = useRef(null);
 
-    // State declarations
-    /*const [atmLocations, setAtmLocations] = useState<AtmLocation[]>([]);
-    const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
-    const [selectedAtm, setSelectedAtm] = useState<AtmLocation | null>(null);
-    const [routeData, setRouteData] = useState<RouteData | null>(null);
-    const [routeSteps, setRouteSteps] = useState<RouteStep[]>([]);
-    const [animationInProgress, setAnimationInProgress] = useState(false);
-    const [animationProgress, setAnimationProgress] = useState(0);
-    const [followingRoute, setFollowingRoute] = useState(false);
-    const [viewTPS, setViewTPS] = useState(false);
-    const [directionsPanelVisible, setDirectionsPanelVisible] = useState(false);
-    const [isQrCodePanelOpen, setIsQrCodePanelOpen] = useState(false);
-    const [isSendMoneyPanelOpen, setIsSendMoneyPanelOpen] = useState(false);
-    const [showRetryModal, setShowRetryModal] = useState(false);
-    const [qrImageData, setQrImageData] = useState<string>('');
-
-    const [isDragging, setIsDragging] = useState(false);
-    const [is3D, setIs3D] = useState(false);
-
-    const [isControlPaneDisabled] = useState(false);
-    const [searchText, setSearchText] = useState('');
-    const [bankNames, setBankNames] = useState('all');
-    const [bankOptions] = useState(['Bank 1', 'Bank 2', 'Bank 3']);
-    const [filterStatus, setFilterStatus] = useState('all');
-    const [statusOptions] = useState(['Active', 'Inactive']);
-    const [filterDepositStatus, setFilterDepositStatus] = useState('all');
-    const [depositOptions] = useState(['Available', 'Unavailable']);
-    const [filterWithdrawStatus, setFilterWithdrawStatus] = useState('all');
-    const [withdrawOptions] = useState(['Available', 'Unavailable']);
-    const [selectedRouteType, setSelectedRouteType] = useState('walking');
-    const [sendButtonVisibility] = useState(true);
-
-    const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
-
-    const {
-        viewState,
-        setViewState,
-        cameraPosition,
-        setCameraPosition,
-        mapRef
-    } = useMapView();
-
-    const {
-        startTPSAnimation,
-        stopTPSAnimation,
-        routeLayer,
-        animatedRouteLayer
-    } = useTPSAnimation({
-        routeData,
-        viewState,
-        setViewState: (newViewState) => setViewState(newViewState),
-        setCameraPosition: (position) => setCameraPosition(position),
-        setAnimationProgress,
-        setAnimationInProgress,
-        setFollowingRoute,
-        setViewTPS
-    });
-
-    const handleSourceData = (e: any) => {
-        const source = e.source;
-        if (!source) return;
-
-        if (source.id === 'composite' && source.type === 'vector') {
-            const terrainSourceExists = mapRef.current?.getSource('mapbox-dem');
-            const buildingLayerExists = mapRef.current?.getLayer('3d-buildings');
-
-            if (!terrainSourceExists) {
-                console.warn('3D terrain için gerekli "mapbox-dem" kaynağı bulunamadı.');
-            }
-            if (!buildingLayerExists) {
-                console.warn('3D bina katmanı yüklenmedi veya eksik.');
-            }
-        }
-    };
-
-
-    const toggleQrCodePanel = () => {
-        setIsQrCodePanelOpen(!isQrCodePanelOpen);
-    };
-
-    const toggleSendMoneyPanel = () => {
-        setIsSendMoneyPanelOpen(!isSendMoneyPanelOpen);
-    };
-
-    const toggle3D = () => {
-        // Implementation for 3D toggle
-        console.log('Toggle 3D');
-    };
-
-    const changeRouteType = (type: string) => {
-        setSelectedRouteType(type);
-    };
-
     useEffect(() => {
-        getAtmLocations();
-        addCustomIconsAndImagesToMap(null, [], null);
-    }, []);*/
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const {latitude, longitude} = position.coords;
+                setUserPosition({latitude, longitude});
 
-
+            }, error => {
+                console.error("Konum alınamadı:", error);
+                // Varsayılan konum olarak İstanbul'u kullan
+            });
+        }
+    }, []);
 
     useEffect(() => {
         getStatusOptions();
@@ -244,11 +168,28 @@ export default function AtmFinderPage() {
         setIs3D(prev => !prev);
     }, [is3D, animationInProgress]);
 
-    const routeSource = useMemo(() => ({
-        type: 'geojson',
-        data: routeData, // routeData değişkeninin tanımlı olduğundan emin olun
-        lineMetrics: true // Bu kısım önemli - gradient için gerekli
-    }), [routeData]);
+
+    const stopCalculatingRoute = useCallback(() => {
+        // Sadece stop signal'ini gönder
+        setShouldStopAnimation(true);
+
+        // Fallback: Eğer MapCanvas tepki vermezse
+        setTimeout(() => {
+            if (animationRef.current) {
+                cancelAnimationFrame(animationRef.current);
+                animationRef.current = null;
+            }
+            setAnimationInProgress(false);
+            setFollowingRoute(false);
+            setViewTPS(false);
+            setAnimationProgress(0);
+            setShouldStopAnimation(false); // Reset flag
+
+            if (mapCanvasRef.current?.stopAnimation()) {
+                mapCanvasRef.current.stopAnimation();
+            }
+        }, 100);
+    }, []);
 
     const filteredAtmLocations = useMemo(() => {
         return atmLocations.filter((atm: any) => {
@@ -264,6 +205,63 @@ export default function AtmFinderPage() {
         });
     }, [atmLocations, bankNames, filterStatus, filterDepositStatus, filterWithdrawStatus]);
 
+    const calculateRoute = async (generateQR = false) => {
+        if (!userPosition || !selectedAtm || animationInProgress) return;
+
+        setIsCalculatingRoute(true);
+        setIsDirectionsPanelVisible(true);
+        setIsMinimapPanelVisible(true);
+        setIsControlPanelDisabled(true);
+
+        try {
+            const response = await fetch(
+                `https://api.mapbox.com/directions/v5/mapbox/${routeType}/${userPosition.longitude},${userPosition.latitude};${selectedAtm.longitude},${selectedAtm.latitude}?steps=true&geometries=geojson&access_token=${MAPBOX_TOKEN}`
+            );
+
+            const data = await response.json();
+
+            if (data.routes && data.routes.length > 0) {
+                // Yeni rota datası oluştur
+                const newRouteData = {
+                    type: "Feature",
+                    properties: {},
+                    geometry: {
+                        type: "LineString",
+                        coordinates: data.routes[0].geometry.coordinates,
+                    },
+                };
+
+                setRouteData(newRouteData);
+                setRouteSteps(data.routes[0].legs[0].steps);
+
+                // Kamera animasyonu bittikten sonra devam et
+                setTimeout(async () => {
+                    setIsControlPanelDisabled(false);
+
+                    if (generateQR) {
+                        try {
+                            /*const imageUrl = await takeMapScreenshot();
+                            const uploadedUrl = await uploadImageToImgBB(imageUrl);
+
+                            setScreenshotUrl(imageUrl);
+                            setQrImageData(uploadedUrl);
+
+                            console.log("📸 Görsel yüklendi:", uploadedUrl);*/
+                        } catch (screenshotErr) {
+                            console.error("❌ Screenshot/Upload hatası:", screenshotErr);
+                        }
+                    } else {
+                        startAnimation(); // Sadece izleme modunda animasyon başlat
+                    }
+                }, 100);
+            }
+        } catch (error) {
+            console.error("❌ Rota hesaplama hatası:", error);
+            alert("Rota hesaplanamadı. Lütfen tekrar deneyin.");
+        } finally {
+            setIsCalculatingRoute(false);
+        }
+    };
 
     const toggleSendMoneyPanel = () => {
         setIsSendMoneyPanelOpen(!isSendMoneyPanelOpen);
@@ -279,7 +277,8 @@ export default function AtmFinderPage() {
 
     const cancelSelectedATM = async () => {
         setSelectedAtm(null);
-        setDirectionsPanelVisible(false);
+        setIsDirectionsPanelVisible(false);
+        setIsMinimapPanelVisible(false);
 
         // Yol bilgisini boş bir FeatureCollection yap
         setRouteData({
@@ -293,7 +292,38 @@ export default function AtmFinderPage() {
             pitch: 0,
             bearing: 0,
         }));
+
+        // Call clearRoute on MapCanvas
+        if (mapCanvasRef.current?.clearRoute) {
+            mapCanvasRef.current.clearRoute();
+        }
     };
+
+    useEffect(() => {
+        if (isSelectedAtmChanged) {
+            // DirectionsPanel'i gizle
+            setIsDirectionsPanelVisible(false);
+            setIsMinimapPanelVisible(false);
+
+            // Rota verilerini temizle
+            setRouteData(null);
+            setRouteSteps([]);
+
+            // Animasyonu durdur
+            if (animationInProgress) {
+                stopCalculatingRoute();
+            }
+
+            // Flag'i sıfırla
+            setIsSelectedAtmChanged(false);
+
+            if (selectedAtm?.status !== 'ACTIVE' || selectedAtm?.withdrawStatus !== 'ACTIVE') {
+                setSendButtonVisibility(false);
+            } else {
+                setSendButtonVisibility(true);
+            }
+        }
+    }, [isSelectedAtmChanged, animationInProgress]);
 
     const searchLocation = async () => {
         if (!searchText) return;
@@ -316,23 +346,14 @@ export default function AtmFinderPage() {
         }
     };
 
-    const handleSourceData = (e: any) => {
-        const source = e.source as { id?: string; type?: string };
-        if (!source) return;
-
-        // Only proceed if "composite" source and "vector" type
-        if (source.id === 'composite' && source.type === 'vector') {
-            const terrainSourceExists = (mapRef.current as any)?.getSource('mapbox-dem');
-            const buildingLayerExists = (mapRef.current as any)?.getLayer('3d-buildings');
-
-            if (!terrainSourceExists) {
-                console.warn('Required "mapbox-dem" source for 3D terrain not found.');
-            }
-            if (!buildingLayerExists) {
-                console.warn('3D building layer not loaded or missing.');
-            }
-        }
-    };
+    const RetryModal = ({ onRetry}) => (
+        <div className="retry-modal-overlay">
+            <div className="retry-modal">
+                <h2>ATM Bilgisi Alma İşlemi Başarısız</h2>
+                <button onClick={onRetry}>Yeniden Dene</button>
+            </div>
+        </div>
+    );
 
     const changeRouteType = (type: string) => {
         setRouteType(type);
@@ -411,6 +432,16 @@ export default function AtmFinderPage() {
         []
     );
 
+    const startAnimation = useCallback(() => {
+        if (mapCanvasRef.current?.handleStartAnimation) {
+            mapCanvasRef.current.handleStartAnimation();
+        }
+    }, []);
+
+    const handleCameraPositionChange = useCallback((pos: Coordinates | null) => {
+        //console.log("Camera position updated:", pos);
+    }, []);
+
     // 🔹 TripsLayer (3D yol animasyonu)
     const tripsLayer = new TripsLayer({
         id: "trips",
@@ -439,7 +470,6 @@ export default function AtmFinderPage() {
 
     return (
         <div className="relative w-screen h-screen overflow-hidden">
-
             <header className="bg-black border-b border-gray-800">
                 <div className="w-full"> {/*max-w-7xl mx-auto px-4 sm:px-6 lg:px-8*/}
                     <div className="flex justify-between items-center h-16 px-4">
@@ -450,7 +480,8 @@ export default function AtmFinderPage() {
                                 className="flex items-center text-blue-400 hover:text-blue-300 transition-colors"
                             >
                                 <Landmark className="h-8 w-8 text-blue-400 hover:text-blue-300"/>
-                                <span className="ml-2 text-2xl font-bold text-white hover:text-blue-300">BAKIRBANK</span>
+                                <span
+                                    className="ml-2 text-2xl font-bold text-white hover:text-blue-300">BAKIRBANK</span>
                             </button>
                         </div>
 
@@ -464,7 +495,7 @@ export default function AtmFinderPage() {
                                             transform: 'translate(-50%, -50%)',
                                             position: 'absolute'
                                         }}
-                                        dropDirection={"center"}/>
+                                                           dropDirection={"center"}/>
                                     </div>
 
                                     <div className={"flex items-center gap-60 pr-5"}>
@@ -503,7 +534,7 @@ export default function AtmFinderPage() {
                                         onClick={() => router.push('/sign-up')}
                                         className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
                                     >
-                                    Kayıt Ol
+                                        Kayıt Ol
                                     </button>
                                 </div>
                             )}
@@ -519,32 +550,43 @@ export default function AtmFinderPage() {
 
                 <div style={{height: "100vh", width: "100%"}}>
                     <MapCanvas
+                        ref={mapCanvasRef}
                         routeType={selectedRouteType}
+                        isRouteCalculating={isCalculatingRoute}
                         is3D={is3D}
                         onAtmSelect={setSelectedAtm}
+                        animationRef={animationRef}
+                        setAnimationInProgress={setAnimationInProgress}
+                        setAnimationProgress={setAnimationProgress}
+                        setFollowingRoute={setFollowingRoute}
+                        setViewTPS={setViewTPS}
+                        setViewState={setViewState}
+                        viewState={viewState}
+                        routeData={routeData}
+                        onCameraPositionChange={handleCameraPositionChange}
+                        setIsSelectedAtmChanged={setIsSelectedAtmChanged}
+                        setUserPosition={setUserPosition}
+                        shouldStopAnimation={shouldStopAnimation}
+                        startAnimation={() => {
+                        }}
                     />
                 </div>
 
+                <DirectionsPanel
+                    steps={routeSteps}
+                    isDirectionsPanelOpen={isDirectionsPanelVisible}
+                />
 
-                {/*<AtmFinderContent
-                    directionsPanelVisible={directionsPanelVisible}
-                    isQrCodePanelOpen={isQrCodePanelOpen}
-                    routeSteps={routeSteps}
-                    toggleQrCodePanel={toggleQrCodePanel}
-                    atmLocations={atmLocations}
-                    setUserPosition={setUserPosition}
-                    setSelectedAtm={setSelectedAtm}
-                    calculateRoute={calculateRoute}
-                    qrImageData={qrImageData}
-                    animationInProgress={animationInProgress}
-                    routeData={routeData}
-                    userPosition={userPosition}
-                    selectedAtm={selectedAtm}
-                    cameraPosition={cameraPosition}
-                    MAPBOX_TOKEN={MAPBOX_TOKEN}
-                    isSendMoneyPanelOpen={isSendMoneyPanelOpen}
-                    toggleSendMoneyPanel={toggleSendMoneyPanel}
-                />*/}
+                {animationInProgress && (
+                    <MiniMapPanel
+                        routeData={routeData}
+                        userPosition={userPosition}
+                        selectedAtm={selectedAtm}
+                        currentPosition={cameraPosition}
+                        mapboxToken={MAPBOX_TOKEN}
+                        processActive={isMinimapPanelVisible}
+                    />
+                )}
 
                 <div className="fixed top-20 right-95 flex items-end gap-3 z-[1000]">
 
@@ -588,11 +630,10 @@ export default function AtmFinderPage() {
                     />
                 </div>
 
-
                 {userPosition && selectedAtm && !isSendMoneyPanelOpen && !isQrCodePanelOpen && ( //userPosition && selectedAtm && !isSendMoneyPanelOpen && !isQrCodePanelOpen &&
                     <button
-                        //onClick={animationInProgress ? stopTPSAnimation : () => calculateRoute(false)}
-                        disabled={false} // isCalculatingRoute should be defined in your state
+                        onClick={animationInProgress ? stopCalculatingRoute : () => calculateRoute(false)}
+                        disabled={isCalculatingRoute} // isCalculatingRoute should be defined in your state
                         className={`
                           fixed bottom-10 left-1/2 -translate-x-1/2
                           px-6 py-3 w-72 h-14
@@ -604,12 +645,12 @@ export default function AtmFinderPage() {
                         `}
                         style={{
                             background: animationInProgress
-                                ? `linear-gradient(to right, #4CAF50 ${animationProgress * 100}%, #cccccc ${animationProgress * 100}%)`
+                                ? `linear-gradient(to right, #4CAF50 ${animationProgress * 100}%, #cccccc ${animationProgress * 100}%)` //TODO: Burada rota gosteriliyor % derken hoveri baska renk yap.
                                 : undefined,
                         }}
                     >
-                        <div className="flex items-center justify-center">
-                            {false // isCalculatingRoute should be defined in your state
+                        <div className="flex items-center justify-center hover:scale-105">
+                            {isCalculatingRoute // isCalculatingRoute should be defined in your state
                                 ? 'Hesaplanıyor...'
                                 : animationInProgress
                                     ? `Rota Gösteriliyor (${Math.round(animationProgress * 100)}%)`
