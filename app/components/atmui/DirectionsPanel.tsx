@@ -20,15 +20,17 @@ const DirectionsPanel: React.FC<DirectionsPanelProps> = ({ steps, isDirectionsPa
 
     const totalDuration = steps.reduce((acc, step) => acc + step.duration, 0);
     const totalDistance = steps.reduce((acc, step) => acc + step.distance, 0);
-
+//#0a3d42 ccccc bg-black/30 overflow-y-auto max-h-[400px] mt-5 flex flex-col gap-2.5
     return (
         <div
             className="
-        absolute bottom-5 left-5 z-[1000] h-[400px] w-[370px] max-w-[370px]
-        rounded-2xl bg-[#0a3d42] p-5 shadow-xl
-        overflow-y-auto backdrop-blur-md
+        absolute bottom-20 left-5 z-[1000] h-[400px] w-[370px] max-w-[370px]
+        rounded-2xl bg-[#ccccc] p-5 shadow-xl bg-black/50
+        backdrop-blur-md border border-white/20
+        transition-all duration-300 ease-out
+
         font-sans
-        scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent
+        scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-[#ccccc]
         hover:scrollbar-thumb-gray-500
       "
         >
@@ -42,7 +44,7 @@ const DirectionsPanel: React.FC<DirectionsPanelProps> = ({ steps, isDirectionsPa
                 Tahmini Mesafe: {Math.round(totalDistance)} m
             </h2>
 
-            <ol className="mt-5 flex flex-col gap-2.5 list-none p-0">
+            <ol className="custom-scrollbar mt-5 flex flex-col gap-2.5 list-none p-0 overflow-y-auto max-h-[250px]">
                 {steps.map((step, index) => (
                     <li
                         key={index}

@@ -87,15 +87,14 @@ const ControlPanel = ({
 
     const [isQrCodePanelOpen, setIsQrCodePanelOpen] = useState(false);
 
-    console.log("SelectedATM info: ", selectedAtm);
-
     if (viewTPS || isSendMoneyPanelOpen || isQrCodePanelOpen || showRetryModal || !isControlPanelOpen) return null;
 
-    if(!isControlPanelOpen) return null;
+    if (!isControlPanelOpen) return null;
 
+    // bg-gradient-to-br
     return (
         <div className={`fixed top-18 right-2 w-[350px] max-w-[90vw] max-h-screen p-6 
-                        bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 
+                        bg-[#ccccc] from-slate-800 via-slate-700 to-slate-900 
                         backdrop-blur-lg bg-opacity-95 text-white 
                         rounded-3xl shadow-2xl border border-slate-600/30
                         overflow-y-auto z-50 transition-all duration-300
@@ -316,12 +315,13 @@ const ControlPanel = ({
                 <button
                     onClick={toggleSendMoneyPanel}
                     disabled={!sendButtonVisibility}
-                    className="w-full px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-600
-                             hover:from-green-600 hover:to-emerald-700
-                             disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed
-                             rounded-xl font-bold text-lg transition-all duration-200
-                             shadow-lg hover:shadow-green-500/25 transform hover:scale-105
-                             disabled:transform-none disabled:opacity-50"
+                    className={`w-full px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-600
+             hover:from-green-600 hover:to-emerald-700
+             disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed
+             rounded-xl font-bold text-lg transition-all duration-200
+             shadow-lg hover:shadow-green-500/25
+             ${sendButtonVisibility ? 'transform hover:scale-105' : 'transform-none'}
+             disabled:opacity-50`}
                     style={{
                         opacity: sendButtonVisibility ? 1 : 0.5,
                     }}
