@@ -7,24 +7,23 @@ import {
     ArrowUpRight,
     ArrowDownLeft,
     Wallet,
-    //CreditCard,
     TrendingUp,
     TrendingDown,
     DollarSign,
-    //Calendar,
     Eye,
     EyeOff,
-    Home,
+    Landmark,
     RefreshCw,
     Send,
     PiggyBank
 } from 'lucide-react';
+import axios from 'axios';
 
 import NotificationPanel from "@/app/components/atmui/NotificationPanel";
 
 interface Transaction {
     id: string;
-    type: 'income' | 'expense';
+    type: 'INCOME' | 'EXPENSE';
     amount: number;
     description: string;
     date: string;
@@ -46,67 +45,32 @@ export default function DashboardPage() {
     const router = useRouter();
     const [showBalance, setShowBalance] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
+    const [accountData, setAccountData] = useState<AccountData | null>(null);
+    const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
 
-    // Mock data - gerçek uygulamada API'den gelecek
-    const [accountData, setAccountData] = useState<AccountData>({
-        balance: 25750.80,
-        totalIncome: 125000,
-        totalExpenses: 99249.20,
-        monthlyIncome: 8500,
-        monthlyExpenses: 6200,
-        savingsGoal: 50000,
-        currentSavings: 15750
-    });
+    const fetchDashboardData = async () => {
+        setIsLoading(true);
+        try {
+            const res = await axios.get(`http://localhost:8090/api/v1/dashboard`, {
+                params: { userId: user?.id }
+            });
 
-    const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([
-        {
-            id: '1',
-            type: 'income',
-            amount: 8500,
-            description: 'Maaş Ödemesi',
-            date: '2025-08-01',
-            category: 'Gelir'
-        },
-        {
-            id: '2',
-            type: 'expense',
-            amount: 1200,
-            description: 'Market Alışverişi',
-            date: '2025-07-30',
-            category: 'Gıda'
-        },
-        {
-            id: '3',
-            type: 'expense',
-            amount: 850,
-            description: 'Elektrik Faturası',
-            date: '2025-07-28',
-            category: 'Faturalar'
-        },
-        {
-            id: '4',
-            type: 'income',
-            amount: 500,
-            description: 'Freelance Projesi',
-            date: '2025-07-25',
-            category: 'Yan Gelir'
-        },
-        {
-            id: '5',
-            type: 'expense',
-            amount: 2500,
-            description: 'Kira Ödemesi',
-            date: '2025-07-20',
-            category: 'Barınma'
+            // API'den gelen data'yı set et
+            const { account, transactions } = res.data;
+
+            setAccountData(account);
+            setRecentTransactions(transactions);
+        } catch (err) {
+            console.error("Dashboard veri çekme hatası:", err);
+        } finally {
+            setIsLoading(false);
         }
-    ]);
+    };
 
     useEffect(() => {
-        // Simulate API loading
-        setTimeout(() => {
-            setIsLoading(false);
-        }, 500);
-    }, [user, router]);
+        if (!isAuthenticated) return;
+        fetchDashboardData();
+    }, [user, isAuthenticated]);
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('tr-TR', {
@@ -125,14 +89,11 @@ export default function DashboardPage() {
 
     const handleLogout = async () => {
         try {
-            console.log('Logging out...');
             await logout();
         } catch (error) {
             console.error('Logout error:', error);
         }
     };
-
-    const savingsProgress = (accountData.currentSavings / accountData.savingsGoal) * 100;
 
     if (!isAuthenticated) {
         return (
@@ -142,7 +103,7 @@ export default function DashboardPage() {
         );
     }
 
-    if (isLoading) {
+    if (isLoading || !accountData) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
                 <div className="text-center">
@@ -153,6 +114,8 @@ export default function DashboardPage() {
         );
     }
 
+    const savingsProgress = (accountData.currentSavings / accountData.savingsGoal) * 100;
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
             {/* Header */}
@@ -162,15 +125,16 @@ export default function DashboardPage() {
                         <div className="flex items-center space-x-4">
                             <button
                                 onClick={() => router.push('/')}
-                                className="text-blue-400 hover:text-blue-300 transition-colors"
+                                className="group flex items-center text-blue-400 hover:text-blue-300 transition-colors"
                             >
-                                <Home className="w-6 h-6" />
+                                <Landmark className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-colors"/>
+                                <span className="ml-2 text-2xl font-bold text-white group-hover:text-blue-300 transition-colors">BAKIRBANK</span>
                             </button>
-                            <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+                            <span className="text-2xl font-bold text-white">Dashboard</span>
                         </div>
 
                         <div className="flex items-center space-x-4">
-                            <span className="text-gray-300">Hoş geldin, {"TEST USERNAME"}</span>
+                            <span className="text-gray-300">Hoş geldin, {user?.username || "Kullanıcı"}</span>
                             <button
                                 onClick={handleLogout}
                                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
@@ -180,7 +144,7 @@ export default function DashboardPage() {
                         </div>
                     </div>
                 </div>
-                <NotificationPanel userId={"TEST"} />
+                <NotificationPanel userId={user?.id || ""} />
             </header>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -310,11 +274,11 @@ export default function DashboardPage() {
                                 <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-colors">
                                     <div className="flex items-center space-x-4">
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                            transaction.type === 'income'
+                                            transaction.type === 'INCOME'
                                                 ? 'bg-green-600'
                                                 : 'bg-red-600'
                                         }`}>
-                                            {transaction.type === 'income'
+                                            {transaction.type === 'INCOME'
                                                 ? <ArrowUpRight className="w-5 h-5 text-white" />
                                                 : <ArrowDownLeft className="w-5 h-5 text-white" />
                                             }
@@ -326,11 +290,11 @@ export default function DashboardPage() {
                                     </div>
                                     <div className="text-right">
                                         <p className={`font-bold ${
-                                            transaction.type === 'income'
+                                            transaction.type === 'INCOME'
                                                 ? 'text-green-400'
                                                 : 'text-red-400'
                                         }`}>
-                                            {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                                            {transaction.type === 'INCOME' ? '+' : '-'}{formatCurrency(transaction.amount)}
                                         </p>
                                         <p className="text-gray-400 text-sm">{formatDate(transaction.date)}</p>
                                     </div>

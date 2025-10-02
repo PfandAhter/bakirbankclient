@@ -2,18 +2,20 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import SockJS from 'sockjs-client';
+import axios from 'axios';
 import { Client } from '@stomp/stompjs';
 
 interface Notification {
-    id: number | string;
+    id: number;
     message: string;
     title: string;
     type: string;
     timestamp: string;
+    isRead?: boolean;
 }
 
 interface NotificationPanelProps {
-    userId: string | number;
+    userId: string ;
     position?: React.CSSProperties;
     dropDirection?: 'left' | 'right' | 'center';
 }
@@ -21,13 +23,61 @@ interface NotificationPanelProps {
 const NotificationPanel: React.FC<NotificationPanelProps> = ({
                                                                  userId,
                                                                  position,
-                                                                 dropDirection = 'right' // Varsayılan değer
+                                                                 dropDirection = 'right'
                                                              }) => {
-
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const clientRef = useRef<Client | null>(null);
+    const channel = new BroadcastChannel("notifications");
+
+    useEffect(() => {
+        channel.onmessage = (event) => {
+            if (event.data.type === "INIT_NOTIFICATIONS") {
+                setNotifications(event.data.payload);
+                setUnreadCount(event.data.payload.filter((n: Notification) => !n.isRead).length);
+            }
+            if (event.data.type === "NEW_NOTIFICATION") {
+                const notification: Notification = event.data.payload;
+                setNotifications(prev => [notification, ...prev]);
+                setUnreadCount(prev => prev + 1);
+            }
+            if (event.data.type === "READ_NOTIFICATION") {
+                const id = event.data.payload;
+                setNotifications(prev =>
+                    prev.map(n => n.id === id ? { ...n, isRead: true } : n)
+                );
+                setUnreadCount(prev => Math.max(prev - 1, 0));
+            }
+            if (event.data.type === "DELETE_NOTIFICATION") {
+                const id = event.data.payload;
+                setNotifications(prev => prev.filter(n => n.id !== id));
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        async function fetchNotifications() {
+            const res = await axios.get(`http://localhost:8090/api/v1/notification/get`,{
+                params: {
+                    userId:userId
+                }
+            });
+            console.log("Fetch Notifications Response data: ",res);
+
+            const data = res.data.notifications;
+
+            setNotifications(data);
+            // unread count hesapla
+            setUnreadCount(data.filter((n: Notification) => !n.isRead).length);
+
+            channel.postMessage({type: "INIT_NOTIFICATIONS", payload:data});
+        }
+
+        if (userId) {
+            fetchNotifications();
+        }
+    }, [userId]);
 
     useEffect(() => {
         if (clientRef.current) return;
@@ -38,21 +88,28 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
             reconnectDelay: 5000,
             onConnect: () => {
                 console.log('Connected to WebSocket');
-                console.log("user id: " + userId);
 
                 client.subscribe(`/user/${userId}/notifications`, (message) => {
                     const data = JSON.parse(message.body);
 
+                    console.log("Notifications:",data);
+
                     const notification: Notification = {
-                        id: data.id || Date.now(),
+                        id: data.id,
                         message: data.message,
                         title: data.title,
                         type: data.type,
-                        timestamp: new Date().toLocaleString()
+                        timestamp: data.timestamp,
+                        isRead: false
                     };
 
                     setNotifications(prev => [notification, ...prev]);
                     setUnreadCount(prev => prev + 1);
+
+                    channel.postMessage({
+                        type: "NEW_NOTIFICATION",
+                        payload: notification
+                    });
                 });
             },
             onStompError: (frame) => {
@@ -82,18 +139,42 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
         }
     }
 
-    const handleDelete = (id: string | number) => {
-        setNotifications(prev => prev.filter(notif => notif.id !== id));
+    const handleDelete = async (id: number) => {
+        try {
+            const res = axios.delete(`http://localhost:8090/api/v1/notification/delete`, {
+                params: {
+                    notificationId:id
+                }
+            });
+            setNotifications(prev => prev.filter(notif => notif.id !== id));
+
+            channel.postMessage({ type: "DELETE_NOTIFICATION", payload: id });
+        } catch (err) {
+            console.error("Silme hatası:", err);
+        }
+    };
+
+    const handleRead = async (id: number) => {
+        try {
+            await axios.patch(`http://localhost:8090/api/v1/notification/${id}/read`);
+
+            setNotifications(prev =>
+                prev.map(notif =>
+                    notif.id === id ? { ...notif, isRead: true } : notif
+                )
+            );
+            //setUnreadCount(prev => Math.max(prev - 1, 0));
+
+            channel.postMessage({ type: "READ_NOTIFICATION", payload: id });
+        } catch (err) {
+            console.error("Okuma hatası:", err);
+        }
     };
 
     const togglePanel = () => {
         setIsOpen(!isOpen);
-        if (!isOpen) {
-            setUnreadCount(0); // panel açılınca okunmuş say
-        }
     };
 
-    // Varsayılan pozisyon
     const defaultPosition: React.CSSProperties = { top: '10px', right: '1.5rem' };
 
     return (
@@ -118,7 +199,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
             {isOpen && (
                 <div className={`${getDropdownPosition()} w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 animate-fade-in`}>
                     <h3 className="text-lg font-semibold mb-3 text-gray-800 flex items-center gap-2">
-                    <span>Bildirimler</span>
+                        <span>Bildirimler</span>
                         <span className="ml-auto text-xs text-gray-400">{notifications.length} toplam</span>
                     </h3>
                     <ul className="space-y-3 max-h-96 overflow-y-auto">
@@ -127,12 +208,17 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
                         ) : (
                             notifications.map((notif) => (
                                 <li key={notif.id}
-                                    className="bg-gray-50 rounded-lg p-3 shadow flex flex-col gap-1 relative group">
+                                    className={`rounded-lg p-3 shadow flex flex-col gap-1 relative group cursor-pointer ${notif.isRead ? "bg-gray-50" : "bg-yellow-50"}`}
+                                    onClick={() => handleRead(notif.id)}
+                                >
                                     <div className="flex items-center justify-between">
                                         <strong className="text-blue-700">{notif.title}</strong>
                                         <button
                                             className="opacity-60 group-hover:opacity-100 text-lg hover:text-red-500 transition-colors"
-                                            onClick={() => handleDelete(notif.id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDelete(notif.id);
+                                            }}
                                             aria-label="Bildirim Sil"
                                         >
                                             🗑️

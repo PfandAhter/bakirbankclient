@@ -60,10 +60,6 @@ export const startTPSAnimation = ({
         animationRef.current = null;
     }
 
-
-
-
-
     const ANIMATION_FPS = 60;
     const FRAME_INTERVAL = 1000 / ANIMATION_FPS;
     const animationDuration = 10000; // ms
@@ -87,7 +83,9 @@ export const startTPSAnimation = ({
     routeDataRef.current = routeData;
 
     let prevBearing = calculateBearing(firstPoint, secondPoint);
-    let cameraPositionRef: Coordinates | null = null;
+
+    // ÖNEMLİ DEĞİŞİKLİK: Kamera pozisyonunu local değişken olarak tut
+    let lastCameraPosition: Coordinates | null = null;
 
     // Ease function
     const easeInOutCubic = (t: number) =>
@@ -136,10 +134,10 @@ export const startTPSAnimation = ({
 
             mapRef.current.easeTo({
                 center: [centerLng, centerLat],
-                zoom: 18,         // başlangıç zoom
-                pitch: 60,        // eğim
+                zoom: 18,
+                pitch: 60,
                 bearing: cameraBearing,
-                duration: 1000    // 2 saniyelik geçiş
+                duration: 1000
             });
         }
     }
@@ -164,14 +162,15 @@ export const startTPSAnimation = ({
                 const bounds = new mapboxgl.LngLatBounds();
                 routeDataRef.current.geometry.coordinates.forEach((coord: [number, number]) => {
                     bounds.extend(coord);
-                }); // Biraz padding ekle ki rota kenara yapışmasın
+                });
 
                 mapRef.current?.fitBounds(bounds,
                     {
                         padding: 300,
                         pitch: 60,
                         bearing: 30,
-                        duration: 2000
+                        duration: 2000,
+                        zoom:16
                     });
             }
         }, 1000);
@@ -220,14 +219,19 @@ export const startTPSAnimation = ({
         smoothBearing = prevBearing + Math.max(-maxRotationPerFrame, Math.min(maxRotationPerFrame, bearingDiff * easeSegmentProgress));
         prevBearing = smoothBearing;
 
-        // Camera güncelle, sadece değişmişse
-        const updatedCameraPosition = {longitude: interpolatedLng, latitude: interpolatedLat};
-        if (!cameraPositionRef ||
-            cameraPositionRef.latitude !== updatedCameraPosition.latitude ||
-            cameraPositionRef.longitude !== updatedCameraPosition.longitude
-        ) {
+        // ÖNEMLİ DEĞİŞİKLİK: Pozisyon değişikliğini daha hassas kontrol et
+        const updatedCameraPosition = {
+            longitude: parseFloat(interpolatedLng.toFixed(6)),
+            latitude: parseFloat(interpolatedLat.toFixed(6))
+        };
+
+        const shouldUpdateCamera = !lastCameraPosition ||
+            Math.abs(lastCameraPosition.latitude - updatedCameraPosition.latitude) > 0.000001 ||
+            Math.abs(lastCameraPosition.longitude - updatedCameraPosition.longitude) > 0.000001;
+
+        if (shouldUpdateCamera) {
+            lastCameraPosition = updatedCameraPosition;
             setCameraPosition(updatedCameraPosition);
-            cameraPositionRef = updatedCameraPosition;
         }
 
         const newViewState = {
@@ -262,10 +266,10 @@ export const startTPSAnimation = ({
             animationRef.current = requestAnimationFrame(animate);
         } else {
             stopAnimation();
-
             setViewStateAfterAnimation();
         }
     };
+
     prepareCameraPosition(smoothBearing, interpolatedLng, interpolatedLat);
 
     setTimeout(() =>{
