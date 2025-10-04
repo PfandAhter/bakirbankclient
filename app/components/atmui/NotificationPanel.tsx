@@ -58,20 +58,28 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
 
     useEffect(() => {
         async function fetchNotifications() {
-            const res = await axios.get(`http://localhost:8090/api/v1/notification/get`,{
-                params: {
-                    userId:userId
-                }
-            });
-            console.log("Fetch Notifications Response data: ",res);
+            try{
+                const res = await axios.get(`http://localhost:8090/api/v1/notification/get`,{
+                    params: {
+                        userId:userId
+                    }
+                });
+                console.log("Fetch Notifications Response data: ",res);
 
-            const data = res.data.notifications;
+                const data = res.data.notifications;
 
-            setNotifications(data);
-            // unread count hesapla
-            setUnreadCount(data.filter((n: Notification) => !n.isRead).length);
+                setNotifications(data);
+                // unread count hesapla
+                setUnreadCount(data.filter((n: Notification) => !n.isRead).length);
 
-            channel.postMessage({type: "INIT_NOTIFICATIONS", payload:data});
+                channel.postMessage({type: "INIT_NOTIFICATIONS", payload:data});
+
+
+            }catch (error){
+                console.error("Bildirimler alınırken hata oluştu:", error);
+                setNotifications([]);
+                setUnreadCount(0);
+            }
         }
 
         if (userId) {
