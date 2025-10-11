@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-    const token = request.cookies.get('access_token')?.value;
+    const token = request.cookies.get('mb_session')?.value;
     const { pathname } = request.nextUrl;
 
     // Auth gerektiren sayfalar
@@ -31,7 +31,7 @@ export function middleware(request: NextRequest) {
 
     // Auth sayfasında token varsa dashboard'a yönlendir
     if (isAuthPath && token) {
-        const redirectTo = request.nextUrl.searchParams.get('redirect') || '/dashboard';
+        const redirectTo = request.nextUrl.searchParams.get('redirect') || '/';
         const url = request.nextUrl.clone();
         url.pathname = redirectTo;
         url.search = '';

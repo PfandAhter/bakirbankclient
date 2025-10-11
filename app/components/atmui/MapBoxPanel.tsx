@@ -1,6 +1,6 @@
 'use client';
 
-import {MutableRefObject, forwardRef, useImperativeHandle, useEffect, useMemo, useRef, useState} from 'react';
+import {MutableRefObject, forwardRef, useImperativeHandle, useEffect, useRef, useState} from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import {useAtmLocations} from "@/app/lib/hooks/useAtmLocations";
@@ -101,9 +101,9 @@ const MapCanvas = forwardRef<
     const previousViewStateRef = useRef(null);
     const routeDataRef = useRef(null);
     const [cameraPosition, setCameraPosition] = useState<Coordinates | null>(null);
-    const animationProgressRef = useRef(0);
+    const [oldCameraPosition, setOldCameraPosition] = useState<Coordinates | null>(null);
 
-    //
+    const animationProgressRef = useRef(0);
 
     const [markerCoordinates, setMarkerCoordinates] = useState<Coordinates>({
         latitude: 38.020274,
@@ -112,12 +112,6 @@ const MapCanvas = forwardRef<
     const markerElementRef = useRef<HTMLDivElement | null>(null);
 
     const [isDragging, setIsDragging] = useState<boolean>(false);
-
-    const mapStyle = useMemo(() =>
-            is3D
-                ? "mapbox://styles/mapbox/dark-v8"
-                : "mapbox://styles/mapbox/dark-v10"
-        , [is3D]);
 
     const buildingLayer: mapboxgl.AnyLayer = {
         id: '3d-buildings',
@@ -184,12 +178,16 @@ const MapCanvas = forwardRef<
     }, [isRouteCalculating, startAnimation]);
 
     useEffect(() => {
-        if (onCameraPositionChange) {
+        if (!cameraPosition || !onCameraPositionChange) return;
+
+        // Sadece gerçekten değiştiğinde çağır
+        if (oldCameraPosition?.latitude !== cameraPosition.latitude ||
+            oldCameraPosition?.longitude !== cameraPosition.longitude) {
             onCameraPositionChange(cameraPosition);
+            setOldCameraPosition(cameraPosition);
         }
     }, [cameraPosition]);
 
-    // Veya bir button click handler'ında
     const handleStartAnimation = () => {
         if (startAnimation) {
             startTPSAnimation({
@@ -205,7 +203,7 @@ const MapCanvas = forwardRef<
                 routeDataRef,
                 previousViewStateRef,
                 lastFrameTimeRef,
-                mapRef, // <= burayı ekle
+                mapRef,
                 userMarkerRef: markerRef,
                 userPosition: markerCoordinates,
                 shouldStopAnimation: shouldStopAnimation,
@@ -215,7 +213,7 @@ const MapCanvas = forwardRef<
         }
     };
 
-    useEffect(() => {
+    /*useEffect(() => {
         console.log("Calculating route is: ", isRouteCalculating);
         if (isRouteCalculating) {
             startTPSAnimation({
@@ -231,7 +229,7 @@ const MapCanvas = forwardRef<
                 routeDataRef,
                 previousViewStateRef,
                 lastFrameTimeRef,
-                mapRef, // <= burayı ekle
+                mapRef,
                 userMarkerRef: markerRef,
                 userPosition: markerCoordinates,
                 shouldStopAnimation: shouldStopAnimation,
@@ -239,7 +237,6 @@ const MapCanvas = forwardRef<
                 setAnimationProgressRef: animationProgressRef
             });
         } else {
-            // Animasyonu durdur
             if (animationRef.current) {
                 cancelAnimationFrame(animationRef.current);
                 animationRef.current = null;
@@ -248,12 +245,14 @@ const MapCanvas = forwardRef<
                 setViewTPS(false);
             }
         }
-    }, [isRouteCalculating]);
+    }, [isRouteCalculating]);*/
 
     useEffect(() => {
         if (!mapRef.current || atmLocations.length === 0) return;
 
         atmLocations.forEach(atm => {
+            if(document.querySelector(`[data-atm-id="${atm.id}"]`)) return;
+
             const atmEl = document.createElement('div');
             atmEl.style.width = '32px';
             atmEl.style.height = '32px';
@@ -264,37 +263,49 @@ const MapCanvas = forwardRef<
             atmEl.style.cursor = 'pointer';
             atmEl.textContent = '🏧';
 
-            // Marker oluştur
+            // Marker'a data attribute ekle
+            atmEl.setAttribute('data-atm-id', atm.id);
+
             const marker = new mapboxgl.Marker({element: atmEl})
                 .setLngLat([atm.longitude, atm.latitude])
                 .addTo(mapRef.current!);
 
-            // Click event
             atmEl.addEventListener('click', () => {
                 const isDifferentAtm = selectedAtm?.id !== atm.id;
-                console.log("Selected ATM: ", selectedAtm);
-                console.log("Clicked ATM: ", atm);
-                console.log("Is different ATM: ", isDifferentAtm);
 
-                if (setIsSelectedAtmChanged) setIsSelectedAtmChanged(true); //TODO bu ney
+                if (setIsSelectedAtmChanged) setIsSelectedAtmChanged(true);
 
                 if (isDifferentAtm) {
                     clearRoute();
                 }
 
-                setSelectedAtm(atm); // MapCanvas içinde local state
-                if (onAtmSelect) onAtmSelect(atm); // Parent’a bildir
+                setSelectedAtm(atm);
+                if (onAtmSelect) onAtmSelect(atm);
+
                 mapRef.current!.flyTo({center: [atm.longitude, atm.latitude], zoom: 16});
+
+                // Tüm marker’ları kontrol edip seçilen ATM’i kırmızı ve parlak yap
+                atmLocations.forEach(otherAtm => {
+                    const markerElement = document.querySelector(
+                        `[data-atm-id="${otherAtm.id}"]`
+                    ) as HTMLDivElement | null;
+                    if (!markerElement) return;
+
+                    if (otherAtm.id === atm.id) {
+                        // Seçilen ATM
+                        markerElement.style.color = 'red';
+                        markerElement.style.textShadow = '0 0 10px red';
+                        markerElement.style.transform = 'scale(1.5)';
+                    } else {
+                        // Diğerleri normal
+                        markerElement.style.color = 'black';
+                        markerElement.style.textShadow = '';
+                        markerElement.style.transform = 'scale(1)';
+                    }
+                });
             });
-
         });
-    }, [atmLocations, selectedAtm, setIsSelectedAtmChanged, onAtmSelect]);
-
-    useEffect(() => {
-        if (!mapRef.current) return;
-
-        mapRef.current.setStyle(mapStyle);
-    }, [mapStyle]);
+    }, [atmLocations,setIsSelectedAtmChanged, onAtmSelect]);
 
     useEffect(() => {
         if (!mapRef.current || !routeData?.geometry?.coordinates) return;
@@ -311,10 +322,8 @@ const MapCanvas = forwardRef<
         };
 
         if (map.getSource("route")) {
-            // daha önce varsa güncelle
             (map.getSource("route") as mapboxgl.GeoJSONSource).setData(routeGeoJson);
         } else {
-            // yoksa ekle
             map.addSource("route", {
                 type: "geojson",
                 data: routeGeoJson,
@@ -346,43 +355,35 @@ const MapCanvas = forwardRef<
 
     useEffect(() => {
         if (!mapRef.current) return;
-
         const map = mapRef.current;
 
         if (is3D) {
-            // 3D moduna geç
             map.easeTo({
                 pitch: 60,
                 bearing: 30,
                 duration: 1000,
-                zoom: 16
+                zoom: 16,
             });
 
-            // Building layer'ı ekle
-            map.once('styledata', () => {
-                if (!map.getLayer('3d-buildings')) {
-                    map.addLayer(buildingLayer);
-                }
-            });
+            if (!map.getLayer("3d-buildings")) {
+                map.addLayer(buildingLayer);
+            }
         } else {
-            // 2D moduna geç
             map.easeTo({
                 pitch: 0,
                 bearing: 0,
                 duration: 1000,
-                zoom: 16
+                zoom: 16,
             });
 
-            // Building layer'ı kaldır
-            if (map.getLayer('3d-buildings')) {
-                map.removeLayer('3d-buildings');
+            if (map.getLayer("3d-buildings")) {
+                map.removeLayer("3d-buildings");
             }
         }
     }, [is3D]);
 
     useEffect(() => {
         if (markerElementRef.current && routeType) {
-            // Marker emoji'sini güncelle
             if (routeType === 'walking') {
                 markerElementRef.current.textContent = '🚶';
             } else if (routeType === 'driving') {
@@ -390,7 +391,7 @@ const MapCanvas = forwardRef<
             } else if (routeType === 'cycling') {
                 markerElementRef.current.textContent = '🚴';
             } else {
-                markerElementRef.current.textContent = '🚶'; // varsayılan
+                markerElementRef.current.textContent = '🚶';
             }
         }
     }, [routeType]);
@@ -413,19 +414,17 @@ const MapCanvas = forwardRef<
                 }
             }, error => {
                 console.error("Konum alınamadı:", error);
-                // Varsayılan konum olarak İstanbul'u kullan
             });
         }
     }, []);
 
     useEffect(() => {
-        if (mapRef.current) return; // harita bir kere oluşturulsun
+        if (mapRef.current) return;
 
-        // Harita oluştur
         mapRef.current = new mapboxgl.Map({
             container: mapContainerRef.current as HTMLDivElement,
-            style: 'mapbox://styles/mapbox/dark-v11',
-            center: [markerCoordinates.longitude, markerCoordinates.latitude], // kullanıcı konumu
+            style: 'mapbox://styles/mapbox/dark-v8',
+            center: [markerCoordinates.longitude, markerCoordinates.latitude],
             zoom: 14,
             renderWorldCopies: false,
         });
@@ -459,7 +458,7 @@ const MapCanvas = forwardRef<
 
         markerRef.current = marker;
 
-        // Marker sürükleme olayları
+
         marker.on('dragstart', () => {
             setIsDragging(true);
             markerElement.className = 'w-10 h-10 cursor-grabbing';
@@ -482,7 +481,7 @@ const MapCanvas = forwardRef<
             setIsDragging(false);
             markerElement.className = 'w-10 h-10 cursor-grab transition-transform';
 
-            // Harita pan'ini tekrar etkinleştir
+
             if (mapRef.current) {
                 mapRef.current.dragPan.enable();
             }
@@ -499,10 +498,138 @@ const MapCanvas = forwardRef<
             });
         });
 
-        // Cleanup function
+
         return () => {
             mapRef.current?.remove();
             mapRef.current = null;
+        };
+    }, []);
+
+
+    useEffect(() => {
+        if (!mapRef.current) return;
+
+        const map = mapRef.current;
+
+        console.log("Map yükleniyor ve ikonlar ekleniyor...");
+
+        map.on("load", async () => {
+            const icons = [
+                { name: "mosque-icon", url: "/icons/mosque.png" },
+                { name: "turkish-flag", url: "/icons/turkishflag.png" },
+                { name: "faculty-icon", url: "/icons/facultyBuilding.png" },
+                { name: "hospital-icon", url: "/icons/hospital.png" },
+                { name: "dormBuilding-icon", url: "/icons/dormBuilding.png" },
+                { name: "gokkusagi-icon", url: "/icons/gokkusagi.png" },
+                { name: "institute-icon", url: "/icons/institute.png" }
+            ];
+
+            await Promise.all(
+                icons.map(
+                    (icon) =>
+                        new Promise<void>((resolve, reject) => {
+                            if (map.hasImage(icon.name)) return resolve();
+                            map.loadImage(icon.url, (error, image) => {
+                                if (error) return reject(error);
+                                if (!map.hasImage(icon.name) && image) {
+                                    map.addImage(icon.name, image);
+                                }
+                                resolve();
+                            });
+                        })
+                )
+            );
+
+            try {
+                console.log("Json verileri yükleniyor...");
+
+                const [points,parkAreas] = await Promise.all([
+                    fetch("/buildingIcons.json").then((res) => res.json()),
+                    fetch("/parkAreas.json").then((res) => res.json())
+                ]);
+
+                if (!map.getSource("multiple-icons")) {
+                    map.addSource("multiple-icons", {
+                        type: "geojson",
+                        data: points
+                    });
+
+                    map.addLayer({
+                        id: "multiple-icons-layer",
+                        type: "symbol",
+                        source: "multiple-icons",
+                        layout: {
+                            "icon-image": ["get", "icon"],
+                            "icon-size": [
+                                "match",
+                                ["get", "icon"],
+                                "mosque-icon", 0.2,
+                                "turkish-flag", 0.4,
+                                "faculty-icon", 0.4,
+                                "hospital-icon", 0.4,
+                                "dormBuilding-icon", 0.4,
+                                "gokkusagi-icon", 0.4,
+                                "institute-icon", 0.4,
+                                0.4
+                            ],
+                            "icon-allow-overlap": true,
+                            "text-field": ["get", "title"],
+                            "text-offset": [0, 1.2],
+                            "text-anchor": "top",
+                            "text-size": 16
+                        },
+                        paint: {
+                            "text-color": "#ffffff"
+                        }
+                    });
+                }
+
+                parkAreas.forEach(({ id, url, coordinates }: any) => {
+                    if (!map.getSource(id)) {
+                        map.addSource(id, {
+                            type: "image",
+                            url,
+                            coordinates
+                        });
+
+                        map.addLayer({
+                            id: `${id}-layer`,
+                            type: "raster",
+                            source: id,
+                            paint: {
+                                "raster-opacity": 0.85
+                            }
+                        });
+                    }
+                });
+            } catch (err) {
+                console.error("Veriler yüklenirken hata oluştu:", err);
+            }
+        });
+    }, [is3D]);
+
+
+    useEffect(() => {
+        if (!mapRef.current) return;
+        const map = mapRef.current;
+
+        const addTerrain = () => {
+            if (!map.getSource("mapbox-dem")) {
+                map.addSource("mapbox-dem", {
+                    type: "raster-dem",
+                    url: "mapbox://mapbox.mapbox-terrain-dem-v1",
+                    tileSize: 512,
+                    maxzoom: 14,
+                });
+            }
+            map.setTerrain({ source: "mapbox-dem", exaggeration: 1.5 });
+            map.setLight({ anchor: "viewport", intensity: 0.5 });
+        };
+
+        map.on("style.load", addTerrain);
+
+        return () => {
+            map.off("style.load", addTerrain);
         };
     }, []);
 
@@ -519,30 +646,3 @@ const MapCanvas = forwardRef<
 MapCanvas.displayName = 'MapCanvas';
 
 export default MapCanvas;
-
-{/* Koordinat Göstergesi
-            <div
-                className="absolute top-5 left-5 bg-black/85 backdrop-blur-md p-5 rounded-xl border border-white/10 shadow-2xl z-10 min-w-[220px]">
-                <h3 className="m-0 mb-4 text-white text-sm font-semibold tracking-wider uppercase">
-                    Marker Konumu
-                </h3>
-                <div className="flex justify-between items-center py-2 border-b border-white/5">
-                    <span className="text-white/60 text-sm">Enlem:</span>
-                    <span className="text-red-500 font-semibold text-sm font-mono">
-                        {markerCoordinates.latitude.toFixed(6)}
-                    </span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-white/5">
-                    <span className="text-white/60 text-sm">Boylam:</span>
-                    <span className="text-red-500 font-semibold text-sm font-mono">
-                        {markerCoordinates.longitude.toFixed(6)}
-                    </span>
-                </div>
-                {isDragging && (
-                    <div
-                        className="mt-4 p-2 bg-red-500/20 border border-red-500/40 rounded-md text-red-400 text-xs text-center animate-pulse">
-                        Sürükleniyor...
-                    </div>
-                )}
-            </div>*/
-}

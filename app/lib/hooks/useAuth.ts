@@ -13,5 +13,6 @@ export const useAuth = () => {
         logout: store.logout,
         checkAuth: store.checkAuth,
         clearError: store.clearError,
+        getCurrentUser: store.getCurrentUser,
     };
 };

@@ -15,7 +15,6 @@ function SignInContent() {
     useEffect(() => {
         // Kullanıcı zaten giriş yapmışsa yönlendirme yap
         if (isAuthenticated) {
-            console.log('Kullanıcı zaten giriş yapmış, yönlendiriliyor... ve redirectUrl:', redirectUrl);
             router.push(decodeURIComponent(redirectUrl));
         }
     }, [user, router, redirectUrl]);

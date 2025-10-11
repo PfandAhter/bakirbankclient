@@ -1,5 +1,10 @@
+"use server";
+
 import axios from 'axios';
-import { setCookie, getCookie, deleteCookie } from '@/app/lib/store/cookieUtils';
+import {
+    getAccessTokenFromSession,
+    createUserSessionToken, deleteUserSessionToken
+} from '@/app/lib/store/cookieUtils';
 
 export interface RegisterData {
     name: string;
@@ -9,8 +14,10 @@ export interface RegisterData {
 
 export interface User {
     id: string;
-    name: string;
     email: string;
+    firstName: string;
+    secondName: string;
+    lastName: string;
 }
 
 export interface LoginResponse {
@@ -18,13 +25,14 @@ export interface LoginResponse {
     token: string;
 }
 
-const TOKEN_COOKIE_NAME = 'access_token';
 
-// Environment variable'dan base URL'i al
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8081';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
-export const getToken = (): string | null => {
-    return getCookie(TOKEN_COOKIE_NAME);
+
+/*export const getToken = (): string | null => {
+    const cookieStore = cookies();
+    getAccessTokenFromSession();
+    return cookieStore.get(TOKEN_COOKIE_NAME)?.value || null;
 };
 
 export const setToken = (token: string): void => {
@@ -33,21 +41,95 @@ export const setToken = (token: string): void => {
 
 export const removeToken = (): void => {
     deleteCookie(TOKEN_COOKIE_NAME);
-};
+};*/
 
-export const getAuthHeaders = () => {
-    const token = getToken();
+export async function getAuthHeaders (){
+    const token = await getAccessTokenFromSession();
     return {
         'Content-Type': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` })
     };
 };
 
-// Login fonksiyonu - Axios ile
-export const login = async (username: string, password: string): Promise<LoginResponse> => {
+export async function login(email: string, password: string) {
+    console.log("Login attempt for:", email); // Debug için
+    const res = await fetch(`${API_BASE_URL}/authentication/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+        credentials: "include",
+    });
+
+    console.log("Login response status: ", res);
+
+    if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Giriş başarısız");
+    }
+
+    const data = await res.json();
+    await createUserSessionToken(data.token);
+    return data.data;
+}
+
+export async function register(userData: RegisterData) {
+    const res = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+    });
+
+    if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Kayıt başarısız");
+    }
+
+    return;
+}
+
+export async function logout() {
+    const headers = await getAuthHeaders();
     try {
-        const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-            username,
+        await axios.post(`${API_BASE_URL}/auth/logout`, {}, { headers });
+    } catch (err) {
+        console.error("Logout API error:", err);
+    }
+    await deleteUserSessionToken();
+}
+
+
+export async function checkAuth() {
+    try {
+        const headers = await getAuthHeaders();
+        const res = await axios.get(`${API_BASE_URL}/account/user/check/auth`, { headers });
+        return res.data.authenticated === true;
+    } catch {
+        return false;
+    }
+}
+
+export async function getCurrentUser() {
+    try {
+        console.log("TEST Get CURRENT USER");
+        const headers = await getAuthHeaders();
+        console.log("Fetching current user with headers:", headers); // Debug için
+        const res = await axios.get(`${API_BASE_URL}/account/user/get/info`, { headers });
+        console.log("USER INFO:", res); // Debug için
+        return res.data.user;
+    } catch (err: any) {
+        if (err.response?.status === 401) {
+            await deleteUserSessionToken();
+        }
+        throw new Error(err.response?.data?.message || "Kullanıcı bilgileri alınamadı");
+    }
+}
+//TODO: Burada hata yonetimini daha iyi yapabiliriz.
+
+
+/*export const login = async (email: string, password: string): Promise<LoginResponse> => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/authentication/login`, {
+            email,
             password
         }, {
             headers: {
@@ -107,11 +189,23 @@ export const logout = async (): Promise<void> => {
     removeToken();
 };
 
+export const checkAuth = async (): Promise<boolean> => {
+    try{
+        const response = await axios.get(`${API_BASE_URL}/account/user/check/auth`, {
+            headers:getAuthHeaders()
+        });
+
+        return response.data.authenticated === true;
+    }catch (error){
+        return false;
+    }
+}
+
 // Mevcut kullanıcıyı al (token doğrulama)
 export const getCurrentUser = async (): Promise<User> => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/auth/me`, {
-            headers: getAuthHeaders()
+        const response = await axios.get(`${API_BASE_URL}/account/user/get/info`, { //TODO: Kullanici bilgilerini buraddan alacaz..
+            headers:getAuthHeaders()
         });
 
         return response.data.user;
@@ -163,4 +257,4 @@ export const createAuthApiClient = () => {
     );
 
     return apiClient;
-};
+};*/

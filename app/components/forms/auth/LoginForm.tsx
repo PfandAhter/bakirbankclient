@@ -23,7 +23,7 @@ const LoginForm = ({
     const validateForm = () => {
         const newErrors: { email?: string; password?: string } = {};
 
-        /*if (!formData.email) {
+        if (!formData.email) {
             newErrors.email = 'E-posta adresi gereklidir';
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
             newErrors.email = 'Geçerli bir e-posta adresi giriniz';
@@ -33,7 +33,7 @@ const LoginForm = ({
             newErrors.password = 'Şifre gereklidir';
         } else if (formData.password.length < 6) {
             newErrors.password = 'Şifre en az 6 karakter olmalıdır';
-        }*/
+        }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -45,9 +45,30 @@ const LoginForm = ({
 
         if (validateForm()) {
             try {
-                console.log('Test giris basarizi error code:', error);
+
+                console.log("TEST: form submitted", formData);
+
                 await login(formData.email, formData.password);
-                onSuccessfulLogin?.(); // Başarılı login sonrası callback
+                onSuccessfulLogin?.();
+                // const res = await fetch('/api/auth/sign-in', {
+                //     method: 'POST',
+                //     headers: { 'Content-Type': 'application/json' },
+                //     body: JSON.stringify({ email: formData.email, password: formData.password }),
+                // });
+
+
+                // console.log("TEST: response status", res.status); // ← Buraya ekle
+                // console.log("TEST: response headers", res.headers); // ← Buraya ekle
+                //
+                // console.log("TEST: response received", res);
+                // if (!res.ok) {
+                //     const data = await res.json();
+                //     throw new Error(data.message || 'Giriş başarısız');
+                // }
+
+
+                 // Başarılı login sonrası callback
+                //await login(formData.email, formData.password);
             } catch {
                 setFormError('Giriş yapılamadı, lütfen tekrar deneyin.');
             }
@@ -87,7 +108,7 @@ const LoginForm = ({
                         value={formData.email}
                         onChange={handleChange}
                         icon={Mail}
-                        placeholder="ornek@email.com veya 11 haneli TCKN"
+                        placeholder="ornek@email.com"
                         error={errors.email}
                     />
 

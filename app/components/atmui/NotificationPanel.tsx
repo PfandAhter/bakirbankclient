@@ -57,34 +57,55 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
     }, []);
 
     useEffect(() => {
+        let retryInterval: NodeJS.Timeout | null = null;
+
         async function fetchNotifications() {
-            try{
-                const res = await axios.get(`http://localhost:8090/api/v1/notification/get`,{
-                    params: {
-                        userId:userId
-                    }
+            try {
+                const res = await axios.get(`http://localhost:8090/api/v1/notification/get`, {
+                    params: { userId }
                 });
-                console.log("Fetch Notifications Response data: ",res);
+
+                console.log("Fetch Notifications Response data: ", res);
 
                 const data = res.data.notifications;
-
                 setNotifications(data);
-                // unread count hesapla
                 setUnreadCount(data.filter((n: Notification) => !n.isRead).length);
 
-                channel.postMessage({type: "INIT_NOTIFICATIONS", payload:data});
+                // Diğer sekmeler için senkronizasyon
+                channel.postMessage({ type: "INIT_NOTIFICATIONS", payload: data });
 
+                // Eğer daha önce hata nedeniyle interval başlatılmışsa durdur
+                if (retryInterval) {
+                    clearInterval(retryInterval);
+                    retryInterval = null;
+                    console.log("✅ Notification server tekrar erişilebilir hale geldi, retry interval temizlendi.");
+                }
 
-            }catch (error){
-                console.error("Bildirimler alınırken hata oluştu:", error);
+            } catch (error) {
+                console.error("❌ Bildirimler alınırken hata oluştu:", error);
+
+                // Retry interval zaten çalışmıyorsa başlat
+                if (!retryInterval) {
+                    retryInterval = setInterval(() => {
+                        console.log("🔁 Bildirimler yeniden alınmaya çalışılıyor...");
+                        fetchNotifications();
+                    }, 3 * 60 * 1000); // 3 dakika
+                }
+
                 setNotifications([]);
                 setUnreadCount(0);
             }
         }
 
         if (userId) {
+            // İlk çağrı (component mount olduğunda)
             fetchNotifications();
         }
+
+        // Cleanup: component unmount olursa interval temizle
+        return () => {
+            if (retryInterval) clearInterval(retryInterval);
+        };
     }, [userId]);
 
     useEffect(() => {

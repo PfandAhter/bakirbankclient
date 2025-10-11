@@ -7,20 +7,33 @@ import {useEffect, useState} from "react";
 import NotificationPanel from '@/app/components/atmui/NotificationPanel';
 
 export default function HomePage() {
-    const { user, isAuthenticated, logout } = useAuth();
+    const { user, isAuthenticated, logout , checkAuth} = useAuth();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        debugger;
-        console.log('DashboardPage useEffect triggered and isAuthenticated:', isAuthenticated);
-
-        // Simulate API loading
         setTimeout(() => {
             setIsLoading(false);
         }, 500);
-    }, [user, router]);
+    }, []);
 
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                await checkAuth();
+            } catch (error) {
+                console.error('Error fetching current user:', error);
+                router.push('/sign-in');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        // Sadece ilk defa authenticated olduğunda çağır
+        if (isAuthenticated && !user) {
+            fetchUser();
+        }
+    }, [isAuthenticated]);
 
     const handleProtectedAction = (path: string) => {
         console.log('Authenticated info:', isAuthenticated);
@@ -38,7 +51,6 @@ export default function HomePage() {
         await logout();
         router.push('/');
     };
-
 
     if (isLoading) {
         return (
@@ -84,8 +96,8 @@ export default function HomePage() {
                                                 <User className="w-5 h-5 text-white"/>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-white font-medium">{"ATABERK TEST"}</p>
-                                                <p className="text-gray-400 text-sm">{"USEER.EMAIL TEST"}</p>
+                                                <p className="text-white font-medium"> {user?.firstName} {user?.secondName} <span className="text-xl">{user?.lastName}</span></p>
+                                                <p className="text-gray-400 text-sm">{user?.email}</p>
                                             </div>
                                         </div>
 
@@ -98,15 +110,6 @@ export default function HomePage() {
                                             <span>Dashboard</span>
                                         </button>
 
-                                        {/* Çıkış butonu */}
-                                        <button
-                                            onClick={handleLogout}
-                                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-                                        >
-                                            <LogOut className="w-4 h-4"/>
-                                            <span>Çıkış</span>
-                                        </button>
-
                                         <button
                                             onClick={() => router.push('/atmfinder')}
                                             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 ml-1"
@@ -115,7 +118,15 @@ export default function HomePage() {
                                             <span>ATM Bul</span>
                                         </button>
 
-                                        <NotificationPanel userId={"test"}/>
+                                        <button
+                                            onClick={handleLogout}
+                                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                                        >
+                                            <LogOut className="w-4 h-4"/>
+                                            <span>Çıkış</span>
+                                        </button>
+
+                                        <NotificationPanel userId={user?.id || "null"}/>
                                     </div>
                                 ) : (
                                     <div className="space-x-2">
@@ -145,7 +156,7 @@ export default function HomePage() {
                         <h2 className="text-5xl font-bold text-white mb-6">
                             {isAuthenticated ? (
                                 <>
-                                    Hoş geldin, <span className="text-blue-400">{"USERNAME TEST"}</span>
+                                    Hoş geldin, <span className="text-blue-400">{user?.firstName} {user?.secondName} {user?.lastName}</span>
                                 </>
                             ) : (
                                 <>
@@ -301,7 +312,6 @@ export default function HomePage() {
                     </section>
                 )}
             </div>
-
         </div>
     );
 }

@@ -12,10 +12,12 @@ import MapLoadingScreen from "@/app/lib/loadingScreen/MapLoadingScreen";
 import axios from "axios";
 import {TripsLayer} from "@deck.gl/geo-layers";
 
-import MapCanvas from "@/app/maptestv2/page";
+import MapCanvas from "@/app/components/atmui/MapBoxPanel";
 import RouteTypeSelector from "@/app/components/atmui/RouteTypeSelector";
 import DirectionsPanel from "@/app/components/atmui/DirectionsPanel";
 import MiniMapPanel from "@/app/components/atmui/MiniMapPanel";
+import SendMoneyPanel from "@/app/components/atmui/SendMoneyPanel";
+import {fetchAtmLocations} from "@/app/lib/atm/getAtmLocations";
 
 
 // Define types
@@ -109,7 +111,7 @@ export default function AtmFinderPage() {
     const [isDragging, setIsDragging] = useState(false);
 
     //Route Calculating
-    const [routeData, setRouteData] = useState<any>(null);
+    const [routeData, setRouteData] = useState<RouteData | null>(null);
     const mapCanvasRef = useRef<{
         handleStartAnimation: () => void;
         stopAnimation: () => void;
@@ -346,11 +348,29 @@ export default function AtmFinderPage() {
         }
     };
 
-    const RetryModal = ({ onRetry}) => (
-        <div className="retry-modal-overlay">
-            <div className="retry-modal">
-                <h2>ATM Bilgisi Alma İşlemi Başarısız</h2>
-                <button onClick={onRetry}>Yeniden Dene</button>
+    const getAtmLocations = async () => {
+        try{
+            console.log("TEST TEST TEST ");
+            await fetchAtmLocations();
+            setShowRetryModal(false);
+        }catch(error){
+            console.log("ATM bilgisi alınamadı, modal gösteriliyor.", error);
+            setShowRetryModal(true);
+        }
+    }
+
+    const RetryModal = ({ onRetry }) => (
+        <div className="fixed inset-0 bg-transparent bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-6">
+                    ATM Bilgisi Alma İşlemi Başarısız
+                </h2>
+                <button
+                    onClick={onRetry}
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 shadow-md"
+                >
+                    Yeniden Dene
+                </button>
             </div>
         </div>
     );
@@ -359,6 +379,10 @@ export default function AtmFinderPage() {
         setRouteType(type);
         setSelectedRouteType(type); // Seçili butonu güncelle
     }
+
+    useEffect(() => {
+        getAtmLocations();
+    }, []);
 
     const getStatusOptions = async () => {
         try {
@@ -381,57 +405,6 @@ export default function AtmFinderPage() {
         }
     }
 
-    const renderMarkersAsGeoJSON = useMemo(() => {
-        const atmFeatures = filteredAtmLocations.map((atm: Atm) => ({
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [atm.longitude, atm.latitude],
-            },
-            properties: {
-                id: atm.id,
-                icon: 'atm-icon', // ATM ikonu
-            },
-        }));
-
-        const userFeature = userPosition
-            ? {
-                type: 'Feature',
-                geometry: {
-                    type: 'Point',
-                    coordinates: [userPosition.longitude, userPosition.latitude],
-                },
-                properties: {
-                    id: 'user',
-                    icon: 'user-icon', // Kullanıcı ikonu
-                },
-            }
-            : null;
-        console.log("TEST USER LATITUDE", userPosition.latitude);
-        console.log("TEST USER LONGITUDE", userPosition.longitude);
-
-
-        return {
-            type: 'FeatureCollection',
-            features: userFeature ? [...atmFeatures, userFeature] : atmFeatures,
-        };
-    }, [filteredAtmLocations, userPosition]);
-
-
-    const tripsData = useMemo(
-        () => [
-            {
-                path: [
-                    [29.0, 41.0],
-                    [29.05, 41.02],
-                    [29.1, 41.03],
-                ],
-                timestamps: [0, 100, 200],
-            },
-        ],
-        []
-    );
-
     const startAnimation = useCallback(() => {
         if (mapCanvasRef.current?.handleStartAnimation) {
             mapCanvasRef.current.handleStartAnimation();
@@ -440,20 +413,8 @@ export default function AtmFinderPage() {
 
     const handleCameraPositionChange = useCallback((pos: Coordinates | null) => {
         //console.log("Camera position updated:", pos);
+        setCameraPosition(pos);
     }, []);
-
-    // 🔹 TripsLayer (3D yol animasyonu)
-    const tripsLayer = new TripsLayer({
-        id: "trips",
-        data: tripsData,
-        getPath: d => d.path,
-        getTimestamps: d => d.timestamps,
-        getColor: [253, 128, 93],
-        opacity: 0.8,
-        widthMinPixels: 4,
-        trailLength: 180,
-        currentTime: (Date.now() / 100) % 200,
-    });
 
     if (!isAuthenticated) {
         return (
@@ -477,11 +438,11 @@ export default function AtmFinderPage() {
                         <div className="flex items-center pl-70">
                             <button
                                 onClick={() => router.push('/')}
-                                className="flex items-center text-blue-400 hover:text-blue-300 transition-colors"
+                                className="group flex items-center text-blue-400 hover:text-blue-300 transition-colors"
                             >
-                                <Landmark className="h-8 w-8 text-blue-400 hover:text-blue-300"/>
+                                <Landmark className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-colors"/>
                                 <span
-                                    className="ml-2 text-2xl font-bold text-white hover:text-blue-300">BAKIRBANK</span>
+                                    className="ml-2 text-2xl font-bold text-white group-hover:text-blue-300 transition-colors">BAKIRBANK</span>
                             </button>
                         </div>
 
@@ -489,7 +450,7 @@ export default function AtmFinderPage() {
                             {isAuthenticated ? (
                                 <div className="flex items-center justify-end w-full space-x-4">
                                     <div className="flex items-center space-x-4">
-                                        <NotificationPanel userId={"testUSERIDYERI"} position={{
+                                        <NotificationPanel userId={"6bb91e57-032c-40db-b6ce-4e3ef459c3a0"} position={{
                                             top: '3%',
                                             left: '50%',
                                             transform: 'translate(-50%, -50%)',
@@ -545,7 +506,8 @@ export default function AtmFinderPage() {
 
             <div
                 //ref={mapContainerRef}
-                className={`relative w-full h-full ${showRetryModal ? 'blur-sm pointer-events-none' : ''} min-h-[400px] sm:min-h-[600px]`}
+                className={`relative w-full h-full ${showRetryModal ? 'blur-sm' : ''} min-h-[400px] sm:min-h-[600px]`}
+                //className="relative w-full h-full min-h-[400px] sm:min-h-[600px]"
             >
 
                 <div style={{height: "100vh", width: "100%"}}>
@@ -588,7 +550,14 @@ export default function AtmFinderPage() {
                     />
                 )}
 
+
                 <div className="fixed top-20 right-95 flex items-end gap-3 z-[1000]">
+
+                    <SendMoneyPanel
+                        isOpen={isSendMoneyPanelOpen}
+                        togglePanel={toggleSendMoneyPanel}
+                        selectedAtm={selectedAtm}
+                    />
 
                     <RouteTypeSelector
                         selectedRouteType={selectedRouteType}
@@ -630,10 +599,10 @@ export default function AtmFinderPage() {
                     />
                 </div>
 
-                {userPosition && selectedAtm && !isSendMoneyPanelOpen && !isQrCodePanelOpen && ( //userPosition && selectedAtm && !isSendMoneyPanelOpen && !isQrCodePanelOpen &&
+                {userPosition && selectedAtm && !isSendMoneyPanelOpen && !isQrCodePanelOpen && (
                     <button
                         onClick={animationInProgress ? stopCalculatingRoute : () => calculateRoute(false)}
-                        disabled={isCalculatingRoute} // isCalculatingRoute should be defined in your state
+                        disabled={isCalculatingRoute}
                         className={`
                           fixed bottom-10 left-1/2 -translate-x-1/2
                           px-6 py-3 w-72 h-14
@@ -650,7 +619,7 @@ export default function AtmFinderPage() {
                         }}
                     >
                         <div className="flex items-center justify-center hover:scale-105">
-                            {isCalculatingRoute // isCalculatingRoute should be defined in your state
+                            {isCalculatingRoute
                                 ? 'Hesaplanıyor...'
                                 : animationInProgress
                                     ? `Rota Gösteriliyor (${Math.round(animationProgress * 100)}%)`
@@ -658,8 +627,8 @@ export default function AtmFinderPage() {
                         </div>
                     </button>
                 )}
-
             </div>
+            {showRetryModal && <RetryModal onRetry={getAtmLocations}/>}
         </div>
     );
 }

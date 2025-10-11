@@ -13,23 +13,29 @@ import {
     History,
     Bell,
     KeyRound,
-    Settings,
-    XCircle, CheckCircle
+    Calendar,
+    XCircle, CheckCircle, RefreshCw
 } from "lucide-react";
 import NotificationPanel from "@/app/components/atmui/NotificationPanel";
 import {useRouter} from "next/navigation";
 import {useAuth} from "@/app/lib/hooks/useAuth";
-import { useEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 import axios from 'axios';
+import {getAuthHeaders} from "@/app/lib/api/services/authService";
 
 export default function ProfilePage() {
     const router = useRouter();
     const {user, logout} = useAuth();
 
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+    const [isLoading, setIsLoading] = useState(true);
+
     type TabType = "profile" | "password" | "security" | "sessions" | "notifications" | "accounts" | "freeze";
 
     const [activeTab, setActiveTab] = useState<TabType>("profile");
     const [sessionHistory, setSessionHistory] = useState<any[]>([]);
+    const [tcknError, setTcknError] = useState("");
 
     const [formData, setFormData] = useState({
         firstName: "",
@@ -40,6 +46,7 @@ export default function ProfilePage() {
         email: "",
         address: "",
         oldPassword: "",
+        birthDate: "",
         newPassword: "",
         confirmPassword: ""
     });
@@ -50,9 +57,55 @@ export default function ProfilePage() {
     };
 
     useEffect(() => {
+        // Kullanıcı bilgilerini API'den çek
+        axios.get(`${API_BASE_URL}/account/user/get/info`, {
+            headers: getAuthHeaders()
+        })
+            .then(res => {
+                console.log("API'den gelen kullanıcı bilgileri:", res.data);
+                const data = res.data.user;
+
+                const formattedBirthDate = data.birthDate
+                    ? data.birthDate.split('/').reverse().join('-') // "01/01/2004" -> "2004-01-01"
+                    : "";
+
+                setFormData({
+                    firstName: data.firstName || "",
+                    secondName: data.secondName || "",
+                    lastName: data.lastName || "",
+                    tckn: data.tckn || "",
+                    phone: data.phoneNumber || "",
+                    email: data.email || "",
+                    address: data.address || "",
+                    birthDate: formattedBirthDate || "",
+                    oldPassword: "",
+                    newPassword: "",
+                    confirmPassword: ""
+                });
+                setIsLoading(false);
+            })
+
+            .catch(err => console.error("Kullanıcı bilgileri alınamadı:", err));
+
+        setFormData({
+            firstName: "TEST FIRSTNAME",
+            secondName: "TEST SECONDNAME",
+            lastName: "TEST LASTNAME",
+            tckn: "TEST TCKN",
+            phone: "TEST PHONE",
+            email: "TEST EMAIL",
+            address: "TEST ADDRESS",
+            birthDate: "",
+            oldPassword: "",
+            newPassword: "",
+            confirmPassword: ""
+        });
+    }, []);
+
+    useEffect(() => {
         if (activeTab === "sessions") {
             axios.get("http://localhost:8090/api/v1/profile/session-history", {
-                params: { userId: user?.id }
+                params: {userId: user?.id}
             })
                 .then(res => setSessionHistory(res.data))
                 .catch(err => console.error("Oturum geçmişi alınamadı:", err));
@@ -61,7 +114,18 @@ export default function ProfilePage() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("Form data gönderildi:", formData);
+
+        // try{
+        //     const response = axios.post(`${API_BASE_URL}/account/user/update/info`, formData,{
+        //         headers: getAuthHeaders()
+        //     })
+        // }catch(){
+        //
+        // }
+        //
+        //
+        //
+        // console.log("Form data gönderildi:", formData);
     };
 
     const handleLogout = async () => {
@@ -71,6 +135,28 @@ export default function ProfilePage() {
             console.error('Logout error:', error);
         }
     };
+
+    useEffect(() => {
+        if (isLoading) {
+            const timeout = setTimeout(() => {
+                router.push("/");
+            }, 5000);
+
+            return () => clearTimeout(timeout); // Cleanup timeout on unmount
+        }
+    }, [isLoading]);
+
+    if (isLoading) {
+        return (
+            <div
+                className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
+                <div className="text-center">
+                    <RefreshCw className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-4"/>
+                    <p className="text-white">Profil bilgileri yükleniyor...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <ProtectedRoute>
@@ -94,7 +180,7 @@ export default function ProfilePage() {
                             </div>
 
                             <div className="flex items-center space-x-4">
-                                <span className="text-gray-300">Hoş geldin, {user?.username ?? "TEST USER"}</span>
+                                <span className="text-gray-300">Hoş geldin, {user?.firstName} {user?.secondName} {user?.lastName}</span>
                                 <button
                                     onClick={handleLogout}
                                     className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
@@ -104,7 +190,7 @@ export default function ProfilePage() {
                             </div>
                         </div>
                     </div>
-                    <NotificationPanel userId={"6bb91e57-032c-40db-b6ce-4e3ef459c3a0"}/>
+                    <NotificationPanel userId={user?.id ?? "null"} />
                 </header>
 
                 {/* Content */}
@@ -164,7 +250,9 @@ export default function ProfilePage() {
                                                     }
                                                 }}
                                                 placeholder={"Ad"}
-                                                className="w-full px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 text-white"
+                                                disabled={formData.firstName !== "" && formData.firstName !== null}
+                                                className="w-full px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 text-white
+                                                disabled:opacity-50 disabled:cursor-not-allowed"
                                             />
                                         </div>
                                         <div>
@@ -180,7 +268,9 @@ export default function ProfilePage() {
                                                     }
                                                 }}
                                                 placeholder={"İkinci Ad (Varsa)"}
-                                                className="w-full px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 text-white"
+                                                disabled={formData.secondName !== "" && formData.secondName !== null}
+                                                className="w-full px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 text-white
+                                                disabled:opacity-50 disabled:cursor-not-allowed"
                                             />
                                         </div>
                                         <div>
@@ -196,28 +286,64 @@ export default function ProfilePage() {
                                                     }
                                                 }}
                                                 placeholder={"Soyad"}
-                                                className="w-full px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 text-white"
+                                                disabled={formData.lastName !== "" && formData.lastName !== null}
+                                                className="w-full px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 text-white
+                                                disabled:opacity-50 disabled:cursor-not-allowed"
                                             />
                                         </div>
-                                        <div>
+                                        <div className="flex flex-col gap-1 w-full">
                                             <label className="block text-gray-300 mb-1">TCKN</label>
-                                            <input
-                                                type="text"
-                                                name="tckn"
-                                                value={formData.tckn}
-                                                onChange={handleChange}
-                                                placeholder={"12345678901"}
-                                                onKeyDown={(e) => {
-                                                    if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-                                                        e.preventDefault();
-                                                    }
-                                                }}
-                                                maxLength={11}
-                                                className="w-full px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 text-white"
-                                            />
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="text"
+                                                    name="tckn"
+                                                    value={formData.tckn}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        // sadece sayısal giriş
+                                                        if (!/^\d*$/.test(value)) return;
+
+                                                        handleChange(e);
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        const tckn = e.target.value;
+
+                                                        if (tckn.length === 0) return;
+
+                                                        if (tckn.length !== 11) {
+                                                            setTcknError("TCKN 11 haneli olmalıdır");
+                                                            return;
+                                                        }
+
+                                                        // TCKN algoritması
+                                                        const digits = tckn.split("").map(Number);
+                                                        const oddSum = digits[0] + digits[2] + digits[4] + digits[6] + digits[8];
+                                                        const evenSum = digits[1] + digits[3] + digits[5] + digits[7];
+                                                        const check10 = (oddSum * 7 - evenSum) % 10;
+                                                        const check11 = digits.slice(0, 10).reduce((a, b) => a + b, 0) % 10;
+
+                                                        if (digits[9] !== check10 || digits[10] !== check11) {
+                                                            setTcknError("Geçerli bir TCKN girin");
+                                                        } else {
+                                                            setTcknError("");
+                                                        }
+                                                    }}
+                                                    placeholder="12345678901"
+                                                    maxLength={11}
+                                                    disabled={formData.tckn !== "" && formData.tckn !== null}
+                                                    className={`w-full px-4 py-2 rounded-lg bg-gray-900 border ${
+                                                        tcknError ? "border-red-500" : "border-gray-700"
+                                                    } text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-600`}
+                                                />
+                                            </div>
+
+                                            {tcknError && (
+                                                <p className="text-red-500 text-sm ml-1">{tcknError}</p>
+                                            )}
                                         </div>
-                                        <div>
+                                        <div className="flex flex-col gap-1 w-full">
                                             <label className="block text-gray-300 mb-1">Telefon</label>
+
                                             <div className="flex items-center gap-2">
                                                 <Phone className="w-4 h-4 text-gray-400"/>
                                                 <input
@@ -226,30 +352,68 @@ export default function ProfilePage() {
                                                     value={formData.phone}
                                                     onChange={handleChange}
                                                     onKeyDown={(e) => {
-                                                        if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                                                        if (
+                                                            !/[0-9]/.test(e.key) &&
+                                                            !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)
+                                                        ) {
                                                             e.preventDefault();
                                                         }
                                                     }}
                                                     maxLength={10}
                                                     placeholder="5xxxxxxxxx"
-                                                    className="w-full px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 text-white"
+                                                    className={`w-full px-4 py-2 rounded-lg bg-gray-900 border ${
+                                                        formData.phone && formData.phone.length !== 10
+                                                            ? 'border-red-500'
+                                                            : 'border-gray-700'
+                                                    } text-white focus:outline-none focus:ring-2 focus:ring-blue-600`}
                                                 />
                                             </div>
+
+                                            {formData.phone && formData.phone.length !== 10 && (
+                                                <p className="text-red-500 text-sm ml-6">Geçerli bir telefon numarası
+                                                    girin</p>
+                                            )}
                                         </div>
                                         <div>
                                             <label className="block text-gray-300 mb-1">E-posta</label>
+                                            <div className="flex flex-col gap-1 w-full">
+                                                <div className="flex items-center gap-2">
+                                                    <Mail className="w-4 h-4 text-gray-400"/>
+                                                    <input
+                                                        type="email"
+                                                        name="email"
+                                                        value={formData.email}
+                                                        onChange={handleChange}
+                                                        pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                                                        placeholder="test@bakirbank.com"
+                                                        className="w-full px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 text-white
+                                                       disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    />
+                                                </div>
+                                                {formData.email &&
+                                                    !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email) && (
+                                                        <p className="text-red-500 text-sm ml-6">Geçerli bir e-posta
+                                                            adresi girin</p>
+                                                    )}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-gray-300 mb-1">Doğum Tarihi</label>
                                             <div className="flex items-center gap-2">
-                                                <Mail className="w-4 h-4 text-gray-400"/>
+                                                <Calendar className="w-4 h-4 text-gray-400"/>
                                                 <input
-                                                    type="email"
-                                                    name="email"
-                                                    value={formData.email}
+                                                    type="date"
+                                                    name="birthDate"
+                                                    value={formData.birthDate}
                                                     onChange={handleChange}
-                                                    placeholder={"test@bakirbank.com"}
-                                                    className="w-full px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 text-white"
+                                                    max={new Date().toISOString().split("T")[0]} // gelecekteki tarih seçimini engeller
+                                                    className="w-full px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 text-white
+                       focus:outline-none focus:ring-2 focus:ring-blue-600"
                                                 />
                                             </div>
                                         </div>
+
                                         <div className="md:col-span-2">
                                             <label className="block text-gray-300 mb-1">Adres</label>
                                             <div className="flex items-center gap-2">

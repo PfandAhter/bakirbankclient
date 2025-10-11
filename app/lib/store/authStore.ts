@@ -1,10 +1,12 @@
 import { create } from 'zustand';
-import {login, register, logout, getCurrentUser, getToken} from '@/app/lib/api/services/authService';
+import {login, register, logout, getCurrentUser, checkAuth} from '@/app/lib/api/services/authService';
 
 interface User {
     id: string;
-    name: string;
     email: string;
+    firstName: string;
+    secondName: string;
+    lastName: string;
 }
 
 interface RegisterData {
@@ -23,32 +25,44 @@ interface AuthState {
     logout: () => Promise<void>;
     checkAuth: () => Promise<void>;
     clearError: () => void;
+    getCurrentUser: () => Promise<void>;
     setLoading: (loading: boolean) => void;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
     user: null,
     isLoading: true,
     error: null,
     isAuthenticated: false,
 
-    login: async (email, password) => {
+    login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
+
         try {
-            const data = await login(email, password);
+            // Client-side'dan API route'una istek at
+            const res = await fetch('/api/auth/sign-in', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.message || 'Giriş başarısız');
+            }
+
+            const data = await res.json();
+
             set({
                 user: data.user,
-                isLoading: false,
                 isAuthenticated: true,
+                isLoading: false,
                 error: null
             });
-        } catch (error: unknown) {
-            console.log('Login error:', error);
-            debugger;
-            const err = error as { message?: string, status?: number };
-            console.log('error codetest', err.status);
+
+        } catch (error: any) {
             set({
-                error: err.message || 'Giriş başarısız',
+                error: error.message || 'Giriş başarısız',
                 isLoading: false,
                 isAuthenticated: false,
                 user: null
@@ -56,6 +70,55 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             throw error;
         }
     },
+
+    checkAuth: async () => {
+        set({ isLoading: true });
+
+        try {
+            const res = await fetch('/api/auth/check');
+
+            if (!res.ok) {
+                throw new Error('Not authenticated');
+            }
+
+            const data = await res.json();
+
+            set({
+                user: data.user,
+                isAuthenticated: true,
+                isLoading: false,
+                error: null
+            });
+        } catch (error) {
+            set({
+                user: null,
+                isAuthenticated: false,
+                isLoading: false,
+                error: null
+            });
+        }
+    },
+
+
+    getCurrentUser: async () => {
+        try {
+            set({ isLoading: true });
+            const user = await getCurrentUser();
+            if (user) {
+                set({ user, isAuthenticated: true, isLoading: false });
+            } else {
+                set({ user: null, isAuthenticated: false, isLoading: false });
+            }
+        } catch (err) {
+            set({
+                user: null,
+                isAuthenticated: false,
+                isLoading: false,
+                error: "Kullanıcı bilgisi alınamadı veya oturum süresi doldu",
+            });
+        }
+    },
+
 
     register: async (userData: RegisterData) => {
         set({ isLoading: true, error: null });
@@ -106,46 +169,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
     },
 
-    checkAuth: async () => {
-        try {
-            set({ isLoading: true, error: null });
-
-            // İlk olarak token kontrolü yap
-            const token = getToken();
-
-            if (!token) {
-                // Token yoksa authenticated değil
-                set({
-                    user: null,
-                    isAuthenticated: false,
-                    isLoading: false,
-                    error: null
-                });
-                return;
-            }
-
-            // Token varsa user bilgilerini al
-            //const user = await getCurrentUser();
-
-            set({
-                //user,
-                isAuthenticated: true,
-                isLoading: false,
-                error: null
-            });
-
-        } catch (error: any) {
-            console.log('Auth check failed:', error.message);
-
-            // Auth check başarısız - state temizle
-            set({
-                user: null,
-                isAuthenticated: false,
-                isLoading: false,
-                error: null
-            });
-        }
-    },
 
     clearError: () => {
         set({ error: null });
