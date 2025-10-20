@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
+    if (request.method === 'OPTIONS') {
+
+        return new NextResponse(null, { status: 200 });
+    }
+
     const token = request.cookies.get('mb_session')?.value;
     const { pathname } = request.nextUrl;
 
@@ -40,3 +45,7 @@ export function middleware(request: NextRequest) {
 
     return NextResponse.next();
 }
+
+export const config = {
+    matcher: '/api/:path*', // sadece /api altındaki istekler için çalışır
+};

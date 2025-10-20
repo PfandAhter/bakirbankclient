@@ -1,28 +1,43 @@
 import {Eye, EyeOff, Mail, Lock, User, Phone} from "lucide-react";
-import {useState} from "react";
+import React, {useState} from "react";
 import {useAuth} from '@/app/lib/hooks/useAuth';
 import {Input} from '@/app/components/ui/Input';
 import {Button} from '@/app/components/ui/Button';
+import {useAlert} from "@/app/lib/hooks/useAlert";
+import AlertBox from "@/components/modals/AlertBox";
+import OTPVerificationModal from "@/app/components/OTPVerificationModal";
+import TermsAndPrivacyModal from '@/app/components/TermsAndPrivacyModal';
+
 
 const RegisterForm = ({
                           onSwitchToLogin,
                           onSuccessfulRegister
-                     }: {
+                      }: {
     onSwitchToLogin?: () => void;
     onSuccessfulRegister?: () => void;
 }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [modalType, setModalType] = useState<'terms' | 'privacy' | null>(null);
+
+
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        phone: '',
+        gsm: '',
         password: '',
         confirmPassword: '',
         terms: false
     });
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const {register, isLoading} = useAuth();
+    const {alert, showAlert} = useAlert();
+
+    const [showOTPModal, setShowOTPModal] = useState(false);
+    const [registeredUserEmail, setRegisteredUserEmail] = useState<string | null>();
+
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#+_\$%\^&\*]).{8,}$/;
 
     const validateForm = () => {
         const newErrors: { [key: string]: string } = {};
@@ -39,16 +54,16 @@ const RegisterForm = ({
             newErrors.email = 'Geçerli bir e-posta adresi giriniz';
         }
 
-        if (!formData.phone) {
+        if (!formData.gsm) {
             newErrors.phone = 'Telefon numarası gereklidir';
-        } else if (!/^[0-9]{10,11}$/.test(formData.phone.replace(/\s/g, ''))) {
+        } else if (!/^[0-9]{10,10}$/.test(formData.gsm.replace(/\s/g, ''))) {
             newErrors.phone = 'Geçerli bir telefon numarası giriniz';
         }
 
         if (!formData.password) {
             newErrors.password = 'Şifre gereklidir';
-        } else if (formData.password.length < 6) {
-            newErrors.password = 'Şifre en az 6 karakter olmalıdır';
+        } else if (!passwordRegex.test(formData.password)) {
+            newErrors.password = 'Şifre en az 8 karakter olmalı, büyük/küçük harf, sayı ve özel karakter içermelidir';
         }
 
         if (!formData.confirmPassword) {
@@ -65,17 +80,58 @@ const RegisterForm = ({
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const routeAfterSuccessRegister = () => {
+        showAlert('success', 'Doğrulama Başarılı', 'Hesabınız aktif hale getirildi.');
+        setTimeout(() => {
+            routeLoginPage();
+        }, 10); // 3 saniye bekle
+    }
+
+    const routeLoginPage = () => {
+        onSuccessfulRegister?.(); // Başarılı kayıt sonrası callback
+        onSwitchToLogin?.();
+    }
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
-            register(formData);
-            onSuccessfulRegister?.(); // Başarılı kayıt sonrası callback
-            onSwitchToLogin?.();
+            try {
+                await register(formData);
+                setRegisteredUserEmail(formData.email);
+                setShowOTPModal(true);
+                showAlert("success",
+                    "Kayıt Başarılı",
+                    "Kullanıcı kaydınız başarıyla oluşturuldu. Email doğrulaması gerekmektedir.");
+
+            } catch (error: any) {
+                showAlert(
+                    "destructive",
+                    "Registration Failed",
+                    <>
+                        <p>{error.message}</p>
+                        <ul className="list-inside list-disc text-sm mt-1">
+                            <li>Invalid email or password</li>
+                            <li>Email may in usage</li>
+                            <li>Please try again</li>
+                        </ul>
+                    </>
+                );
+
+            }
+
         }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const {name, value, type, checked} = e.target;
+        if (name === "gsm") {
+            const numericValue = value.replace(/\D/g, "");
+            if (numericValue.length <= 10) {
+                setFormData(prev => ({...prev, [name]: numericValue}));
+            }
+            return;
+        }
+
         setFormData(prev => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value
@@ -92,10 +148,23 @@ const RegisterForm = ({
     return (
         <div className="min-h-screen bg-black flex items-center justify-center p-4">
             <div className="w-full max-w-md mx-auto bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 p-8">
+
+                {showOTPModal && registeredUserEmail && (
+                    <OTPVerificationModal
+                        userEmail={registeredUserEmail}
+                        onVerified={() => {
+                            setShowOTPModal(false);
+                            routeAfterSuccessRegister();
+                        }}
+                        onCancel={() => setShowOTPModal(false)}
+                    />
+                )}
+
                 {/* Header */}
                 <div className="text-center mb-8">
                     <div className="flex justify-center mb-4">
-                        <div className="w-16 h-16 bg-green-900 rounded-full flex items-center justify-center border border-green-700">
+                        <div
+                            className="w-16 h-16 bg-green-900 rounded-full flex items-center justify-center border border-green-700">
                             <User className="w-8 h-8 text-green-400"/>
                         </div>
                     </div>
@@ -112,7 +181,7 @@ const RegisterForm = ({
                         value={formData.name}
                         onChange={handleChange}
                         icon={User}
-                        placeholder="Adınız ve soyadınız"
+                        placeholder="Adınız ve soyadınız (Lütfen aralarında boşluk bırakın)"
                         error={errors.name}
                     />
 
@@ -130,11 +199,11 @@ const RegisterForm = ({
                     <Input
                         label="Telefon Numarası"
                         type="tel"
-                        name="phone"
-                        value={formData.phone}
+                        name="gsm"
+                        value={formData.gsm}
                         onChange={handleChange}
                         icon={Phone}
-                        placeholder="05XX XXX XX XX"
+                        placeholder="5XX XXX XX XX"
                         error={errors.phone}
                     />
 
@@ -147,10 +216,11 @@ const RegisterForm = ({
                             <input
                                 type={showPassword ? 'text' : 'password'}
                                 name="password"
+                                autoComplete={"new-password"}
                                 value={formData.password}
                                 onChange={handleChange}
                                 className={`w-full pl-10 pr-12 py-3 border bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 ${errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-600'}`}
-                                placeholder="En az 6 karakter"
+                                placeholder="Şifrenizi giriniz"
                             />
                             <button
                                 type="button"
@@ -174,6 +244,7 @@ const RegisterForm = ({
                             <input
                                 type={showConfirmPassword ? 'text' : 'password'}
                                 name="confirmPassword"
+                                autoComplete={"new-password"}
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
                                 className={`w-full pl-10 pr-12 py-3 border bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 ${errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : 'border-gray-600'}`}
@@ -203,14 +274,29 @@ const RegisterForm = ({
                                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 bg-gray-800 border-gray-600 rounded mt-1"
                             />
                             <span className="ml-2 text-sm text-gray-400">
-                                <a href="#" className="text-blue-400 hover:text-blue-300">Kullanım Koşulları</a> ve{' '}
-                                <a href="#" className="text-blue-400 hover:text-blue-300">Gizlilik Politikası</a>`nı okudum ve kabul ediyorum.
-                            </span>
+      <button
+          type="button"
+          onClick={() => setModalType('terms')}
+          className="text-blue-400 hover:text-blue-300 underline"
+      >
+        Kullanım Koşulları
+      </button>{' '}
+                                ve{' '}
+                                <button
+                                    type="button"
+                                    onClick={() => setModalType('privacy')}
+                                    className="text-blue-400 hover:text-blue-300 underline"
+                                >
+        Gizlilik Politikası
+      </button>
+      `nı okudum ve kabul ediyorum.
+    </span>
                         </label>
                         {errors.terms && (
                             <p className="text-sm text-red-400">{errors.terms}</p>
                         )}
                     </div>
+
 
                     <Button type="submit" loading={isLoading} size={'login'}>
                         Hesap Oluştur
@@ -231,6 +317,15 @@ const RegisterForm = ({
                     </p>
                 </div>
             </div>
+
+            {modalType && (
+                <TermsAndPrivacyModal
+                    type={modalType}
+                    onClose={() => setModalType(null)}
+                />
+            )}
+
+            <AlertBox type={alert.type} title={alert.title} message={alert.message}/>
         </div>
     );
 };

@@ -3,7 +3,9 @@
 import {useAuth} from '@/app/lib/hooks/useAuth';
 import {useRouter} from 'next/navigation';
 import {useEffect, useState} from 'react';
-import axios from 'axios';
+import { useAlert } from "@/app/lib/hooks/useAlert";
+import AlertBox from "@/components/modals/AlertBox";
+
 import {
     ArrowUpRight,
     ArrowDownLeft,
@@ -18,6 +20,7 @@ import {
 
 import NotificationPanel from "@/app/components/atmui/NotificationPanel";
 import ProtectedRoute from "@/app/lib/providers/ProtectedRoute"
+import AccountCreationForm from "@/app/components/AccountCreationForm";
 
 // Transaction tipi
 interface Transaction {
@@ -28,8 +31,8 @@ interface Transaction {
     description: string;
     date: string; // ISO datetime
     category: string;
-    channel:string;
-    status:string;
+    channel: string;
+    status: string;
 }
 
 interface Account {
@@ -77,6 +80,7 @@ interface AccountData {
 export default function TransactionPage() {
     const router = useRouter();
     const {user, isAuthenticated, logout, checkAuth} = useAuth();
+    const { alert, showAlert } = useAlert();
 
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
@@ -219,14 +223,25 @@ export default function TransactionPage() {
                 }),
             });
 
-            if (!response.ok) throw new Error("Fetch failed");
             const data = await response.json();
+
+            console.log("response transaction list page.tsx icerisinden deneme: ", data);
+            if (!response.ok) {
+                showAlert(
+                    "error",
+                    data.processCode || "İşlem Başarısız",
+                    data.processMessage || "Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyiniz."
+                );
+                return;
+            }
 
             // Backend'in response'u Page<Transaction> formatında ise:
             setRecentTransactions(data.transactions || data);
             setTotalPages(data.totalPages || 1);
+            showAlert("success", "İşlem Başarılı", "Veriler başarıyla yüklendi.");
         } catch (err) {
             console.error("Transactions fetch error:", err);
+            showAlert("error", "Sunucu Hatası","Lütfen daha sonra tekrar deneyiniz.");
         }
     };
 
@@ -313,6 +328,8 @@ export default function TransactionPage() {
     return (
         <ProtectedRoute>
             <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+                <AlertBox type={alert.type} title={alert.title} message={alert.message} />
+
                 {accounts.length === 0 && (
                     <div
                         className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
@@ -374,141 +391,16 @@ export default function TransactionPage() {
 
                             {/* Eğer EVET derse form açılacak */}
                             {showAccountForm && (
-                                <form
+                                <AccountCreationForm
+                                    newAccount={newAccount}
+                                    setNewAccount={setNewAccount}
+                                    cities={cities}
+                                    districts={districts}
+                                    branches={branches}
                                     onSubmit={handleCreateAccount}
-                                    className="mt-6 space-y-4"
-                                >
-                                    <div>
-                                        <label className="block text-sm text-gray-400 mb-1">Hesap Adı</label>
-                                        <input
-                                            type="text"
-                                            value={newAccount.name}
-                                            onChange={(e) => setNewAccount({...newAccount, name: e.target.value})}
-                                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"
-                                            required={true}
-                                        />
-                                        {!newAccount.name && (
-                                            <p className="text-red-500 text-sm mt-1">Hesap adı zorunludur</p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm text-gray-400 mb-1">Açıklama</label>
-                                        <input
-                                            type="text"
-                                            value={newAccount.description}
-                                            onChange={(e) => setNewAccount({
-                                                ...newAccount,
-                                                description: e.target.value
-                                            })}
-                                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm text-gray-400 mb-1">Para Birimi</label>
-                                        <select
-                                            value={newAccount.currency}
-                                            onChange={(e) => setNewAccount({
-                                                ...newAccount,
-                                                currency: e.target.value
-                                            })}
-                                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"
-                                        >
-                                            <option value="TRY">₺ Türk Lirası</option>
-                                            <option value="USD">$ Dolar</option>
-                                            <option value="EUR">€ Euro</option>
-                                            <option value="GOLD">🥇 Altın</option>
-                                        </select>
-                                    </div>
-
-                                    <select
-                                        value={newAccount.city}
-                                        onChange={(e) => {
-                                            const selectedCity = e.target.value;
-                                            setNewAccount({
-                                                ...newAccount,
-                                                city: selectedCity,
-                                                district: "",
-                                                branchId: ""
-                                            });
-                                            // async işlemi ayrı fonksiyona taşıyoruz
-                                            fetchDistricts(selectedCity);
-                                        }}
-                                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"
-                                    >
-                                        <option value="">Şehir seçiniz</option>
-                                        {cities?.map((city: City) => (
-                                            <option key={city.id} value={city.id}>
-                                                {city.name}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    {/* İlçe */}
-                                    {districts.length > 0 && (
-                                        <div>
-                                            <label className="block text-sm text-gray-400 mb-1">İlçe</label>
-                                            <select
-                                                value={newAccount.district}
-                                                onChange={(e) => {
-                                                    const selectedDistrictId = e.target.value;
-                                                    setNewAccount({
-                                                        ...newAccount,
-                                                        district: selectedDistrictId,
-                                                        branchId: ""
-                                                    });
-                                                    fetchBranches(selectedDistrictId); // seçilen ilçe için branch'ler getir
-                                                }}
-                                                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"
-                                            >
-                                                <option value="">İlçe seçiniz</option>
-                                                {districts?.map((district: District) => (
-                                                    <option key={district.id} value={district.id}>
-                                                        {district.name}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    )}
-
-
-                                    {/* Şube */}
-                                    {branches.length > 0 && (
-                                        <div>
-                                            <label className="block text-sm text-gray-400 mb-1">Şube</label>
-                                            <select
-                                                value={newAccount.branchId}
-                                                onChange={(e) =>
-                                                    setNewAccount({
-                                                        ...newAccount,
-                                                        branchId: e.target.value
-                                                    })
-                                                }
-                                                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"
-                                            >
-                                                <option value="">Şube seçiniz</option>
-                                                {branches.map((branch: Branch) => (
-                                                    <option key={branch.id} value={branch.id}>
-                                                        {branch.name} ({branch.address})
-                                                    </option>
-                                                ))}
-                                            </select>
-
-                                            {!newAccount.branchId && (
-                                                <p className="text-red-500 text-sm mt-1">Şube seçilmelidir</p>
-                                            )}
-                                        </div>
-                                    )}
-
-
-                                    <button
-                                        type="submit"
-                                        className="w-full bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-semibold"
-                                    >
-                                        Hesap Aç
-                                    </button>
-                                </form>
+                                    onCityChange={fetchDistricts}
+                                    onDistrictChange={fetchBranches}
+                                />
                             )}
                         </div>
                     </div>

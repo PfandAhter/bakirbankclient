@@ -1,31 +1,38 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import * as authService from '@/app/lib/api/services/authService';
 
-export async function POST(request: NextRequest) {
-    const userData = await request.json();
 
+interface RegisterData {
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+    gsm: string;
+}
+
+export async function POST(request: Request) {
     try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(userData),
-        });
+        const body: RegisterData = await request.json();
 
-        const data = await response.json();
-
-        if (!response.ok) {
+        if (!body.name || !body.email || !body.password || !body.confirmPassword || !body.gsm) {
             return NextResponse.json(
-                { message: data.message || 'Kayıt başarısız' },
-                { status: response.status }
+                { success: false, message: "Tüm alanlar zorunludur" },
+                { status: 400 }
             );
         }
 
-        return NextResponse.json({ message: 'Kayıt başarılı' });
-    } catch (err) {
-        console.error('Register error:', err);
+        const response = await authService.register(body);
+
+        console.log("Sign-up route.ts response log: ", response);
+
         return NextResponse.json(
-            { message: 'Kayıt sırasında bir hata oluştu' },
+            { success: true, message: response.processMessage || "Kayıt başarılı" },
+            { status: 200 }
+        );
+    } catch (error) {
+        console.error("API Gateway Error:", error);
+        return NextResponse.json(
+            { success: false, message: "Sunucuya ulaşılamadı" },
             { status: 500 }
         );
     }

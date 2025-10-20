@@ -4,20 +4,19 @@ import axios from 'axios';
 
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
         const authHeaders = await authService.getAuthHeaders();
 
         if (!authHeaders) {
             return NextResponse.json(
-                { message: "Unauthorized: No access token" },
+                { processMessage: "Unauthorized: No access token" },
                 { status: 401 }
             );
         }
 
         const response = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/transaction/api/v1/transaction/transactionsv2`,
-            body,
-            { headers: authHeaders }
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/account/api/v1/user/get/info`,
+            { },
+            {headers: authHeaders, withCredentials: true}
         );
 
         return NextResponse.json(response.data, { status: 200 });
@@ -26,8 +25,9 @@ export async function POST(request: NextRequest) {
 
         // BaseResponse varsa direkt dön
         if (error.response && error.response.data) {
-            return NextResponse.json(error.response.data, {
-                status: error.response.status,
+            return NextResponse.json(
+                {processMessage: error.response.data},
+                {status: error.response.status,
             });
         }
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import {User, Settings, BarChart3, CreditCard, Landmark, LogOut, RefreshCw, MapPinned} from 'lucide-react';
 import {useEffect, useState} from "react";
 import NotificationPanel from '@/app/components/atmui/NotificationPanel';
+import ChatWidget from "@/app/components/ChatWidget";
 
 export default function HomePage() {
     const { user, isAuthenticated, logout , checkAuth} = useAuth();
@@ -77,6 +78,11 @@ export default function HomePage() {
             ></div>
 
             <div className="relative z-10">
+
+                {isAuthenticated && (
+                    <ChatWidget />
+                )}
+
                 {/* Header */}
                 <header className="bg-black/50 backdrop-blur-md border-b border-gray-800">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

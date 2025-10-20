@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as authService from '@/app/lib/api/services/authService';
-import axios from 'axios';
+import axios from "axios";
+import * as authService from "@/app/lib/api/services/authService";
 
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
+        const functionCall = await request.json();
         const authHeaders = await authService.getAuthHeaders();
 
         if (!authHeaders) {
@@ -14,29 +14,31 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        console.log("🔹 MCP INVOKE CALL:", functionCall);
+
         const response = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/transaction/api/v1/transaction/transactionsv2`,
-            body,
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/mcpserver/v1/api/mcp/invoke`,
+            functionCall,
             { headers: authHeaders }
         );
 
+        console.log("✅ MCP INVOKE RESPONSE:", response.data);
+
         return NextResponse.json(response.data, { status: 200 });
     } catch (error: any) {
-        console.error("ERROR OBJECT: ", error.response.data.processMessage);
+        console.error("❌ MCP INVOKE ERROR:", error.response?.data || error.message);
 
-        // BaseResponse varsa direkt dön
-        if (error.response && error.response.data) {
+        if (error.response?.data) {
             return NextResponse.json(error.response.data, {
                 status: error.response.status,
             });
         }
 
-        // Diğer hatalar
         return NextResponse.json(
             {
                 status: "FAILED",
-                processCode: "SERVER ERROR",
-                processMessage: error.response.data.processMessage,
+                processCode: "SERVER_ERROR",
+                processMessage: error.message || "Unknown error",
             },
             { status: 500 }
         );

@@ -57,16 +57,21 @@ export default function ProfilePage() {
     };
 
     useEffect(() => {
-        // Kullanıcı bilgilerini API'den çek
-        axios.get(`${API_BASE_URL}/account/user/get/info`, {
-            headers: getAuthHeaders()
-        })
-            .then(res => {
-                console.log("API'den gelen kullanıcı bilgileri:", res.data);
-                const data = res.data.user;
+        const fetchUserInfo = async () => {
+            try {
+                const response = await fetch('/api/account/user/get/info', {
+                    method: 'POST',
+                    credentials: 'include',
+                });
 
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const res = await response.json();
+                console.log("API'den gelen kullanıcı bilgileri:", res);
+
+                const data = res.user;
                 const formattedBirthDate = data.birthDate
-                    ? data.birthDate.split('/').reverse().join('-') // "01/01/2004" -> "2004-01-01"
+                    ? data.birthDate.split('/').reverse().join('-')
                     : "";
 
                 setFormData({
@@ -74,7 +79,7 @@ export default function ProfilePage() {
                     secondName: data.secondName || "",
                     lastName: data.lastName || "",
                     tckn: data.tckn || "",
-                    phone: data.phoneNumber || "",
+                    gsm: data.phoneNumber || "",
                     email: data.email || "",
                     address: data.address || "",
                     birthDate: formattedBirthDate || "",
@@ -82,35 +87,37 @@ export default function ProfilePage() {
                     newPassword: "",
                     confirmPassword: ""
                 });
+
                 setIsLoading(false);
-            })
+            } catch (err) {
+                console.error("Kullanıcı bilgileri alınamadı:", err);
+            }
+        };
 
-            .catch(err => console.error("Kullanıcı bilgileri alınamadı:", err));
-
-        setFormData({
-            firstName: "TEST FIRSTNAME",
-            secondName: "TEST SECONDNAME",
-            lastName: "TEST LASTNAME",
-            tckn: "TEST TCKN",
-            phone: "TEST PHONE",
-            email: "TEST EMAIL",
-            address: "TEST ADDRESS",
-            birthDate: "",
-            oldPassword: "",
-            newPassword: "",
-            confirmPassword: ""
-        });
-    }, []);
+        fetchUserInfo();
+    }, [API_BASE_URL]);
 
     useEffect(() => {
-        if (activeTab === "sessions") {
-            axios.get("http://localhost:8090/api/v1/profile/session-history", {
-                params: {userId: user?.id}
-            })
-                .then(res => setSessionHistory(res.data))
-                .catch(err => console.error("Oturum geçmişi alınamadı:", err));
-        }
-    }, [activeTab]);
+        const fetchSessionHistory = async () => {
+            if (activeTab !== "sessions" || !user?.id) return;
+
+            try {
+                const response = await fetch('/api/account/user/get/session-history', {
+                    method: 'POST',
+                    credentials: 'include',
+                });
+
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const res = await response.json();
+                setSessionHistory(res);
+            } catch (err) {
+                console.error("Oturum geçmişi alınamadı:", err);
+            }
+        };
+
+        fetchSessionHistory();
+    }, [activeTab, user]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
