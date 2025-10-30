@@ -6,10 +6,12 @@ import {
     createUserSessionToken, deleteUserSessionToken
 } from '@/app/lib/store/cookieUtils';
 
-export interface RegisterData {
+interface RegisterData {
     name: string;
     email: string;
     password: string;
+    confirmPassword: string;
+    gsm: string;
 }
 
 export interface User {
@@ -43,54 +45,80 @@ export const removeToken = (): void => {
     deleteCookie(TOKEN_COOKIE_NAME);
 };*/
 
-export async function getAuthHeaders (){
+export async function getAuthHeaders() {
     const token = await getAccessTokenFromSession();
     return {
         'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` })
+        ...(token && {'Authorization': `Bearer ${token}`})
     };
 };
 
 export async function login(email: string, password: string) {
-    console.log("Login attempt for:", email); // Debug için
-    const res = await fetch(`${API_BASE_URL}/authentication/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-        credentials: "include",
-    });
+    try {
+        const response = await axios.post(`${API_BASE_URL}/authentication/login`,
+            { email, password },
+            {
+                headers: { 'Content-Type': 'application/json' },
+                withCredentials: true,
+                validateStatus: () => true
+            }
+        );
+        const data = response.data;
+        console.log("Login response data:", data.processMessage);
+        console.log("response status:", response.status);
 
-    console.log("Login response status: ", res);
+        if (response.status !== 200) {
+            throw new Error(data.processMessage || "Giriş başarısız");
+        }
 
-    if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Giriş başarısız");
+        await createUserSessionToken(data.token);
+
+        return data.processMessage;
+    } catch (error: any) {
+        console.log("Login error caught:", error.message);
+        if (error.response) {
+            throw new Error(error.message || "Giriş başarısız");
+        } else {
+            throw new Error(error.message);
+        }
     }
-
-    const data = await res.json();
-    await createUserSessionToken(data.token);
-    return data.data;
 }
 
 export async function register(userData: RegisterData) {
-    const res = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
-    });
+    try{
+        console.log("Registering user with data:", userData);
+        const response = await axios.post(`${API_BASE_URL}/authentication/register`,
+            userData,
+            {
+                headers: {'Content-Type': 'application/json'},
+                withCredentials: true,
+                validateStatus: () => true
+            }
+        );
+        console.log("REGISTER RESPONSE DATA VSVSVS : ",response);
+        const data = response.data;
+        console.log("Register response data:", data.processMessage);
+        console.log("response status:", response.status);
 
-    if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Kayıt başarısız");
+        if(response.status !== 200){
+            throw new Error(data.processMessage || "Kayıt başarısız");
+        }
+
+        return data.processMessage;
+    }catch(error: any){
+        console.log("Register error caught:", error);
+        if (error.response) {
+            throw new Error(error.message || "Kayıt başarısız");
+        } else {
+            throw new Error(error.message);
+        }
     }
-
-    return;
 }
 
 export async function logout() {
     const headers = await getAuthHeaders();
     try {
-        await axios.post(`${API_BASE_URL}/auth/logout`, {}, { headers });
+        await axios.post(`${API_BASE_URL}/auth/logout`, {}, {headers});
     } catch (err) {
         console.error("Logout API error:", err);
     }
@@ -101,7 +129,7 @@ export async function logout() {
 export async function checkAuth() {
     try {
         const headers = await getAuthHeaders();
-        const res = await axios.get(`${API_BASE_URL}/account/user/check/auth`, { headers });
+        const res = await axios.get(`${API_BASE_URL}/account/user/check/auth`, {headers});
         return res.data.authenticated === true;
     } catch {
         return false;
@@ -110,19 +138,18 @@ export async function checkAuth() {
 
 export async function getCurrentUser() {
     try {
-        console.log("TEST Get CURRENT USER");
         const headers = await getAuthHeaders();
-        console.log("Fetching current user with headers:", headers); // Debug için
-        const res = await axios.get(`${API_BASE_URL}/account/user/get/info`, { headers });
-        console.log("USER INFO:", res); // Debug için
+        const res = await axios.post(`${API_BASE_URL}/account/api/v1/user/get/info`, {},{ headers, withCredentials: true });
         return res.data.user;
     } catch (err: any) {
         if (err.response?.status === 401) {
             await deleteUserSessionToken();
         }
-        throw new Error(err.response?.data?.message || "Kullanıcı bilgileri alınamadı");
+        console.log("Get current user error caught:", err.message);
+                throw new Error(err.response?.data?.message || "Kullanıcı bilgileri alınamadı");
     }
 }
+
 //TODO: Burada hata yonetimini daha iyi yapabiliriz.
 
 

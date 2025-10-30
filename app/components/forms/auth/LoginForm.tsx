@@ -1,10 +1,13 @@
 'use client';
 
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useAuth} from '@/app/lib/hooks/useAuth';
 import {Input} from '@/app/components/ui/Input';
 import {Button} from '@/app/components/ui/Button';
+import { useAlert } from "@/app/lib/hooks/useAlert";
+import AlertBox from "@/components/modals/AlertBox";
 import {Mail, Lock, Eye, EyeOff, User} from 'lucide-react';
+import ForgotPasswordForm from "@/app/components/forms/auth/ForgotPasswordForm";
 
 const LoginForm = ({
                        onSwitchToRegister,
@@ -17,8 +20,11 @@ const LoginForm = ({
     const [formData, setFormData] = useState({email: '', password: ''});
     const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
     const [formError, setFormError] = useState<string | null>(null);
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
 
     const {login, isLoading, error} = useAuth();
+    const [loginAttempted, setLoginAttempted] = useState(false);
+    const { alert, showAlert } = useAlert();
 
     const validateForm = () => {
         const newErrors: { email?: string; password?: string } = {};
@@ -39,38 +45,41 @@ const LoginForm = ({
         return Object.keys(newErrors).length === 0;
     };
 
+    useEffect(() => {
+        if (loginAttempted && error) {
+            showAlert("destructive", "Login Failed", error);
+        }
+    }, [error, loginAttempted]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setFormError(null);
+        setLoginAttempted(true);
 
         if (validateForm()) {
             try {
-
-                console.log("TEST: form submitted", formData);
-
                 await login(formData.email, formData.password);
+                showAlert("success",
+                    "Login Successful",
+                    "You have successfully logged in.");
+
                 onSuccessfulLogin?.();
-                // const res = await fetch('/api/auth/sign-in', {
-                //     method: 'POST',
-                //     headers: { 'Content-Type': 'application/json' },
-                //     body: JSON.stringify({ email: formData.email, password: formData.password }),
-                // });
+            } catch(error: any) {
 
+                showAlert(
+                    "destructive",
+                    "Login Failed",
+                    <>
+                        <p>{error.message}</p>
+                        <ul className="list-inside list-disc text-sm mt-1">
+                            <li>Invalid email or password</li>
+                            <li>Account not verified</li>
+                            <li>Try resetting your password</li>
+                        </ul>
+                    </>
+                );
 
-                // console.log("TEST: response status", res.status); // ← Buraya ekle
-                // console.log("TEST: response headers", res.headers); // ← Buraya ekle
-                //
-                // console.log("TEST: response received", res);
-                // if (!res.ok) {
-                //     const data = await res.json();
-                //     throw new Error(data.message || 'Giriş başarısız');
-                // }
-
-
-                 // Başarılı login sonrası callback
-                //await login(formData.email, formData.password);
-            } catch {
-                setFormError('Giriş yapılamadı, lütfen tekrar deneyin.');
+                //setFormError('Login failed, please try again.');
             }
         }
     };
@@ -99,65 +108,79 @@ const LoginForm = ({
                     <p className="text-gray-400">Hesabınıza giriş yapın</p>
                 </div>
 
+                {showForgotPassword && (
+                    <ForgotPasswordForm onBackToLogin={() => setShowForgotPassword(setShowForgotPassword)} />
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Email Input */}
-                    <Input
-                        label="E-posta Adresi"
-                        type="username"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        icon={Mail}
-                        placeholder="ornek@email.com"
-                        error={errors.email}
-                    />
-
-                    {/* Password Input */}
-                    <div className="relative">
+                    <fieldset disabled={isLoading} className={isLoading ? "opacity-50 cursor-not-allowed" : ""}>
+                        {/* Email Input */}
                         <Input
-                            label="Şifre"
-                            type={showPassword ? 'text' : 'password'}
-                            name="password"
-                            value={formData.password}
+                            label="E-posta Adresi"
+                            type="username"
+                            name="email"
+                            value={formData.email}
                             onChange={handleChange}
-                            icon={Lock}
-                            placeholder="Şifrenizi giriniz"
-                            error={errors.password}
+                            icon={Mail}
+                            placeholder="ornek@email.com"
+                            error={errors.email}
                         />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-9 text-gray-400 hover:text-gray-300 transition-colors"
-                        >
-                            {showPassword ? <EyeOff className="h-5 w-5"/> : <Eye className="h-5 w-5"/>}
-                        </button>
-                    </div>
 
-                    {/* Remember me & forgot password */}
-                    <div className="flex items-center justify-between mb-6 mt-6">
-                        <label className="flex items-center cursor-pointer select-none relative">
-                            <input
-                                type="checkbox"
-                                className="peer appearance-none h-5 w-5 border border-gray-500 bg-gray-800 rounded transition-colors checked:bg-blue-600 checked:border-blue-600 focus:ring-2 focus:ring-blue-500"
+                        {/* Password Input */}
+                        <div className="relative">
+                            <Input
+                                label="Şifre"
+                                type={showPassword ? 'text' : 'password'}
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                icon={Lock}
+                                placeholder="Şifrenizi giriniz"
+                                error={errors.password}
                             />
-                            <span className="ml-2 text-sm font-medium text-gray-400">Beni hatırla</span>
-                            <svg className="absolute left-0.5 top-0.5 w-4 h-4 text-white hidden peer-checked:block pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
-                            </svg>
-                        </label>
-                        <a href="#" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-                            Şifremi unuttum
-                        </a>
-                    </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                disabled={isLoading}
+                                className="absolute right-3 top-9 text-gray-400 hover:text-gray-300 transition-colors"
+                            >
+                                {showPassword ? <EyeOff className="h-5 w-5"/> : <Eye className="h-5 w-5"/>}
+                            </button>
+                        </div>
 
-                    {/* Error messages */}
-                    {formError && <p className="text-sm text-red-400 mb-4 text-center">{formError}</p>}
-                    {error && <p className="text-sm text-red-400 mb-4 text-center">{error}</p>}
+                        {/* Remember me & forgot password */}
+                        <div className="flex items-center justify-between mb-6 mt-6">
+                            <label className="flex items-center cursor-pointer select-none relative">
+                                <input
+                                    type="checkbox"
+                                    disabled={isLoading}
+                                    className="peer appearance-none h-5 w-5 border border-gray-500 bg-gray-800 rounded transition-colors checked:bg-blue-600 checked:border-blue-600 focus:ring-2 focus:ring-blue-500"
+                                />
+                                <span className="ml-2 text-sm font-medium text-gray-400">Beni hatırla</span>
+                                <svg className="absolute left-0.5 top-0.5 w-4 h-4 text-white hidden peer-checked:block pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </label>
 
-                    {/* Submit Button */}
-                    <Button type="submit" loading={isLoading} size={'login'}>
-                        Giriş Yap
-                    </Button>
+                            <button
+                                type="button"
+                                onClick={() => setShowForgotPassword(true)}
+                                disabled={isLoading}
+                                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                            >
+                                Şifremi unuttum
+                            </button>
+                        </div>
+
+                        {/* Error messages */}
+                        {formError && <p className="text-sm text-red-400 mb-4 text-center">{formError}</p>}
+                        {error && <p className="text-sm text-red-400 mb-4 text-center">{error}</p>}
+
+                        {/* Submit Button */}
+                        <Button type="submit" loading={isLoading} size={'login'}>
+                            {isLoading ? "Giriş Yapılıyor..." : "Giriş Yap"}
+                        </Button>
+                    </fieldset>
                 </form>
 
                 {/* Divider */}
@@ -175,6 +198,7 @@ const LoginForm = ({
                 {/* Google Login */}
                 <button
                     type="button"
+                    disabled={isLoading}
                     className="w-full flex items-center justify-center px-4 py-3 border border-gray-600 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors text-gray-300"
                 >
                     <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
@@ -197,6 +221,7 @@ const LoginForm = ({
                         <button
                             type="button"
                             onClick={onSwitchToRegister}
+                            disabled={isLoading}
                             className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
                         >
                             Kayıt Ol
@@ -204,6 +229,7 @@ const LoginForm = ({
                     </p>
                 </div>
             </div>
+            <AlertBox type={alert.type} title={alert.title} message={alert.message} />
         </div>
     );
 };

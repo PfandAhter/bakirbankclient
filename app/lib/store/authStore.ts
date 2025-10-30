@@ -13,6 +13,8 @@ interface RegisterData {
     name: string;
     email: string;
     password: string;
+    confirmPassword: string;
+    gsm: string;
 }
 
 interface AuthState {
@@ -34,6 +36,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     isLoading: true,
     error: null,
     isAuthenticated: false,
+        setLoading: (loading:boolean) => set({ isLoading: loading }),
 
     login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
@@ -45,13 +48,12 @@ export const useAuthStore = create<AuthState>((set) => ({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
             });
+            const data = await res.json();
 
+            console.log("TEST AUTHSTORE LOGIN RESPONSE:", data);
             if (!res.ok) {
-                const data = await res.json();
                 throw new Error(data.message || 'Giriş başarısız');
             }
-
-            const data = await res.json();
 
             set({
                 user: data.user,
@@ -66,6 +68,42 @@ export const useAuthStore = create<AuthState>((set) => ({
                 isLoading: false,
                 isAuthenticated: false,
                 user: null
+            });
+            throw error;
+        }
+    },
+
+    register: async (userData: RegisterData) => {
+        set({ isLoading: true, error: null });
+        try {
+            const res = await fetch('/api/auth/sign-up', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: userData.name,
+                    email: userData.email,
+                    gsm: userData.gsm,
+                    password: userData.password,
+                    confirmPassword: userData.confirmPassword
+                }),
+            });
+
+            const data = await res.json();
+
+            console.log("TEST AUTHSTORE REGISTER RESPONSE:", data);
+            if (!res.ok) {
+                throw new Error(data.message || 'Kayıt başarısız');
+            }
+
+
+            set({ isLoading: false, error: null });
+        } catch (error: unknown) {
+            const err = error as { message?: string };
+            set({
+                error: err.message || 'Kayıt başarısız',
+                isLoading: false
             });
             throw error;
         }
@@ -110,30 +148,19 @@ export const useAuthStore = create<AuthState>((set) => ({
                 set({ user: null, isAuthenticated: false, isLoading: false });
             }
         } catch (err) {
+            console.log("GET CURRENT USER ERROR: ", err)
             set({
                 user: null,
                 isAuthenticated: false,
                 isLoading: false,
-                error: "Kullanıcı bilgisi alınamadı veya oturum süresi doldu",
+                //error: "Kullanıcı bilgisi alınamadı veya oturum süresi doldu",
+                error: err.message,
             });
         }
     },
 
 
-    register: async (userData: RegisterData) => {
-        set({ isLoading: true, error: null });
-        try {
-            await register(userData);
-            set({ isLoading: false, error: null });
-        } catch (error: unknown) {
-            const err = error as { message?: string };
-            set({
-                error: err.message || 'Kayıt başarısız',
-                isLoading: false
-            });
-            throw error;
-        }
-    },
+
 
     logout: async () => {
         try {

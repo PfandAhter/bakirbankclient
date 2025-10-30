@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import SockJS from 'sockjs-client';
-import axios from 'axios';
 import { Client } from '@stomp/stompjs';
 
 interface Notification {
@@ -27,19 +26,28 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
                                                              }) => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isOpen, setIsOpen] = useState(false);
+    const tabId = useRef(Math.random().toString(36).substring(2, 9));
     const [unreadCount, setUnreadCount] = useState(0);
     const clientRef = useRef<Client | null>(null);
-    const channel = new BroadcastChannel("notifications");
+    const channelRef = useRef<BroadcastChannel | null>(null);
+    const isProcessingRef = useRef(false); // 🔥 Tekrar işlemeyi önlemek için
 
     useEffect(() => {
+        channelRef.current = new BroadcastChannel("notifications");
+        const channel = channelRef.current;
+
         channel.onmessage = (event) => {
+            if (event.data.source === tabId.current) return; // 🔥 kendi mesajını yoksay
             if (event.data.type === "INIT_NOTIFICATIONS") {
                 setNotifications(event.data.payload);
                 setUnreadCount(event.data.payload.filter((n: Notification) => !n.isRead).length);
             }
             if (event.data.type === "NEW_NOTIFICATION") {
                 const notification: Notification = event.data.payload;
-                setNotifications(prev => [notification, ...prev]);
+                setNotifications(prev => {
+                    if (prev.some(n => n.id === notification.id)) return prev;
+                    return [notification, ...prev];
+                });
                 setUnreadCount(prev => prev + 1);
             }
             if (event.data.type === "READ_NOTIFICATION") {
@@ -51,28 +59,64 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
             }
             if (event.data.type === "DELETE_NOTIFICATION") {
                 const id = event.data.payload;
+                const wasUnread = event.data.wasUnread;
                 setNotifications(prev => prev.filter(n => n.id !== id));
+                if (wasUnread) {
+                    setUnreadCount(prev => Math.max(prev - 1, 0));
+                }
             }
         };
+
+        return () => channel.close(); // ✅ cleanup
     }, []);
+
+    useEffect(() => {
+        // Update unread count
+        const count = notifications.filter(n => !n.isRead).length;
+        setUnreadCount(count);
+
+        // Ensure notifications are sorted by timestamp (newest first)
+        const sorted = [...notifications].sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
+        const isSameOrder = sorted.length === notifications.length && sorted.every((v, i) => v.id === notifications[i].id);
+        if (!isSameOrder) setNotifications(sorted);
+    }, [notifications]);
 
     useEffect(() => {
         let retryInterval: NodeJS.Timeout | null = null;
 
         async function fetchNotifications() {
             try {
-                const res = await axios.get(`http://localhost:8090/api/v1/notification/get`, {
-                    params: { userId }
+                const res = await fetch('/api/notification/get',{
+                    method: 'POST',
+                    credentials: 'include',
                 });
+                const data = await res.json();
 
-                console.log("Fetch Notifications Response data: ", res);
 
-                const data = res.data.notifications;
-                setNotifications(data);
-                setUnreadCount(data.filter((n: Notification) => !n.isRead).length);
+                // Normalize response to an array of notifications
+                let notificationsData: Notification[] = [];
+                if (Array.isArray(data)) {
+                    notificationsData = data;
+                } else if (data && Array.isArray((data as any).notifications)) {
+                    notificationsData = (data as any).notifications;
+                } else if (data && Array.isArray((data as any).data)) {
+                    notificationsData = (data as any).data;
+                } else if (data && Array.isArray((data as any).payload)) {
+                    notificationsData = (data as any).payload;
+                } else {
+                    console.warn('Unexpected notifications response shape:', data);
+                }
+
+                // Ensure notifications are sorted by timestamp (newest first)
+                const sorted = [...notificationsData].sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
+                setNotifications(sorted);
 
                 // Diğer sekmeler için senkronizasyon
-                channel.postMessage({ type: "INIT_NOTIFICATIONS", payload: data });
+                channelRef.current?.postMessage({
+                    type: "INIT_NOTIFICATIONS",
+                    payload: sorted,
+                    source: tabId.current
+                });
 
                 // Eğer daha önce hata nedeniyle interval başlatılmışsa durdur
                 if (retryInterval) {
@@ -109,52 +153,91 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
     }, [userId]);
 
     useEffect(() => {
-        if (clientRef.current) return;
-
-        const socket = new SockJS('http://localhost:8090/notification-websocket');
-        const client = new Client({
-            webSocketFactory: () => socket,
-            reconnectDelay: 5000,
-            onConnect: () => {
-                console.log('Connected to WebSocket');
-
-                client.subscribe(`/user/${userId}/notifications`, (message) => {
-                    const data = JSON.parse(message.body);
-
-                    console.log("Notifications:",data);
-
-                    const notification: Notification = {
-                        id: data.id,
-                        message: data.message,
-                        title: data.title,
-                        type: data.type,
-                        timestamp: data.timestamp,
-                        isRead: false
-                    };
-
-                    setNotifications(prev => [notification, ...prev]);
-                    setUnreadCount(prev => prev + 1);
-
-                    channel.postMessage({
-                        type: "NEW_NOTIFICATION",
-                        payload: notification
-                    });
+        async function setupWebSocket() {
+            try {
+                // userId’yi cookie'den alan route’tan iste
+                const res = await fetch('/api/notification/socket/notification', {
+                    method: 'POST',
+                    credentials: 'include', // ✅ Cookie'yi gönder
                 });
-            },
-            onStompError: (frame) => {
-                console.error('STOMP error:', frame);
-            }
-        });
 
-        client.activate();
-        clientRef.current = client;
+                if (!res.ok) throw new Error('User not authorized');
+                const data = await res.json();
+                const socket = new SockJS('http://localhost:8080/notification/notification-websocket');
+
+                const client = new Client({
+                    webSocketFactory: () => socket,
+                    reconnectDelay: 1000,
+                    onConnect: () => {
+                        console.log('✅ Connected to Notification WebSocket');
+
+                        client.subscribe(`/user/${data.userId}/notifications`, (message) => {
+                            if (isProcessingRef.current) {
+                                console.log('⚠️ Zaten bir bildirim işleniyor, atlanıyor');
+                                return;
+                            }
+
+                            isProcessingRef.current = true;
+
+                            try {
+                                const payload = JSON.parse(message.body);
+                                const notification: Notification = {
+                                    id: payload.id,
+                                    message: payload.message,
+                                    title: payload.title,
+                                    type: payload.type,
+                                    timestamp: payload.timestamp,
+                                    isRead: false,
+                                };
+
+                                console.log('📩 Yeni bildirim alındı:', notification.id);
+
+                                // 🔹 State güncelleme - duplicate kontrolü ile
+                                setNotifications(prev => {
+                                    if (prev.some(n => n.id === notification.id)) {
+                                        console.log('⚠️ Bildirim zaten mevcut:', notification.id);
+                                        return prev;
+                                    }
+                                    console.log('✅ Bildirim ekleniyor:', notification.id);
+                                    return [notification, ...prev];
+                                });
+
+                                // 🔹 Diğer sekmelere bildir
+                                channelRef.current?.postMessage({
+                                    type: 'NEW_NOTIFICATION',
+                                    payload: notification,
+                                    source: tabId.current
+                                });
+                            } finally {
+                                // 🔥 Kilitten çık - küçük bir gecikme ile
+                                setTimeout(() => {
+                                    isProcessingRef.current = false;
+                                }, 100);
+                            }
+                        });
+                    },
+                    onStompError: (frame) => {
+                        console.error('STOMP error:', frame);
+                    },
+                });
+
+                client.activate();
+                clientRef.current = client;
+            } catch (error) {
+                console.error('❌ WebSocket setup failed:', error);
+            }
+        }
+
+        setupWebSocket();
 
         return () => {
-            if (client && client.connected) {
-                client.deactivate();
+            if (clientRef.current) {
+                console.log('🔌 WebSocket bağlantısı kapatılıyor');
+                clientRef.current.deactivate();
             }
         };
     }, [userId]);
+
 
     const getDropdownPosition = () => {
         switch (dropDirection) {
@@ -170,14 +253,22 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
 
     const handleDelete = async (id: number) => {
         try {
-            const res = axios.delete(`http://localhost:8090/api/v1/notification/delete`, {
-                params: {
-                    notificationId:id
-                }
-            });
-            setNotifications(prev => prev.filter(notif => notif.id !== id));
+            const response = await fetch('/api/notification/delete', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ notificationId: id }),
+            })
+            const data = response;
 
-            channel.postMessage({ type: "DELETE_NOTIFICATION", payload: id });
+            if(data.status && data.status !== 200){
+                throw new Error('Bildirim silme başarısız.');
+            }
+
+            setNotifications(prev => prev.filter(notif => notif.id !== id));
+            channelRef.current?.postMessage({ type: "DELETE_NOTIFICATION", payload: id });
         } catch (err) {
             console.error("Silme hatası:", err);
         }
@@ -185,16 +276,22 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
 
     const handleRead = async (id: number) => {
         try {
-            await axios.patch(`http://localhost:8090/api/v1/notification/${id}/read`);
+            await fetch('/api/notification/read', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ notificationId: id }),
+            });
 
             setNotifications(prev =>
                 prev.map(notif =>
                     notif.id === id ? { ...notif, isRead: true } : notif
                 )
             );
-            //setUnreadCount(prev => Math.max(prev - 1, 0));
 
-            channel.postMessage({ type: "READ_NOTIFICATION", payload: id });
+            channelRef.current?.postMessage({ type: "READ_NOTIFICATION", payload: id });
         } catch (err) {
             console.error("Okuma hatası:", err);
         }

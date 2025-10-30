@@ -1,23 +1,36 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, {useEffect} from 'react';
 import { useAuthStore } from '@/app/lib/store/authStore';
 import { RefreshCw } from 'lucide-react';
 import NotificationPopUpPanel from "@/app/components/ui/NotificationPopUpPanel";
 import {useNotificationStore} from "@/app/lib/store/notificationStore";
+import {usePathname} from "next/navigation";
 
 interface AuthProviderProps {
     children: React.ReactNode;
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-    const {isLoading,getCurrentUser } = useAuthStore();
+    const {isLoading,getCurrentUser,setLoading} = useAuthStore();
     const { showNotification } = useNotificationStore();
+    const pathname = usePathname();
+
+    const isPublicPage = (
+        pathname === '/sign-in' ||
+        pathname === '/sign-up' ||
+        pathname === '/authentication/forgot-password'
+    );
 
     useEffect(() => {
         console.log('AuthProvider: Starting auth check...');
+        console.log('isLoading: ', isLoading);
         const initAuth = async () => {
             try {
+                if (isPublicPage){
+                    setLoading(false);
+                    return;
+                }
                 await getCurrentUser();
                 showNotification("Authentication completed","success");
             } catch (error) {
@@ -27,9 +40,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
 
         initAuth();
-    }, []);
+    }, [pathname]);
 
-    if (isLoading) {
+    if (isLoading && !isPublicPage) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
                 <div className="text-center">
@@ -43,7 +56,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return (
         <>
             {children}
-            <NotificationPopUpPanel />
         </>
     );
 };

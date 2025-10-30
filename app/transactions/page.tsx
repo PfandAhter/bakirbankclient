@@ -15,12 +15,16 @@ import {
     Landmark,
     RefreshCw,
     Send,
+    ChevronDown,
+    CreditCard,
 } from 'lucide-react';
 
 
 import NotificationPanel from "@/app/components/atmui/NotificationPanel";
 import ProtectedRoute from "@/app/lib/providers/ProtectedRoute"
 import AccountCreationForm from "@/app/components/AccountCreationForm";
+import TransferMoneyPanel from "@/app/components/TransferMoneyPanel";
+import SavedRecipientShowModal from "@/app/components/SavedRecipientShowModal";
 
 // Transaction tipi
 interface Transaction {
@@ -29,10 +33,19 @@ interface Transaction {
     type: 'INCOME' | 'EXPENSE';
     amount: number;
     description: string;
-    date: string; // ISO datetime
+    date: string;
     category: string;
     channel: string;
     status: string;
+}
+
+interface SavedRecipient {
+    id: string;
+    nickname: string;
+    accountIBAN: string;
+    firstName: string;
+    secondName?: string;
+    lastName: string;
 }
 
 interface Account {
@@ -63,10 +76,9 @@ const currencySymbols: Record<string, string> = {
     USD: "$",
     EUR: "€",
     TRY: "₺",
-    GOLD: "🥇", // altın için emoji
+    GOLD: "🥇",
 };
 
-// Account tipi
 interface AccountData {
     balance: number;
     totalIncome: number;
@@ -90,13 +102,18 @@ export default function TransactionPage() {
     const [showBalance, setShowBalance] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
 
+    const [showTransferPanel, setShowTransferPanel] = useState(false);
     const [accountData, setAccountData] = useState<AccountData | null>(null);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [savedRecipients, setSavedRecipients] = useState<SavedRecipient[]>([]);
+    const [selectedRecipient, setSelectedRecipient] = useState<SavedRecipient | null>(null);
+    const [showRecipientForm, setShowRecipientForm] = useState(false);
 
     const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
 
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [selectedAccount, setSelectedAccount] = useState<Account>();
+    const [showAccountDropdown, setShowAccountDropdown] = useState(false);
 
     const [cities, setCities] = useState<City[] | null>([]);
     const [districts, setDistricts] = useState<District[] | null>([]);
@@ -133,18 +150,14 @@ export default function TransactionPage() {
                 setSelectedAccount(data[0]);
             }
 
-            // Hesap özet bilgisi (eğer backend böyle bir endpoint sağlıyorsa)
-            /*const summaryResponse = await axios.get("http://localhost:8081/api/v1/account/summary", {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`
-                }
-            });*/
-            // setAccountData(summaryResponse.data);
-
         } catch (err) {
             console.error("Account fetch error:", err);
         }
     };
+
+    useEffect(() => {
+        fetchSavedRecipients();
+    }, []);
 
     useEffect(() => {
         if (selectedAccount) {
@@ -152,6 +165,20 @@ export default function TransactionPage() {
         }
     }, [selectedAccount, page, filterType, filterDate]);
 
+    const fetchSavedRecipients = async () => {
+        try {
+            const res = await fetch("/api/account/saved/list", {
+                method: "POST",
+                credentials: "include",
+            });
+            const data = await res.json();
+
+            if (!res.ok) throw new Error("Kayıtlı alıcılar alınamadı.");
+            setSavedRecipients(data);
+        } catch (err) {
+            console.error("❌ fetchSavedRecipients:", err);
+        }
+    };
 
     useEffect(() => {
         if (showAccountForm) {
@@ -225,7 +252,6 @@ export default function TransactionPage() {
 
             const data = await response.json();
 
-            console.log("response transaction list page.tsx icerisinden deneme: ", data);
             if (!response.ok) {
                 showAlert(
                     "error",
@@ -235,7 +261,6 @@ export default function TransactionPage() {
                 return;
             }
 
-            // Backend'in response'u Page<Transaction> formatında ise:
             setRecentTransactions(data.transactions || data);
             setTotalPages(data.totalPages || 1);
             showAlert("success", "İşlem Başarılı", "Veriler başarıyla yüklendi.");
@@ -268,17 +293,16 @@ export default function TransactionPage() {
                 router.push("/");
             }, 5000);
 
-            return () => clearTimeout(timeout); // Cleanup timeout on unmount
+            return () => clearTimeout(timeout);
         }
     }, [isLoading]);
 
     if (isLoading) {
         return (
-            <div
-                className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
+            <div className="min-h-screen bg-[#0a0b0f] flex items-center justify-center">
                 <div className="text-center">
-                    <RefreshCw className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-4"/>
-                    <p className="text-white">Hesap bilgileri yükleniyor...</p>
+                    <RefreshCw className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-4"/>
+                    <p className="text-gray-300 text-base font-normal tracking-wide">Hesap bilgileri yükleniyor...</p>
                 </div>
             </div>
         );
@@ -301,7 +325,6 @@ export default function TransactionPage() {
                 }),
             });
 
-            // Başarılı olduğunda bildirim paneli veya modal göster
             setShowSuccess(true);
             setShowAccountForm(false);
             setNewAccount({
@@ -315,7 +338,6 @@ export default function TransactionPage() {
                 balance: 0,
             });
 
-            // Hesapları yeniden yükle
             await fetchAccountData();
 
         } catch (error) {
@@ -323,36 +345,30 @@ export default function TransactionPage() {
         }
     };
 
-    //const savingsProgress = (accountData.currentSavings / accountData.savingsGoal) * 100;
-
     return (
         <ProtectedRoute>
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+            <div className="min-h-screen bg-[#0a0b0f] text-[#f8fafc]">
                 <AlertBox type={alert.type} title={alert.title} message={alert.message} />
 
                 {accounts.length === 0 && (
-                    <div
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-                        <div className="bg-gray-900 rounded-xl shadow-xl p-8 w-full max-w-md text-white">
-                            <h2 className="text-2xl font-bold mb-4">Hesap Bulunamadı</h2>
-                            <p className="text-gray-300 mb-6">
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+                        <div className="bg-[#0c0d13] border border-[#1e222d] rounded-xl shadow-xl p-8 w-full max-w-md">
+                            <h2 className="text-2xl font-bold mb-4 text-white tracking-tight">Hesap Bulunamadı</h2>
+                            <p className="text-gray-400 mb-6 font-normal">
                                 Henüz bir hesabınız bulunmuyor. Yeni bir hesap açmak ister misiniz?
                             </p>
 
                             {!showAccountForm && (
                                 <div className="flex gap-3">
-                                    {/* EVET */}
                                     <button
                                         onClick={() => setShowAccountForm(true)}
-                                        className="flex-1 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg"
+                                        className="flex-1 bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 px-4 py-2 rounded-lg font-semibold text-sm tracking-wide transition-all"
                                     >
                                         Evet
                                     </button>
-
-                                    {/* HAYIR */}
                                     <button
                                         onClick={() => router.push("/")}
-                                        className="flex-1 bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg"
+                                        className="flex-1 bg-[#1e293b] hover:bg-[#334155] px-4 py-2 rounded-lg font-semibold text-sm tracking-wide transition-all"
                                     >
                                         Hayır
                                     </button>
@@ -360,10 +376,8 @@ export default function TransactionPage() {
                             )}
 
                             {showSuccess && (
-                                <div
-                                    className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
-                                    <div
-                                        className="bg-gray-900 border border-green-600 rounded-xl p-8 text-center text-white shadow-lg">
+                                <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
+                                    <div className="bg-[#0c0d13] border border-green-600 rounded-xl p-8 text-center shadow-lg">
                                         <div className="flex justify-center mb-4">
                                             <svg
                                                 className="w-16 h-16 text-green-500 animate-bounce"
@@ -372,16 +386,14 @@ export default function TransactionPage() {
                                                 strokeWidth="2"
                                                 viewBox="0 0 24 24"
                                             >
-                                                <path strokeLinecap="round" strokeLinejoin="round"
-                                                      d="M5 13l4 4L19 7"/>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
                                             </svg>
                                         </div>
-                                        <h2 className="text-2xl font-bold mb-2">Hesap Başarıyla Oluşturuldu!</h2>
-                                        <p className="text-gray-400 mb-6">Yeni hesabınızı kontrol panelinizden
-                                            görüntüleyebilirsiniz.</p>
+                                        <h2 className="text-2xl font-bold mb-2 text-white tracking-tight">Hesap Başarıyla Oluşturuldu!</h2>
+                                        <p className="text-gray-400 mb-6 font-normal">Yeni hesabınızı kontrol panelinizden görüntüleyebilirsiniz.</p>
                                         <button
                                             onClick={() => setShowSuccess(false)}
-                                            className="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-semibold"
+                                            className="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-semibold text-sm tracking-wide transition-all"
                                         >
                                             Tamam
                                         </button>
@@ -389,7 +401,6 @@ export default function TransactionPage() {
                                 </div>
                             )}
 
-                            {/* Eğer EVET derse form açılacak */}
                             {showAccountForm && (
                                 <AccountCreationForm
                                     newAccount={newAccount}
@@ -406,94 +417,135 @@ export default function TransactionPage() {
                     </div>
                 )}
 
-
                 {/* Header */}
-                <header className="bg-black/50 backdrop-blur-md border-b border-gray-800">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <header className="bg-[#0c0d13]/80 border-b border-[#1e222d] backdrop-blur-lg">
+                    <div className="max-w-7xl mx-auto px-6">
                         <div className="flex justify-between items-center h-16">
-                            <div className="flex items-center space-x-4">
+                            <div className="flex items-center space-x-3">
                                 <button
                                     onClick={() => router.push('/')}
-                                    className="group flex items-center text-blue-400 hover:text-blue-300 transition-colors"
+                                    className="group flex items-center transition-all"
                                 >
-                                    <Landmark
-                                        className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-colors"/>
-                                    <span
-                                        className="ml-2 text-2xl font-bold text-white group-hover:text-blue-300 transition-colors">BAKIRBANK</span>
+                                    <Landmark className="h-7 w-7 text-blue-400 group-hover:text-blue-300 transition-colors"/>
+                                    <span className="ml-2 text-2xl font-bold text-white group-hover:text-blue-300 transition-colors tracking-tight" style={{ transform: 'scaleY(1.3)', transformOrigin: 'center' }}>
+                                        BAKIRBANK
+                                    </span>
                                 </button>
-                                <span className="text-2xl font-bold text-white">İşlemler</span>
+                                <span className="text-gray-600">|</span>
+                                <span className="text-xl font-semibold text-white tracking-tight">İşlemler</span>
                             </div>
 
                             <div className="flex items-center space-x-4">
-                                <span
-                                    className="text-gray-300">Hoş geldin, {user?.firstName} {user?.secondName} {user?.lastName}</span>
+                                <span className="text-gray-400 text-sm font-normal">
+                                    Hoş geldin, <span className="text-white font-semibold">{user?.firstName} {user?.lastName}</span>
+                                </span>
                                 <button
                                     onClick={handleLogout}
-                                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+                                    className="bg-[#7f1d1d] hover:bg-[#991b1b] text-white px-4 py-2 rounded-lg font-medium text-sm tracking-wide transition-all"
                                 >
                                     Çıkış Yap
                                 </button>
+                                <NotificationPanel userId={user?.id ?? "null"}/>
                             </div>
                         </div>
                     </div>
-                    <NotificationPanel userId={user?.id ?? "null"}/>
                 </header>
 
                 {/* Content */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* Account Selector */}
-                    <div className="mb-6 flex justify-between items-center">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-2">Hesap Seç</label>
-                            <select
-                                value={selectedAccount?.id || ""}
-                                onChange={(e) => {
-                                    const acc = accounts.find((a) => a.id === e.target.value);
-                                    if (acc) {
-                                        setSelectedAccount(acc);
-                                    }
-                                }}
-                                className="bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                {accounts.map((acc) => (
-                                    <option key={acc.id} value={acc.id}>
-                                        {acc.name} ({currencySymbols[acc.currency] || acc.currency})
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        {selectedAccount && (
-                            <div className="text-right">
-                                <p className="text-sm text-gray-400">Seçili Hesap Bakiyesi</p>
-                                <p className="text-lg font-bold text-white">
-                                    {currencySymbols[selectedAccount.currency] || ""}{" "}
-                                    {selectedAccount.balance.toLocaleString()}
-                                </p>
-                            </div>
-                        )}
-                    </div>
+                <div className="max-w-7xl mx-auto px-6 py-8">
+                    <SavedRecipientShowModal onRecipientSelect={setSelectedRecipient}
+                                             showRecipientForm={showRecipientForm}
+                                             setShowRecipientForm={setShowRecipientForm}
+                                             setShowTransferPanel={setShowTransferPanel}
+                    >
+                    </SavedRecipientShowModal>
 
+                    <div className="mb-8 relative">
+                        <div className="bg-gradient-to-br from-[#1e293b] to-[#0f172a] border border-[#1e222d] rounded-2xl p-6 shadow-xl">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4 flex-1">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center shadow-lg">
+                                        <CreditCard className="w-7 h-7 text-white"/>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-gray-400 text-sm font-normal mb-1">Aktif Hesap</p>
+                                        <button
+                                            onClick={() => setShowAccountDropdown(!showAccountDropdown)}
+                                            className="flex items-center space-x-2 group"
+                                        >
+                                            <span className="text-xl font-bold text-white tracking-tight group-hover:text-blue-400 transition-colors">
+                                                {selectedAccount?.name}
+                                            </span>
+                                            <ChevronDown className={`w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-all ${showAccountDropdown ? 'rotate-180' : ''}`}/>
+                                        </button>
+                                        <p className="text-gray-500 text-xs font-normal mt-1">{selectedAccount?.iban}</p>
+                                    </div>
+                                </div>
+
+                                <div className="text-right">
+                                    <p className="text-gray-400 text-sm font-normal mb-1">Güncel Bakiye</p>
+                                    <div className="flex items-center space-x-2 justify-end">
+                                        <p className="text-2xl font-bold text-white tracking-tight">
+                                            {showBalance
+                                                ? formatCurrency(selectedAccount?.balance ?? 0)
+                                                : "••••••••"}
+                                        </p>
+                                        <button
+                                            onClick={() => setShowBalance(!showBalance)}
+                                            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                                        >
+                                            {showBalance ? (
+                                                <Eye className="w-4 h-4 text-gray-400"/>
+                                            ) : (
+                                                <EyeOff className="w-4 h-4 text-gray-400"/>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Dropdown Menu */}
+                            {showAccountDropdown && (
+                                <div className="mt-4 pt-4 border-t border-[#1e222d] space-y-2">
+                                    {accounts.map((acc) => (
+                                        <button
+                                            key={acc.id}
+                                            onClick={() => {
+                                                setSelectedAccount(acc);
+                                                setShowAccountDropdown(false);
+                                            }}
+                                            className={`w-full text-left p-3 rounded-lg transition-all ${
+                                                selectedAccount?.id === acc.id
+                                                    ? 'bg-blue-600/20 border border-blue-600/50'
+                                                    : 'bg-[#0f172a] hover:bg-[#1e293b] border border-transparent'
+                                            }`}
+                                        >
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <p className="text-white font-semibold text-sm tracking-tight">{acc.name}</p>
+                                                    <p className="text-gray-500 text-xs font-normal">{acc.iban}</p>
+                                                </div>
+                                                <p className="text-white font-bold text-sm">
+                                                    {currencySymbols[acc.currency]} {acc.balance.toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
                     {/* Balance Card */}
-                    <div className="bg-gradient-to-r from-blue-600 to-purple-700 rounded-2xl p-8 mb-8 text-white">
+                    <div className="bg-gradient-to-r from-blue-600 to-purple-700 rounded-2xl p-8 mb-8 shadow-xl">
                         <div className="flex justify-between items-start mb-6">
                             <div>
-                                <h2 className="text-lg font-medium opacity-90">Toplam Bakiye</h2>
+                                <h2 className="text-lg font-semibold opacity-90 tracking-wide">Toplam Bakiye</h2>
                                 <div className="flex items-center space-x-3 mt-2">
-                                    <p className="text-4xl font-bold">
+                                    <p className="text-4xl font-bold tracking-tight">
                                         {showBalance
                                             ? formatCurrency(selectedAccount?.balance ?? 0)
                                             : "••••••••"}
                                     </p>
-                                    <button
-                                        onClick={() => setShowBalance(!showBalance)}
-                                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                                    >
-                                        {showBalance ? (
-                                            <EyeOff className="w-5 h-5"/>
-                                        ) : (
-                                            <Eye className="w-5 h-5"/>
-                                        )}
-                                    </button>
                                 </div>
                             </div>
                             <div className="text-right">
@@ -502,12 +554,22 @@ export default function TransactionPage() {
                         </div>
                         <div className="flex space-x-4">
                             <button
-                                className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
+                                onClick={() => setShowTransferPanel(true)}
+                                className="bg-white/20 hover:bg-white/30 px-6 py-3 rounded-lg transition-all flex items-center space-x-2 font-semibold text-sm tracking-wide shadow-lg"
+                            >
                                 <Send className="w-4 h-4"/>
                                 <span>Para Gönder</span>
                             </button>
-                            <button
-                                className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
+                            {showTransferPanel && (
+                                <TransferMoneyPanel
+                                    fromAccounts={accounts}
+                                    selectedAccount={selectedAccount}
+                                    selectedSavedRecipient={selectedRecipient}
+                                    onClose={() => setShowTransferPanel(false)}
+                                    onSuccess={fetchAccountData}
+                                />
+                            )}
+                            <button className="bg-white/20 hover:bg-white/30 px-6 py-3 rounded-lg transition-all flex items-center space-x-2 font-semibold text-sm tracking-wide shadow-lg">
                                 <ArrowDownLeft className="w-4 h-4"/>
                                 <span>Para Yatır</span>
                             </button>
@@ -515,13 +577,13 @@ export default function TransactionPage() {
                     </div>
 
                     {/* Recent Transactions */}
-                    <div className="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-xl">
-                        <div className="p-6 border-b border-gray-700">
+                    <div className="bg-[#0c0d13]/50 backdrop-blur-md border border-[#1e222d] rounded-2xl shadow-xl">
+                        <div className="p-6 border-b border-[#1e222d]">
                             <div className="flex justify-between items-center">
-                                <h3 className="text-xl font-semibold text-white">Son İşlemler</h3>
+                                <h3 className="text-xl font-bold text-white tracking-tight">Son İşlemler</h3>
                                 <button
                                     onClick={() => router.push("/transactions")}
-                                    className="text-blue-400 hover:text-blue-300 transition-colors"
+                                    className="text-blue-400 hover:text-blue-300 transition-colors font-semibold text-sm tracking-wide"
                                 >
                                     Tümünü Gör
                                 </button>
@@ -529,85 +591,90 @@ export default function TransactionPage() {
                         </div>
 
                         {/* Filtreler */}
-                        <div className="flex flex-wrap justify-between items-center mb-4">
-                            {/* Tarih Filtreleri */}
-                            <div className="flex gap-2">
-                                {['ALL', 'WEEK', 'MONTH'].map((range) => (
-                                    <button
-                                        key={range}
-                                        onClick={() => {
-                                            setFilterDate(range as any);
-                                            setPage(0);
-                                        }}
-                                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors mt-4 ml-2 ${ //TODO: En son buradaydim.
-                                            filterDate === range
-                                                ? "bg-blue-600 text-white"
-                                                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                                        }`}
-                                    >
-                                        {range === 'ALL' ? 'Tümü' : range === 'WEEK' ? 'Son 1 Hafta' : 'Son 1 Ay'}
-                                    </button>
-                                ))}
-                            </div>
+                        <div className="px-6 py-4 border-b border-[#1e222d]">
+                            <div className="flex flex-wrap justify-between items-center gap-4">
+                                {/* Tarih Filtreleri */}
+                                <div className="flex gap-2">
+                                    {['ALL', 'WEEK', 'MONTH'].map((range) => (
+                                        <button
+                                            key={range}
+                                            onClick={() => {
+                                                setFilterDate(range as any);
+                                                setPage(0);
+                                            }}
+                                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all tracking-wide ${
+                                                filterDate === range
+                                                    ? "bg-blue-600 text-white shadow-lg"
+                                                    : "bg-[#1e293b] text-gray-300 hover:bg-[#334155]"
+                                            }`}
+                                        >
+                                            {range === 'ALL' ? 'Tümü' : range === 'WEEK' ? 'Son 1 Hafta' : 'Son 1 Ay'}
+                                        </button>
+                                    ))}
+                                </div>
 
-                            {/* Tür Filtreleri */}
-                            <div className="flex gap-2">
-                                {['ALL', 'INCOME', 'EXPENSE'].map((type) => (
-                                    <button
-                                        key={type}
-                                        onClick={() => {
-                                            setFilterType(type as any);
-                                            setPage(0);
-                                        }}
-                                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                                            filterType === type
-                                                ? (type === 'INCOME'
-                                                    ? "bg-green-600 text-white"
-                                                    : type === 'EXPENSE'
-                                                        ? "bg-red-600 text-white"
-                                                        : "bg-blue-600 text-white")
-                                                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                                        }`}
-                                    >
-                                        {type === 'ALL' ? 'Tümü' : type === 'INCOME' ? 'Gelirler' : 'Giderler'}
-                                    </button>
-                                ))}
+                                {/* Tür Filtreleri */}
+                                <div className="flex gap-2">
+                                    {['ALL', 'INCOME', 'EXPENSE'].map((type) => (
+                                        <button
+                                            key={type}
+                                            onClick={() => {
+                                                setFilterType(type as any);
+                                                setPage(0);
+                                            }}
+                                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all tracking-wide ${
+                                                filterType === type
+                                                    ? (type === 'INCOME'
+                                                        ? "bg-green-600 text-white shadow-lg"
+                                                        : type === 'EXPENSE'
+                                                            ? "bg-red-600 text-white shadow-lg"
+                                                            : "bg-blue-600 text-white shadow-lg")
+                                                    : "bg-[#1e293b] text-gray-300 hover:bg-[#334155]"
+                                            }`}
+                                        >
+                                            {type === 'ALL' ? 'Tümü' : type === 'INCOME' ? 'Gelirler' : 'Giderler'}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
                         <div className="p-6" style={{ minHeight: '600px' }}>
-                            <div  className="space-y-4 overflow-y-auto max-h-120">
+                            <div className="space-y-3 overflow-y-auto max-h-120">
                                 {recentTransactions.map((transaction) => (
                                     <div
                                         key={transaction.id}
-                                        className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-colors"
+                                        className="flex items-center justify-between p-4 bg-[#1e293b]/30 rounded-xl hover:bg-[#1e293b]/50 transition-all border border-transparent hover:border-[#1e222d]"
                                     >
                                         <div className="flex items-center space-x-4">
                                             <div
-                                                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                                className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${
                                                     transaction.type === "INCOME"
                                                         ? "bg-green-600"
                                                         : "bg-red-600"
                                                 }`}
                                             >
                                                 {transaction.type === "INCOME" ? (
-                                                    <ArrowUpRight className="w-5 h-5 text-white"/>
+                                                    <ArrowUpRight className="w-6 h-6 text-white"/>
                                                 ) : (
-                                                    <ArrowDownLeft className="w-5 h-5 text-white"/>
+                                                    <ArrowDownLeft className="w-6 h-6 text-white"/>
                                                 )}
                                             </div>
                                             <div>
-                                                <p className="text-white font-medium">
-                                                    {transaction.description}
+                                                <p className="text-white font-semibold text-base tracking-tight">
+                                                                                                        {transaction.description}
                                                 </p>
-                                                <p className="text-gray-400 text-sm">
+                                                <p className="text-gray-400 font-normal text-sm">
+                                                    {/* {transaction.description} */}
+                                                </p>
+                                                <p className="text-gray-500 text-xs font-normal mt-1">
                                                     {transaction.category}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="text-right">
                                             <p
-                                                className={`font-bold ${
+                                                className={`font-bold text-lg tracking-tight ${
                                                     transaction.type === "INCOME"
                                                         ? "text-green-400"
                                                         : "text-red-400"
@@ -616,8 +683,7 @@ export default function TransactionPage() {
                                                 {transaction.type === "INCOME" ? "+" : "-"}
                                                 {formatCurrency(transaction.amount)}
                                             </p>
-                                            <div
-                                                className="flex items-center gap-1 text-sm text-gray-500 whitespace-nowrap">
+                                            <div className="flex items-center gap-1 text-sm text-gray-500 whitespace-nowrap font-normal">
                                                 <span>{new Date(transaction.date).toLocaleDateString()}</span>
                                                 <span>{new Date(transaction.date).toLocaleTimeString([], {
                                                     hour: '2-digit',
@@ -633,21 +699,21 @@ export default function TransactionPage() {
                                 <button
                                     onClick={() => setPage(prev => Math.max(prev - 1, 0))}
                                     disabled={page === 0}
-                                    className="px-4 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50 hover:bg-gray-600"
+                                    className="px-5 py-2 bg-[#1e293b] text-white rounded-lg disabled:opacity-50 hover:bg-[#334155] transition-all font-semibold text-sm tracking-wide"
                                 >
-                                    Previous
+                                    Önceki
                                 </button>
 
-                                <span className="text-gray-300">
-        Page {page + 1} of {totalPages}
-    </span>
+                                <span className="text-gray-400 font-medium text-sm">
+                                    Sayfa {page + 1} / {totalPages}
+                                </span>
 
                                 <button
                                     onClick={() => setPage(prev => Math.min(prev + 1, totalPages - 1))}
                                     disabled={page >= totalPages - 1}
-                                    className="px-4 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50 hover:bg-gray-600"
+                                    className="px-5 py-2 bg-[#1e293b] text-white rounded-lg disabled:opacity-50 hover:bg-[#334155] transition-all font-semibold text-sm tracking-wide"
                                 >
-                                    Next
+                                    Sonraki
                                 </button>
                             </div>
                         </div>
