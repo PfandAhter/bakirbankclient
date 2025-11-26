@@ -15,9 +15,6 @@ export async function POST() {
             headers: authHeaders
         });
 
-        console.log("Responsev2:", responsev2);
-        //console.log("Response:", response);
-
         if(responsev2.status !== 200) {
             const errorBody = await responsev2.statusText;
             return new Response(errorBody, { status: responsev2.status });

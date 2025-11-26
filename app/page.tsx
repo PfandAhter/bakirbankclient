@@ -165,8 +165,8 @@ export default function HomePage() {
                                 <>
                                     Hoş geldiniz,{' '}
                                     <span className="text-blue-400">
-                    {user?.firstName} {user?.lastName}
-                  </span>
+                                        {user?.firstName} {user?.lastName}
+                                    </span>
                                 </>
                             ) : (
                                 <>

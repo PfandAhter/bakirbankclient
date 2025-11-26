@@ -9,7 +9,12 @@ export type MessageType =
     | 'form'                // dinamik form (ileride)
     | 'custom'          // genişletilebilir özel tipler
     | 'saved_account_selection'   // ✅ yeni
-    | 'confirm_transfer';         // ✅ yeni
+    | 'confirm_transfer'         // ✅ yeni
+    | 'get_user_accounts'
+    | 'get_saved_accounts_for_transfer'
+    | 'get_saved_accounts'
+    | 'bank_name_list'
+    | 'get_nearest_atm';
 
 export interface BaseMessage {
     id: string;
@@ -20,7 +25,7 @@ export interface BaseMessage {
 }
 
 export interface AccountSelectionMessage extends BaseMessage {
-    type: 'account_selection';
+    type: 'get_user_accounts';
     data: {
         accounts: {
             id: string;

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import {useAlert} from "@/app/lib/hooks/useAlert";
 import AlertBox from "@/components/modals/AlertBox";
+import TransferConfirmation from "@/app/components/TransferConfirmation";
 
 interface Account {
     id: string;
@@ -37,6 +38,7 @@ interface TransferMoneyPanelProps {
     selectedSavedRecipient?: SavedRecipient | null;
     onClose: () => void;
     onSuccess: () => Promise<void>;
+    fetchTransaction: () => Promise<void>;
 }
 
 const currencySymbols: Record<string, string> = {
@@ -52,6 +54,7 @@ export default function TransferMoneyPanel({
                                                selectedSavedRecipient,
                                                onClose,
                                                onSuccess,
+                                               fetchTransaction,
                                            }: TransferMoneyPanelProps) {
     const {alert, showAlert} = useAlert();
 
@@ -65,9 +68,13 @@ export default function TransferMoneyPanel({
 
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [confirmStep, setConfirmStep] = useState(false);
     const [recipientName, setRecipientName] = useState<string | null>(null);
     const [ibanLoading, setIbanLoading] = useState(false);
     const [nameMatch, setNameMatch] = useState<boolean | null>(null);
+
+    // Seçili hesabı bul
+    const currentAccount = fromAccounts.find(a => a.id === formData.fromAccountId);
 
     useEffect(() => {
         if (selectedSavedRecipient) {
@@ -85,7 +92,6 @@ export default function TransferMoneyPanel({
         }
     }, [selectedSavedRecipient]);
 
-    // --- Yeni yardımcı fonksiyonlar ---
     const maskName = (name: string): string => {
         const parts = name.split(" ");
         return parts
@@ -138,7 +144,6 @@ export default function TransferMoneyPanel({
         const {name, value} = e.target;
         setFormData({...formData, [name]: value});
 
-        // IBAN değiştiğinde isim sorgula
         if (name === "toIban") {
             if (value.replace(/\s/g, "").length === 26) {
                 fetchRecipientName(value);
@@ -148,19 +153,11 @@ export default function TransferMoneyPanel({
             }
         }
 
-        // Alıcı onayı yazıldıkça kontrol et
         if (name === "recipientNameConfirm" && recipientName) {
-            const confirmVal = value.trim().toLowerCase();
-            const realName = recipientName.trim().toLowerCase();
-            const realSurname = realName.split(" ").slice(-1)[0];
+            const confirmVal = value.trim().toUpperCase();
+            const realName = recipientName.trim().toUpperCase();
 
-            const isExactMatch = confirmVal === realName;
-            const isAllWordsMatch =
-                confirmVal.length > 0 &&
-                confirmVal.split(/\s+/).every((w) => realName.includes(w));
-            const isSurnameMatch = realSurname.startsWith(confirmVal);
-
-            if (confirmVal && (isExactMatch || isAllWordsMatch || isSurnameMatch)) {
+            if (confirmVal && confirmVal === realName) {
                 setNameMatch(true);
             } else {
                 setNameMatch(false);
@@ -183,15 +180,21 @@ export default function TransferMoneyPanel({
 
         setLoading(true);
         try {
+            // İlk Validasyon İsteği
             const res = await fetch("/api/account/transaction/transfer", {
                 method: "POST",
                 credentials: "include",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
-                    fromAccountId: formData.fromAccountId,
-                    toIban: formData.toIban,
-                    amount: parseFloat(formData.amount),
+                    fromIBAN: selectedAccount?.iban,
+                    toIBAN: formData.toIban,
+                    toFirstName: recipientName ? recipientName.split(" ")[0] : undefined,
+                    toSecondName: recipientName && recipientName.split(" ").length === 3 ? recipientName.split(" ")[1] : undefined,
+                    toLastName: recipientName ? recipientName.split(" ").slice(1).join(" ") : undefined,
+                    byAi: false,
+                    amount: (formData.amount),
                     description: formData.description,
+                    isConfirmed: false
                 }),
             });
 
@@ -199,15 +202,61 @@ export default function TransferMoneyPanel({
 
             if (!res.ok) {
                 showAlert("error", data.processCode || "İşlem Başarısız", data.processMessage || "Transfer gerçekleştirilemedi.");
+                setLoading(false); // Hata durumunda loading kapat
                 return;
             }
 
-            showAlert("success", "İşlem Başarılı", "Para transferi başarıyla tamamlandı.");
-            setSuccess(true);
-            await onSuccess();
+            // Başarılı ise Onay Adımına Geç
+            if (!confirmStep) {
+                setConfirmStep(true);
+                setLoading(false);
+                return;
+            }
+
         } catch (error) {
             console.error("Transfer error:", error);
             showAlert("error", "Sunucu Hatası", "Lütfen daha sonra tekrar deneyiniz.");
+            setLoading(false);
+        }
+    };
+
+    // Kesin Onay Fonksiyonu
+    const handleFinalTransfer = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch("/api/account/transaction/transfer", {
+                method: "POST",
+                credentials: "include",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    fromIBAN: selectedAccount?.iban,
+                    toIBAN: formData.toIban,
+                    amount: (formData.amount),
+                    description: formData.description,
+                    byAi: false,
+                    toFirstName: recipientName ? recipientName.split(" ")[0] : undefined,
+                    toSecondName: recipientName && recipientName.split(" ").length === 3 ? recipientName.split(" ")[1] : undefined,
+                    toLastName: recipientName ? recipientName.split(" ").slice(1).join(" ") : undefined,
+                    isConfirmed: true // Backend'in beklediği onay flag'i
+                }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                showAlert("error", data.processCode || "Hata", data.processMessage || "İşlem tamamlanamadı.");
+                setLoading(false);
+                return;
+            }
+
+            await fetchTransaction();
+
+            showAlert("success", "İşlem Başarılı", "Para transferi başarıyla tamamlandı.");
+            setSuccess(true);
+            setConfirmStep(false);
+            await onSuccess();
+        } catch (error) {
+            console.error("Final Transfer error:", error);
+            showAlert("error", "Sunucu Hatası", "Bağlantı hatası oluştu.");
         } finally {
             setLoading(false);
         }
@@ -221,11 +270,12 @@ export default function TransferMoneyPanel({
                 {/* Header */}
                 <div className="flex justify-between items-center border-b border-[#1e222d] p-6">
                     <div className="flex items-center space-x-3">
-                        <div
-                            className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center shadow-lg">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center shadow-lg">
                             <Send className="w-5 h-5 text-white"/>
                         </div>
-                        <h2 className="text-xl font-bold tracking-tight">Para Transferi</h2>
+                        <h2 className="text-xl font-bold tracking-tight">
+                            {confirmStep ? "İşlemi Onayla" : "Para Transferi"}
+                        </h2>
                     </div>
                     <button
                         onClick={onClose}
@@ -235,11 +285,11 @@ export default function TransferMoneyPanel({
                     </button>
                 </div>
 
-                {/* Success */}
+                {/* MAIN CONTENT AREA */}
                 {success ? (
+                    // BAŞARILI DURUM
                     <div className="p-8 text-center">
-                        <div
-                            className="w-20 h-20 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <div className="w-20 h-20 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
                             <CheckCircle2 className="w-12 h-12 text-green-500 animate-pulse"/>
                         </div>
                         <h2 className="text-2xl font-bold mb-2">Transfer Başarılı!</h2>
@@ -251,7 +301,21 @@ export default function TransferMoneyPanel({
                             Tamam
                         </button>
                     </div>
+                ) : confirmStep ? (
+                    // ONAY COMPONENTİ BURADA ÇAĞRILIYOR
+                    <TransferConfirmation
+                        amount={formData.amount}
+                        currencySymbol={currentAccount ? currencySymbols[currentAccount.currency] : "₺"}
+                        fromAccountName={currentAccount?.name}
+                        recipientName={recipientName}
+                        toIban={formData.toIban}
+                        description={formData.description}
+                        loading={loading}
+                        onBack={() => setConfirmStep(false)}
+                        onConfirm={handleFinalTransfer}
+                    />
                 ) : (
+                    // TRANSFER FORMU (Eski Form)
                     <form onSubmit={handleSubmit} className="p-6 space-y-5">
                         {/* Kaynak Hesap */}
                         <div>
@@ -261,7 +325,7 @@ export default function TransferMoneyPanel({
                             </label>
                             <select
                                 name="fromAccountId"
-                                value={formData.fromAccountId}
+                                value={formData.fromAccountId || ""}
                                 onChange={handleChange}
                                 className="w-full bg-[#1e293b] border border-[#1e222d] text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                             >
@@ -275,7 +339,7 @@ export default function TransferMoneyPanel({
                             </select>
                         </div>
 
-                        {/* IBAN */}
+                        {/* IBAN Input */}
                         <div>
                             <label className="flex items-center space-x-2 text-sm font-semibold text-gray-300 mb-2">
                                 <Building2 className="w-4 h-4 text-blue-400"/>
@@ -290,15 +354,13 @@ export default function TransferMoneyPanel({
                                 maxLength={32}
                                 className="w-full bg-[#1e293b] border border-[#1e222d] text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 placeholder-gray-500 text-sm"
                             />
-                            {/* Hashli isim gösterimi */}
                             {ibanLoading && (
                                 <p className="text-xs text-gray-400 mt-2 animate-pulse">
                                     IBAN kontrol ediliyor...
                                 </p>
                             )}
                             {recipientName && (
-                                <div
-                                    className="mt-2 bg-[#111827]/70 border border-[#1e222d] rounded-lg p-2 text-xs text-gray-300">
+                                <div className="mt-2 bg-[#111827]/70 border border-[#1e222d] rounded-lg p-2 text-xs text-gray-300">
                                     Alıcı Adı:{" "}
                                     <span className="text-blue-400 font-semibold">
                                         {maskName(recipientName)}
@@ -307,7 +369,7 @@ export default function TransferMoneyPanel({
                             )}
                         </div>
 
-                        {/* Alıcı Onayı */}
+                        {/* Alıcı Adı Onayı Input */}
                         {recipientName && (
                             <div>
                                 <label className="flex items-center space-x-2 text-sm font-semibold text-gray-300 mb-2">
@@ -341,7 +403,7 @@ export default function TransferMoneyPanel({
                             </div>
                         )}
 
-                        {/* Tutar */}
+                        {/* Tutar Input */}
                         <div>
                             <label className="flex items-center space-x-2 text-sm font-semibold text-gray-300 mb-2">
                                 <DollarSign className="w-4 h-4 text-blue-400"/>
@@ -359,12 +421,12 @@ export default function TransferMoneyPanel({
                                     className="w-full bg-[#1e293b] border border-[#1e222d] text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                                 />
                                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
-                                    {selectedAccount ? currencySymbols[selectedAccount.currency] : "₺"}
+                                    {currentAccount ? currencySymbols[currentAccount.currency] : "₺"}
                                 </span>
                             </div>
                         </div>
 
-                        {/* Açıklama */}
+                        {/* Açıklama Input */}
                         <div>
                             <label className="flex items-center space-x-2 text-sm font-semibold text-gray-300 mb-2">
                                 <FileText className="w-4 h-4 text-blue-400"/>
@@ -380,7 +442,7 @@ export default function TransferMoneyPanel({
                             />
                         </div>
 
-                        {/* Buttons */}
+                        {/* Gönder Butonu */}
                         <div className="flex gap-3 pt-2">
                             <button
                                 type="button"
@@ -401,7 +463,7 @@ export default function TransferMoneyPanel({
                                 {loading ? (
                                     <>
                                         <RefreshCw className="w-4 h-4 animate-spin"/>
-                                        <span>Gönderiliyor...</span>
+                                        <span>Kontrol Ediliyor...</span>
                                     </>
                                 ) : (
                                     <>

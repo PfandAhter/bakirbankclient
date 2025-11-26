@@ -17,6 +17,9 @@ import {
     Send,
     ChevronDown,
     CreditCard,
+    FileText,
+    Clock,
+    Download,
 } from 'lucide-react';
 
 
@@ -37,6 +40,7 @@ interface Transaction {
     category: string;
     channel: string;
     status: string;
+    invoiceStatus?: 'PENDING' | 'COMPLETED' | null;
 }
 
 interface SavedRecipient {
@@ -121,6 +125,8 @@ export default function TransactionPage() {
     const [showAccountForm, setShowAccountForm] = useState(false);
     const [newAccount, setNewAccount] = useState(
         {name: "", iban: "", currency: "TRY", description: "", city: "", district: "", branchId: "", balance: 0});
+
+    const [loadingInvoices, setLoadingInvoices] = useState<Record<string, boolean>>({});
 
 
     useEffect(() => {
@@ -270,6 +276,98 @@ export default function TransactionPage() {
         }
     };
 
+    const handleInvoiceClick = async (transactionId: string, invoiceStatus: string) => {
+        setLoadingInvoices(prev => ({ ...prev, [transactionId]: true }));
+
+        try {
+            const response = await fetch('/api/invoice/get', {
+                method: 'POST',
+                credentials: "include",
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ transactionId }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                showAlert(
+                    "error",
+                    data.processCode || "İşlem Başarısız",
+                    data.processMessage || "Dekont alınamadı."
+                );
+                return;
+            }
+
+            if (data.status === 'PENDING') {
+                showAlert(
+                    "info",
+                    "Dekont Hazırlanıyor",
+                    data.message || `Dekont oluşturma işlemi devam ediyor. Kalan süre: ${data.remainingTime || 'Bilinmiyor'}`
+                );
+            } else if (data.status === 'COMPLETED') {
+                // PDF byte array'i base64 formatında geldiğini varsayıyoruz
+                const pdfBlob = base64ToBlob(data, 'application/pdf');
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+
+                // Yeni sekmede PDF'i aç
+                window.open(pdfUrl, '_blank');
+
+                showAlert(
+                    "success",
+                    "Dekont Hazır",
+                    "Dekontunuz yeni sekmede açıldı."
+                );
+
+                // Transaction listesini güncelle
+                setRecentTransactions(prev =>
+                    prev.map(t =>
+                        t.id === transactionId
+                            ? { ...t, invoiceStatus: 'COMPLETED' as const }
+                            : t
+                    )
+                );
+            }else{
+                // PDF byte array'i base64 formatında geldiğini varsayıyoruz
+                const pdfBlob = base64ToBlob(data, 'application/pdf');
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+
+                // Yeni sekmede PDF'i aç
+                window.open(pdfUrl, '_blank');
+
+                showAlert(
+                    "success",
+                    "Dekont Hazır",
+                    "Dekontunuz yeni sekmede açıldı."
+                );
+
+                // Transaction listesini güncelle
+                setRecentTransactions(prev =>
+                    prev.map(t =>
+                        t.id === transactionId
+                            ? { ...t, invoiceStatus: 'COMPLETED' as const }
+                            : t
+                    )
+                );
+            }
+        } catch (err) {
+            console.error("Invoice fetch error:", err);
+            showAlert("error", "Sunucu Hatası", "Dekont alınırken bir hata oluştu.");
+        } finally {
+            setLoadingInvoices(prev => ({ ...prev, [transactionId]: false }));
+        }
+    };
+
+    const base64ToBlob = (base64: string, contentType: string): Blob => {
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+
+        const byteArray = new Uint8Array(byteNumbers);
+        return new Blob([byteArray], { type: contentType });
+    };
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('tr-TR', {
@@ -562,6 +660,7 @@ export default function TransactionPage() {
                             </button>
                             {showTransferPanel && (
                                 <TransferMoneyPanel
+                                    fetchTransaction={fetchTransactions}
                                     fromAccounts={accounts}
                                     selectedAccount={selectedAccount}
                                     selectedSavedRecipient={selectedRecipient}
@@ -646,7 +745,7 @@ export default function TransactionPage() {
                                         key={transaction.id}
                                         className="flex items-center justify-between p-4 bg-[#1e293b]/30 rounded-xl hover:bg-[#1e293b]/50 transition-all border border-transparent hover:border-[#1e222d]"
                                     >
-                                        <div className="flex items-center space-x-4">
+                                        <div className="flex items-center space-x-4 flex-1">
                                             <div
                                                 className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${
                                                     transaction.type === "INCOME"
@@ -660,35 +759,71 @@ export default function TransactionPage() {
                                                     <ArrowDownLeft className="w-6 h-6 text-white"/>
                                                 )}
                                             </div>
-                                            <div>
+                                            <div className="flex-1">
                                                 <p className="text-white font-semibold text-base tracking-tight">
-                                                                                                        {transaction.description}
-                                                </p>
-                                                <p className="text-gray-400 font-normal text-sm">
-                                                    {/* {transaction.description} */}
+                                                    {transaction.description}
                                                 </p>
                                                 <p className="text-gray-500 text-xs font-normal mt-1">
                                                     {transaction.category}
                                                 </p>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p
-                                                className={`font-bold text-lg tracking-tight ${
-                                                    transaction.type === "INCOME"
-                                                        ? "text-green-400"
-                                                        : "text-red-400"
-                                                }`}
-                                            >
-                                                {transaction.type === "INCOME" ? "+" : "-"}
-                                                {formatCurrency(transaction.amount)}
-                                            </p>
-                                            <div className="flex items-center gap-1 text-sm text-gray-500 whitespace-nowrap font-normal">
-                                                <span>{new Date(transaction.date).toLocaleDateString()}</span>
-                                                <span>{new Date(transaction.date).toLocaleTimeString([], {
-                                                    hour: '2-digit',
-                                                    minute: '2-digit'
-                                                })}</span>
+
+                                        <div className="flex items-center gap-4">
+                                            {/* Invoice Button */}
+                                            {(() => {
+                                                const status = (transaction.invoiceStatus ?? '').toString().toUpperCase();
+                                                if (!(status === 'COMPLETED' || status === 'PENDING')) return null;
+
+                                                const isPending = status === 'PENDING';
+                                                const isCompleted = status === 'COMPLETED';
+                                                const loading = !!loadingInvoices[transaction.id];
+
+                                                return (
+                                                    <button
+                                                        onClick={() => handleInvoiceClick(transaction.id, status)}
+                                                        disabled={loading || isPending}
+                                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm tracking-wide transition-all ${
+                                                            isCompleted
+                                                                ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30 border border-green-600/50'
+                                                                : 'bg-amber-600/20 text-amber-400 hover:bg-amber-600/30 border border-amber-600/50'
+                                                        } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    >
+                                                        {loading ? (
+                                                            <RefreshCw className="w-4 h-4 animate-spin" />
+                                                        ) : isCompleted ? (
+                                                            <>
+                                                                <Download className="w-4 h-4" />
+                                                                <span>Dekont İndir</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Clock className="w-4 h-4" />
+                                                                <span>Dekont Hazırlanıyor</span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                );
+                                            })()}
+
+                                            <div className="text-right">
+                                                <p
+                                                    className={`font-bold text-lg tracking-tight ${
+                                                        transaction.type === "INCOME"
+                                                            ? "text-green-400"
+                                                            : "text-red-400"
+                                                    }`}
+                                                >
+                                                    {transaction.type === "INCOME" ? "+" : "-"}
+                                                    {formatCurrency(transaction.amount)}
+                                                </p>
+                                                <div className="flex items-center gap-1 text-sm text-gray-500 whitespace-nowrap font-normal">
+                                                    <span>{new Date(transaction.date).toLocaleDateString()}</span>
+                                                    <span>{new Date(transaction.date).toLocaleTimeString([], {
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    })}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

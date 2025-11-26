@@ -10,12 +10,32 @@ import {AlertCircle, CheckCircle, Info, AlertTriangle, Wallet, TrendingUp, Trend
 
 interface MessageRendererProps {
     message: Message;
-    globalArgs?: Record<string, any>;
+    globalArgs?: Record<string, unknown>;
+    messageType: string | null;
     onAccountSelect?: (accountId: string) => void;
+    pendingRequestOptions?: Record<string, unknown> | null;
 }
 
-export const MessageRenderer: React.FC<MessageRendererProps> = ({message,globalArgs, onAccountSelect}) => {
-    switch (message.type) {
+export const MessageRenderer: React.FC<MessageRendererProps> = ({message,globalArgs, messageType, onAccountSelect, pendingRequestOptions}) => {
+    const [messageOptionsOrContentType, setMessageOptionsOrContentType] = React.useState<string>(message.type);
+
+    React.useEffect(() => {
+        console.log('Received message type', messageType);
+        console.log("pendingRequestOptions:", pendingRequestOptions);
+        console.log("globalArgs:", globalArgs);
+        console.log("message:", message);
+
+
+        if (pendingRequestOptions && messageType) {
+            setMessageOptionsOrContentType(messageType);
+        }
+
+        if(globalArgs?.pendingRequest?.isConfirmed){
+            setMessageOptionsOrContentType('confirm_transfer');
+        }
+    }, [message, globalArgs?.pendingRequest?.isConfirmed, messageType, pendingRequestOptions]);
+
+    switch (messageOptionsOrContentType) {
         case 'text':
             return (
                 <p className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 leading-relaxed">
@@ -23,9 +43,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({message,globalA
                 </p>
             );
 
-        case 'account_selection': {
-            const msg = message as Extract<Message, { type: 'account_selection' }>;
-            const accounts = msg.data?.accounts ?? [];
+        case 'get_user_accounts': {
+            const msg = message as Extract<Message, { type: 'get_user_accounts' }>;
+            const accounts = pendingRequestOptions.data?.accounts ?? [];
             if (!accounts.length) {
                 return (
                     <div
@@ -113,7 +133,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({message,globalA
 
         case 'transaction_list':
             console.log("Rendering transaction list message:", message);
-            if (!message.data?.transactions?.length) {
+            if (!pendingRequestOptions.data?.transactions?.length) {
                 return (
                     <div
                         className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700">
@@ -133,7 +153,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({message,globalA
                         {message.content ?? 'Son İşlemler'}
                     </p>
                     <ul className="divide-y divide-gray-200 dark:divide-gray-700 ">
-                        {message.data.transactions.map((tx) => (
+                        {pendingRequestOptions.data.transactions.map((tx) => (
                             <li key={tx.id}
                                 className="max-h-25 flex justify-between items-center py-5 group hover:bg-gray-50 dark:hover:bg-gray-800/50 -mx-2 px-2 rounded-lg transition-colors">
                                 <div className="flex items-center gap-1 flex-1 min-w-0">
@@ -197,8 +217,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({message,globalA
                 </div>
             );
 
-        case 'saved_account_selection': {
-            const accounts = message.data?.savedAccounts ?? [];
+        case 'get_saved_accounts_for_transfer':
+        case 'get_saved_accounts' : {
+            const accounts = pendingRequestOptions.data?.savedAccounts ?? [];
 
             if (!accounts.length) {
                 return (

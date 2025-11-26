@@ -1,6 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
-import Button from '@/app/components/ui/Button';
+import { Button }from '@/app/components/ui/Button';
 
 export const Hero: React.FC = () => {
     return (
