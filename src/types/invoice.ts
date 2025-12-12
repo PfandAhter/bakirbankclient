@@ -1,0 +1,1 @@
+export type InvoiceStatus = 'PENDING' | 'COMPLETED' | null;
