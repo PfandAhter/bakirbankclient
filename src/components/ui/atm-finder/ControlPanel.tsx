@@ -1,33 +1,15 @@
 'use client';
 
-import React, {useState} from 'react';
-
-// Define interfaces for the component props
-interface AtmLocation {
-    id: string;
-    name: string;
-    latitude: number;
-    longitude: number;
-    address: string;
-    status: string;
-    depositStatus: string;
-    withdrawStatus: string;
-    supportedBanks?: Array<{
-        id: string;
-        name: string;
-    }>;
-    isUserCreated?: boolean;
-}
+import React, { useState, memo } from 'react';
+import { Atm } from '@/src/types/atm-map';
 
 interface ControlPanelProps {
     viewTPS: boolean;
     isSendMoneyPanelOpen: boolean;
     isControlPanelDisabled: boolean;
-    showRetryModal: boolean;
     isControlPanelOpen: boolean;
-    searchLocation: () => void;
     cancelSelectedATM: () => void;
-    selectedAtm: AtmLocation | null;
+    selectedAtm: Atm | null;
     toggle3D: () => void;
     is3D: boolean;
     animationInProgress: boolean;
@@ -38,56 +20,46 @@ interface ControlPanelProps {
     setFilterStatus: (status: string) => void;
     statusOptions: string[];
     filterDepositStatus: string;
-    searchText: string,
-    setSearchText: (text: string) => void;
     setFilterDepositStatus: (status: string) => void;
     depositOptions: string[];
     filterWithdrawStatus: string;
     setFilterWithdrawStatus: (status: string) => void;
     withdrawOptions: string[];
-    changeRouteType: (type: string) => void;
-    selectedRouteType: string;
     toggleQRCodePanel: () => void;
     toggleSendMoneyPanel: () => void;
     sendButtonVisibility: boolean;
 }
 
 const ControlPanel = ({
-                          viewTPS,
-                          isSendMoneyPanelOpen,
-                          showRetryModal,
-                          isControlPanelOpen,
-                          isControlPanelDisabled,
-                          searchLocation,
-                          selectedAtm,
-                          toggle3D,
-                          is3D,
-                          animationInProgress,
-                          bankNames,
-                          searchText,
-                          setSearchText,
-                          setBankNames,
-                          bankOptions,
-                          filterStatus,
-                          setFilterStatus,
-                          cancelSelectedATM,
-                          statusOptions,
-                          filterDepositStatus,
-                          setFilterDepositStatus,
-                          depositOptions,
-                          filterWithdrawStatus,
-                          setFilterWithdrawStatus,
-                          withdrawOptions,
-                          changeRouteType,
-                          selectedRouteType,
-                          toggleSendMoneyPanel,
-                          toggleQRCodePanel,
-                          sendButtonVisibility,
-                      }: ControlPanelProps) => {
+    viewTPS,
+    isSendMoneyPanelOpen,
+    isControlPanelOpen,
+    isControlPanelDisabled,
+    selectedAtm,
+    toggle3D,
+    is3D,
+    animationInProgress,
+    bankNames,
+    setBankNames,
+    bankOptions,
+    filterStatus,
+    setFilterStatus,
+    cancelSelectedATM,
+    statusOptions,
+    filterDepositStatus,
+    setFilterDepositStatus,
+    depositOptions,
+    filterWithdrawStatus,
+    setFilterWithdrawStatus,
+    withdrawOptions,
+    toggleSendMoneyPanel,
+    toggleQRCodePanel,
+    sendButtonVisibility,
+}: ControlPanelProps) => {
 
     const [isQrCodePanelOpen, setIsQrCodePanelOpen] = useState(false);
 
-    if (viewTPS || isSendMoneyPanelOpen || isQrCodePanelOpen || showRetryModal || !isControlPanelOpen) return null;
+    if (viewTPS || isSendMoneyPanelOpen || isQrCodePanelOpen || !isControlPanelOpen) return null;
 
     if (!isControlPanelOpen) return null;
 
@@ -268,20 +240,20 @@ const ControlPanel = ({
                             <p><span className="font-semibold">Durum:</span>
                                 <span className={`ml-1 px-2 py-1 rounded-full text-xs font-medium
                                   ${selectedAtm.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                       {selectedAtm.status}
-                   </span>
+                                    {selectedAtm.status}
+                                </span>
                             </p>
                             <p><span className="font-semibold">Yatırma:</span>
                                 <span className={`ml-1 px-2 py-1 rounded-full text-xs font-medium
                                   ${selectedAtm.depositStatus === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                       {selectedAtm.depositStatus}
-                   </span>
+                                    {selectedAtm.depositStatus}
+                                </span>
                             </p>
                             <p><span className="font-semibold">Çekme:</span>
                                 <span className={`ml-1 px-2 py-1 rounded-full text-xs font-medium
                                   ${selectedAtm.withdrawStatus === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                       {selectedAtm.withdrawStatus}
-                   </span>
+                                    {selectedAtm.withdrawStatus}
+                                </span>
                             </p>
                         </div>
 
@@ -292,8 +264,8 @@ const ControlPanel = ({
                                     {selectedAtm.supportedBanks.map((bank) => (
                                         <span key={bank.id} className="px-2 py-1 bg-blue-100 text-blue-800
                                                          rounded-full text-xs font-medium">
-                                {bank.name}
-                            </span>
+                                            {bank.name}
+                                        </span>
                                     ))}
                                 </div>
                             </div>

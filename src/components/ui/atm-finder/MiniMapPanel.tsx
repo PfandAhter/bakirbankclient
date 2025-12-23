@@ -1,36 +1,13 @@
 import React, { useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
+import { Atm, Coordinates, RouteData } from '@/src/types/atm-map';
 import 'mapbox-gl/dist/mapbox-gl.css';
-
-interface RouteData {
-    geometry: {
-        coordinates: number[][];
-    };
-    duration?: number;
-    distance?: number;
-}
-
-interface Position {
-    latitude: number;
-    longitude: number;
-}
-
-interface Atm {
-    id: string;
-    name: string;
-    latitude: number;
-    longitude: number;
-    address: string;
-    status: string;
-    depositStatus: string;
-    withdrawStatus: string;
-}
 
 interface MiniMapProps {
     routeData: RouteData | null;
-    userPosition: Position | null;
+    userPosition: Coordinates | null;
     selectedAtm: Atm | null;
-    currentPosition: Position | null;
+    currentPosition: Coordinates | null;
     mapboxToken: string;
     processActive: boolean;
 }
@@ -42,7 +19,7 @@ const MiniMap: React.FC<MiniMapProps> = ({
                                              currentPosition,
                                              mapboxToken,
                                              processActive
-                                         }) => {
+                                         }:MiniMapProps) => {
     const miniMapRef = useRef<HTMLDivElement | null>(null);
     const miniMapInstanceRef = useRef<mapboxgl.Map | null>(null);
     const miniMapMarkersRef = useRef<mapboxgl.Marker[]>([]);

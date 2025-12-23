@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from "react";
-import { Input } from "@/app/components/ui/Input";
-import { Button } from "@/app/components/ui/Button";
-import { useAlert } from "@/app/lib/hooks/useAlert";
-import AlertBox from "@/components/modals/AlertBox";
+import { Input } from "@/src/components/ui/Input";
+import { Button } from "@/src/components/ui/Button";
+import { useAlert } from "@/src/hooks/notification/useAlert";
+import AlertBox from "@/src/components/ui/notification/AlertBox";
 import {InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator} from '@/components/ui/input-otp';
 
 interface ForgotPasswordFormProps {

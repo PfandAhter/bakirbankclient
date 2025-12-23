@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 //import {Button} from '@/components/ui/button';
 //import {Input} from '@/components/ui/input';
 //import Input  from '@/app/components/ui/Input';
-import { Button }  from '@/app/components/ui/Button';
-import {useAuthStore} from "@/app/lib/store/authStore";
+import { Button }  from '@/src/components/ui/Button';
+import {useAuthStore} from "@/src/hooks/login/authStore";
 //import { Card } from './components/ui/Card';
 import {Mail, Lock, Eye, EyeOff} from 'lucide-react';
 //import { CardContent } from './components/ui/CardContent';
@@ -84,74 +84,76 @@ export default function Login() {
                     <p className="text-gray-400">Hesabınıza giriş yapın</p>
                 </div>
 
-                {/* Email Input */}
-                <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">E-posta</label>
-                    <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"/>
-                        <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            className={`w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 text-white placeholder-gray-400 ${
-                                errors.email ? 'border-red-500 focus:ring-red-500' : ''
-                            }`}
-                            placeholder="E-posta adresinizi giriniz"
-                        />
+                <form onSubmit={handleSubmit} className="space-y-6"> {/*Handle submit kisminda e.preventDefault oldugu icin burada direkt handleSubmit yapabiliriz...*/}
+                    {/* Email Input */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">E-posta</label>
+                        <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"/>
+                            <input
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                className={`w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 text-white placeholder-gray-400 ${
+                                    errors.email ? 'border-red-500 focus:ring-red-500' : ''
+                                }`}
+                                placeholder="E-posta adresinizi giriniz"
+                            />
+                        </div>
+                        {errors.email && <p className="text-sm text-red-400 mt-1">{errors.email}</p>}
                     </div>
-                    {errors.email && <p className="text-sm text-red-400 mt-1">{errors.email}</p>}
-                </div>
 
-
-                {/* Password Input */}
-                <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Şifre</label>
-                    <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"/>
-                        <input
-                            type={showPassword ? 'text' : 'password'}
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            className={`w-full pl-10 pr-12 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 text-white placeholder-gray-400 ${
-                                errors.password ? 'border-red-500 focus:ring-red-500' : ''
-                            }`}
-                            placeholder="Şifrenizi giriniz"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
-                        >
-                            {showPassword ? <EyeOff className="h-5 w-5"/> : <Eye className="h-5 w-5"/>}
-                        </button>
+                    {/* Password Input */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Şifre</label>
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"/>
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                className={`w-full pl-10 pr-12 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 text-white placeholder-gray-400 ${
+                                    errors.password ? 'border-red-500 focus:ring-red-500' : ''
+                                }`}
+                                placeholder="Şifrenizi giriniz"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
+                            >
+                                {showPassword ? <EyeOff className="h-5 w-5"/> : <Eye className="h-5 w-5"/>}
+                            </button>
+                        </div>
+                        {errors.password && <p className="text-sm text-red-400 mt-1">{errors.password}</p>}
                     </div>
-                    {errors.password && <p className="text-sm text-red-400 mt-1">{errors.password}</p>}
-                </div>
 
-                {/* Remember me & forgot password */}
-                <div className="flex items-center justify-between mb-6">
-                    <label className="flex items-center">
-                        <input
-                            type="checkbox"
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-500 bg-gray-800 rounded"
-                        />
-                        <span className="ml-2 text-sm text-gray-400">Beni hatırla</span>
-                    </label>
-                    <a href="#" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-                        Şifremi unuttum
-                    </a>
-                </div>
+                    {/* Remember me & forgot password */}
+                    <div className="flex items-center justify-between mb-6">
+                        <label className="flex items-center">
+                            <input
+                                type="checkbox"
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-500 bg-gray-800 rounded"
+                            />
+                            <span className="ml-2 text-sm text-gray-400">Beni hatırla</span>
+                        </label>
+                        <a href="#" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                            Şifremi unuttum
+                        </a>
+                    </div>
 
-                {/* Error messages */}
-                {formError && <p className="text-sm text-red-400 mb-4 text-center">{formError}</p>}
-                {/*error && <p className="text-sm text-red-400 mb-4 text-center">{error}</p>*/}
+                    {/* Error messages */}
+                    {formError && <p className="text-sm text-red-400 mb-4 text-center">{formError}</p>}
+                    {/*error && <p className="text-sm text-red-400 mb-4 text-center">{error}</p>*/}
 
-                {/* Submit Button */}
-                {<Button variant={"primary"} size={"login"} ringColor={"black"} ringThickness={"4"} onClick={handleSubmit} loading={isLoading}>
-                    Giriş Yap
-                </Button>}
+                    {/* Submit Button */}
+                    {<Button type="submit" variant={"primary"} size={"login"} ringColor={"black"} ringThickness={"4"} loading={isLoading}>
+                        Giriş Yap
+                    </Button>}
+
+                </form>
 
                 {/*<button type="button"
                         className="w-full flex items-center justify-center px-4 py-3 border border-gray-600 bg-[#330099] rounded-lg hover:bg-[#191970] transition-colors text-gray-300"

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2, Info, Triangle } from "lucide-react";
-import type { AlertType } from "@/app/lib/hooks/useAlert";
+import type { AlertType } from "@/src/hooks/notification/useAlert";
 
 interface Props {
     type: AlertType;

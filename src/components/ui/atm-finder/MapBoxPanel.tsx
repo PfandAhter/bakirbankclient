@@ -1,53 +1,17 @@
 'use client';
 
-import {MutableRefObject, forwardRef, useImperativeHandle, useEffect, useRef, useState} from 'react';
+import { MutableRefObject, forwardRef, useImperativeHandle, useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import {useAtmLocations} from "@/app/lib/hooks/useAtmLocations";
-import {startTPSAnimation} from "@/app/lib/atm/startTpsAnimation";
-import {setViewStateAfterAnimationUtil} from "@/app/lib/atm/startTpsAnimation";
+import { startTPSAnimation } from "@/src/hooks/atm/startTpsAnimation";
+import { setViewStateAfterAnimationUtil } from "@/src/hooks/atm/startTpsAnimation";
+import { Atm, Coordinates, MapViewState, RouteData } from '@/src/types/atm-map';
 
-mapboxgl.accessToken =
-    '';
-
-interface Coordinates {
-    latitude: number;
-    longitude: number;
-}
-
-interface Atm {
-    id: string;
-    name: string;
-    latitude: number;
-    longitude: number;
-    address: string;
-    status: string;
-    depositStatus: string;
-    withdrawStatus: string;
-    supportedBanks?: Array<{
-        id: string;
-        name: string;
-    }>;
-    isUserCreated?: boolean;
-}
-
-interface ViewState {
-    latitude: number;
-    longitude: number;
-    zoom: number;
-    pitch: number;
-    bearing: number;
-}
-
-interface RouteData {
-    geometry: {
-        coordinates: number[][];
-    };
-    duration?: number;
-    distance?: number;
-}
+// Use environment variable for Mapbox token
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_API_KEY || '';
 
 interface MapCanvasProps {
+    atms: Atm[];  // ATMs passed from parent (filtered or all)
     routeType?: string;
     is3D?: boolean;
     isRouteCalculating?: boolean;
@@ -56,9 +20,9 @@ interface MapCanvasProps {
     setFollowingRoute: (value: boolean) => void;
     setAnimationProgress: (value: number) => void;
     setViewTPS: (value: boolean) => void;
-    setViewState: (view: ViewState) => void;
+    setViewState: (view: MapViewState) => void;
     routeData: RouteData | null;
-    viewState: ViewState;
+    viewState: MapViewState;
     startAnimation?: () => void;
     setIsSelectedAtmChanged?: (value: boolean) => void;
     onAtmSelect?: (atm: Atm) => void;
@@ -72,26 +36,28 @@ const MapCanvas = forwardRef<
     { handleStartAnimation: () => void },
     MapCanvasProps
 >(({
-       routeType,
-       is3D = false,
-       isRouteCalculating,
-       onAtmSelect,
-       animationRef,
-       setAnimationInProgress,
-       setAnimationProgress,
-       setFollowingRoute,
-       setViewTPS,
-       setViewState,
-       viewState,
-       startAnimation,
-       setIsSelectedAtmChanged,
-       onCameraPositionChange,
-       routeData,
-       shouldStopAnimation,
-       setUserPosition,
-       onAnimationStopped
-   }: MapCanvasProps, ref) => {
-    const {atmLocations, error} = useAtmLocations();
+    atms,  // Receive ATMs from props instead of calling hook internally
+    routeType,
+    is3D = false,
+    isRouteCalculating,
+    onAtmSelect,
+    animationRef,
+    setAnimationInProgress,
+    setAnimationProgress,
+    setFollowingRoute,
+    setViewTPS,
+    setViewState,
+    viewState,
+    startAnimation,
+    setIsSelectedAtmChanged,
+    onCameraPositionChange,
+    routeData,
+    shouldStopAnimation,
+    setUserPosition,
+    onAnimationStopped
+}: MapCanvasProps, ref) => {
+    // Map loaded state - gates ATM marker creation until map is ready
+    const [isMapLoaded, setIsMapLoaded] = useState(false);
     const mapContainerRef = useRef<HTMLDivElement | null>(null);
     const mapRef = useRef<mapboxgl.Map | null>(null);
     const [selectedAtm, setSelectedAtm] = useState<Atm | null>(null);
@@ -110,6 +76,8 @@ const MapCanvas = forwardRef<
         longitude: 32.501786
     });
     const markerElementRef = useRef<HTMLDivElement | null>(null);
+    // Track ATM markers for cleanup
+    const atmMarkersRef = useRef<mapboxgl.Marker[]>([]);
 
     const [isDragging, setIsDragging] = useState<boolean>(false);
 
@@ -247,65 +215,102 @@ const MapCanvas = forwardRef<
         }
     }, [isRouteCalculating]);*/
 
+    // ATM markers effect - handles marker creation and cleanup
     useEffect(() => {
-        if (!mapRef.current || atmLocations.length === 0) return;
+        // Debug logging to trace the issue
+        console.log('[ATM Effect] Running...', {
+            isMapLoaded,
+            hasMapRef: !!mapRef.current,
+            atmsLength: atms?.length ?? 'undefined'
+        });
 
-        atmLocations.forEach(atm => {
-            if(document.querySelector(`[data-atm-id="${atm.id}"]`)) return;
+        // 1. Harita yüklü değilse veya ATM verisi yoksa dur.
+        if (!isMapLoaded) {
+            console.log('[ATM Effect] Waiting for map to load...');
+            return;
+        }
+        if (!mapRef.current) {
+            console.log('[ATM Effect] Map ref not available');
+            return;
+        }
+        if (!atms || atms.length === 0) {
+            console.log('[ATM Effect] No ATMs to display');
+            return;
+        }
+
+        const map = mapRef.current;
+        console.log(`[ATM Effect] Adding ${atms.length} ATM markers to map...`);
+
+        // 2. Önceki markerları temizle (Duplicate olmaması için)
+        atmMarkersRef.current.forEach(marker => marker.remove());
+        atmMarkersRef.current = [];
+
+        // 3. Yeni markerları ekle
+        atms.forEach(atm => {
+            // Koordinat kontrolü (Hata almamak için)
+            if (!atm.latitude || !atm.longitude) return;
 
             const atmEl = document.createElement('div');
+            atmEl.className = 'atm-marker'; // CSS class eklemek isterseniz
             atmEl.style.width = '32px';
             atmEl.style.height = '32px';
             atmEl.style.display = 'flex';
             atmEl.style.justifyContent = 'center';
             atmEl.style.alignItems = 'center';
-            atmEl.style.fontSize = '20px';
+            atmEl.style.fontSize = '24px'; // İkonu biraz büyüttüm
             atmEl.style.cursor = 'pointer';
+            atmEl.style.zIndex = '10'; // Diğer layerların üstünde kalsın
             atmEl.textContent = '🏧';
-
-            // Marker'a data attribute ekle
             atmEl.setAttribute('data-atm-id', atm.id);
 
-            const marker = new mapboxgl.Marker({element: atmEl})
+            const marker = new mapboxgl.Marker({
+                element: atmEl,
+                anchor: 'center' // Markerın tam ortası koordinata denk gelsin
+            })
                 .setLngLat([atm.longitude, atm.latitude])
-                .addTo(mapRef.current!);
+                .addTo(map);
 
-            atmEl.addEventListener('click', () => {
-                const isDifferentAtm = selectedAtm?.id !== atm.id;
+            // Marker'ı referans dizisine sakla
+            atmMarkersRef.current.push(marker);
+
+            // Click Event
+            atmEl.addEventListener('click', (e) => {
+                e.stopPropagation(); // Haritaya tıklanmasını engelle
 
                 if (setIsSelectedAtmChanged) setIsSelectedAtmChanged(true);
 
-                if (isDifferentAtm) {
-                    clearRoute();
-                }
-
+                clearRoute();
                 setSelectedAtm(atm);
                 if (onAtmSelect) onAtmSelect(atm);
 
-                mapRef.current!.flyTo({center: [atm.longitude, atm.latitude], zoom: 16});
+                map.flyTo({
+                    center: [atm.longitude, atm.latitude],
+                    zoom: 16,
+                    essential: true
+                });
 
-                // Tüm marker’ları kontrol edip seçilen ATM’i kırmızı ve parlak yap
-                atmLocations.forEach(otherAtm => {
-                    const markerElement = document.querySelector(
-                        `[data-atm-id="${otherAtm.id}"]`
-                    ) as HTMLDivElement | null;
-                    if (!markerElement) return;
-
-                    if (otherAtm.id === atm.id) {
-                        // Seçilen ATM
-                        markerElement.style.color = 'red';
-                        markerElement.style.textShadow = '0 0 10px red';
-                        markerElement.style.transform = 'scale(1.5)';
+                // Seçili marker stil güncellemesi
+                document.querySelectorAll('[data-atm-id]').forEach(el => {
+                    const htmlEl = el as HTMLDivElement;
+                    if (el.getAttribute('data-atm-id') === atm.id) {
+                        htmlEl.style.filter = 'drop-shadow(0 0 5px rgba(0,0,255,0.7))';
+                        htmlEl.style.transition = 'all 0.3s ease';
                     } else {
-                        // Diğerleri normal
-                        markerElement.style.color = 'black';
-                        markerElement.style.textShadow = '';
-                        markerElement.style.transform = 'scale(1)';
+                        htmlEl.style.transform = 'scale(1)';
+                        htmlEl.style.filter = 'none';
                     }
                 });
             });
         });
-    }, [atmLocations,setIsSelectedAtmChanged, onAtmSelect]);
+
+        // Cleanup function
+        return () => {
+            atmMarkersRef.current.forEach(marker => marker.remove());
+            atmMarkersRef.current = [];
+        };
+
+        // BURASI ÇOK ÖNEMLİ: isMapLoaded buraya eklendi.
+    }, [atms, isMapLoaded, setIsSelectedAtmChanged, onAtmSelect]);
 
     useEffect(() => {
         if (!mapRef.current || !routeData?.geometry?.coordinates) return;
@@ -313,10 +318,10 @@ const MapCanvas = forwardRef<
         const map = mapRef.current;
 
         const routeGeoJson = {
-            type: "Feature",
+            type: "Feature" as const,
             properties: {},
             geometry: {
-                type: "LineString",
+                type: "LineString" as const,
                 coordinates: routeData.geometry.coordinates,
             },
         };
@@ -400,8 +405,8 @@ const MapCanvas = forwardRef<
     useEffect(() => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(position => {
-                const {latitude, longitude} = position.coords;
-                setMarkerCoordinates({latitude, longitude});
+                const { latitude, longitude } = position.coords;
+                setMarkerCoordinates({ latitude, longitude });
 
                 // Update map center if map exists
                 if (mapRef.current) {
@@ -421,12 +426,24 @@ const MapCanvas = forwardRef<
     useEffect(() => {
         if (mapRef.current) return;
 
-        mapRef.current = new mapboxgl.Map({
+        try {
+            (mapboxgl as any).telemetry = false;
+        } catch(e) {}
+
+        const map = new mapboxgl.Map({
             container: mapContainerRef.current as HTMLDivElement,
             style: 'mapbox://styles/mapbox/dark-v8',
             center: [markerCoordinates.longitude, markerCoordinates.latitude],
             zoom: 14,
             renderWorldCopies: false,
+        });
+
+        mapRef.current = map;
+
+        // Set isMapLoaded to true when map is ready - this gates ATM marker creation
+        map.on('load', () => {
+            console.log('Mapbox map loaded - ready for markers');
+            setIsMapLoaded(true);
         });
 
         // Custom marker elementi oluştur
@@ -459,7 +476,7 @@ const MapCanvas = forwardRef<
         markerRef.current = marker;
 
 
-        marker.on('dragstart', () => {
+        /*marker.on('dragstart', () => {
             setIsDragging(true);
             markerElement.className = 'w-10 h-10 cursor-grabbing';
 
@@ -470,11 +487,8 @@ const MapCanvas = forwardRef<
         });
 
         marker.on('drag', () => {
-            const lngLat = marker.getLngLat();
-            setMarkerCoordinates({
-                latitude: lngLat.lat,
-                longitude: lngLat.lng
-            });
+            // Only update marker visual position, don't trigger React re-renders
+            // This prevents the trembling effect
         });
 
         marker.on('dragend', () => {
@@ -496,7 +510,7 @@ const MapCanvas = forwardRef<
                 latitude: lngLat.lat,
                 longitude: lngLat.lng
             });
-        });
+        });*/
 
 
         return () => {
@@ -543,7 +557,7 @@ const MapCanvas = forwardRef<
             try {
                 console.log("Json verileri yükleniyor...");
 
-                const [points,parkAreas] = await Promise.all([
+                const [points, parkAreas] = await Promise.all([
                     fetch("/buildingIcons.json").then((res) => res.json()),
                     fetch("/parkAreas.json").then((res) => res.json())
                 ]);

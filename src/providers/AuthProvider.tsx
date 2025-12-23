@@ -1,10 +1,9 @@
 'use client';
 
 import React, {useEffect} from 'react';
-import { useAuthStore } from '@/app/lib/store/authStore';
+import { useAuthStore } from '@/src/hooks/login/authStore';
 import { RefreshCw } from 'lucide-react';
-import NotificationPopUpPanel from "@/app/components/ui/NotificationPopUpPanel";
-import {useNotificationStore} from "@/app/lib/store/notificationStore";
+import {useNotificationStore} from "@/src/hooks/notification/notificationStore";
 import {usePathname} from "next/navigation";
 
 interface AuthProviderProps {

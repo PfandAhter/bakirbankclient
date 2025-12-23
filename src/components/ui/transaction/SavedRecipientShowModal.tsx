@@ -1,15 +1,18 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { RefreshCw, Send, Plus, X, UserPlus, Building2, Tag } from "lucide-react";
+import { SavedRecipient } from "@/src/types/account";
 
-interface SavedRecipient {
-    id: string;
-    nickname: string;
-    accountIBAN: string;
-    firstName: string;
-    secondName?: string;
-    lastName: string;
+
+interface propsSavedRecipientPanel {
+    onRecipientSelect?: (r: SavedRecipient) => void;
+    showRecipientForm?: boolean;
+    setShowRecipientForm?: (v: boolean) => void;
+    setShowTransferPanel?: (v: boolean) => void;
+    savedRecipients: SavedRecipient[];
+    onRefresh: () => void;
+    isLoadingList: boolean;
 }
 
 function SavedRecipientsPanel({
@@ -17,18 +20,16 @@ function SavedRecipientsPanel({
                                   showRecipientForm: controlledShow,
                                   setShowRecipientForm: controlledSetShowRecipientForm,
                                   setShowTransferPanel: controlledSetShowTransferPanel,
-                              }: {
-    onRecipientSelect?: (r: SavedRecipient) => void;
-    showRecipientForm?: boolean;
-    setShowRecipientForm?: (v: boolean) => void;
-    setShowTransferPanel?: (v: boolean) => void;
-}) {
+                                  savedRecipients,
+                                  onRefresh,
+                                  isLoadingList
+                              }: propsSavedRecipientPanel) {
     const [internalShowRecipientForm, internalSetShowRecipientForm] = useState(false);
     const [internalShowTransferPanel, internalSetShowTransferPanel] = useState(false);
     const showRecipientForm = controlledShow ?? internalShowRecipientForm;
     const setShowRecipientForm = controlledSetShowRecipientForm ?? internalSetShowRecipientForm;
     const setShowTransferPanel = controlledSetShowTransferPanel ?? internalSetShowTransferPanel;
-    const [savedRecipients, setSavedRecipients] = useState<SavedRecipient[]>([]);
+
     const [showAddForm, setShowAddForm] = useState(false);
     const [loading, setLoading] = useState(false);
     const [ibanLoading, setIbanLoading] = useState(false);
@@ -40,24 +41,6 @@ function SavedRecipientsPanel({
         secondName: "",
         lastName: "",
     });
-
-    useEffect(() => {
-        fetchSavedRecipients();
-    }, []);
-
-    async function fetchSavedRecipients() {
-        try {
-            const res = await fetch("/api/account/saved/list", {
-                method: "POST",
-                credentials: "include",
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error("Failed to fetch");
-            setSavedRecipients(data);
-        } catch {
-            setSavedRecipients([]);
-        }
-    }
 
     async function fetchRecipientByIBAN(iban: string) {
         if (iban.length !== 26) return;
@@ -123,8 +106,7 @@ function SavedRecipientsPanel({
                 return;
             }
 
-            // Başarılı - listeyi yenile ve formu kapat
-            await fetchSavedRecipients();
+            onRefresh();
             setShowAddForm(false);
             setNewRecipient({
                 nickname: "",
@@ -143,7 +125,6 @@ function SavedRecipientsPanel({
 
     return (
         <div className="fixed bottom-8 right-8 z-[9999]">
-            {/* Toggle Button */}
             <button
                 onClick={() => setShowRecipientForm(!showRecipientForm)}
                 className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 px-5 py-3 rounded-full text-white font-semibold text-sm shadow-lg transition-all tracking-wide"
@@ -152,7 +133,6 @@ function SavedRecipientsPanel({
                 <span>Kayıtlı Alıcılar</span>
             </button>
 
-            {/* Açılan Panel */}
             {showRecipientForm && !showAddForm && (
                 <div className="absolute bottom-16 right-0 bg-[#0c0d13]/95 backdrop-blur-md z-[9999] border border-[#1e222d] rounded-2xl shadow-2xl p-5 w-80 transition-all transform scale-100 origin-bottom-right">
                     <div className="flex items-center justify-between mb-4">
@@ -161,7 +141,7 @@ function SavedRecipientsPanel({
                             Kayıtlı Alıcılar
                         </h3>
                         <button
-                            onClick={() => fetchSavedRecipients()}
+                            onClick={() => onRefresh()}
                             className="text-gray-400 hover:text-blue-400 transition-colors"
                             title="Yenile"
                         >
@@ -171,24 +151,19 @@ function SavedRecipientsPanel({
 
                     {savedRecipients.length === 0 ? (
                         <p className="text-gray-500 text-sm text-center py-3 font-normal">
-                            Henüz kayıtlı alıcı bulunmuyor.
+                            {isLoadingList ? 'Yükleniyor...' : 'Henüz kayıtlı alıcı bulunmuyor.'}
                         </p>
                     ) : (
                         <ul className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
                             {savedRecipients.map((rec) => (
-                                <li
-                                    key={rec.id}
-                                    className="flex justify-between items-center bg-[#1e293b]/40 border border-[#1e222d] hover:bg-[#1e293b]/70 rounded-lg px-4 py-3 transition-all"
-                                >
+                                <li key={rec.id} className="flex justify-between items-center bg-[#1e293b]/40 border border-[#1e222d] hover:bg-[#1e293b]/70 rounded-lg px-4 py-3 transition-all">
                                     <div>
                                         <p className="text-white text-sm font-semibold tracking-tight">{rec.nickname}</p>
                                         <p className="text-gray-300 text-xs font-normal">
                                             {[rec.firstName, rec.secondName, rec.lastName].filter(Boolean).join(" ")}
                                         </p>
                                         <p className="text-gray-500 text-xs font-normal mt-1">
-                                            {rec.accountIBAN
-                                                ? `${rec.accountIBAN.slice(0, 6)}...${rec.accountIBAN.slice(-4)}`
-                                                : "—"}
+                                            {rec.accountIBAN ? `${rec.accountIBAN.slice(0, 6)}...${rec.accountIBAN.slice(-4)}` : "—"}
                                         </p>
                                     </div>
                                     <button
@@ -281,7 +256,6 @@ function SavedRecipientsPanel({
                             )}
                         </div>
 
-                        {/* İsim (Otomatik Doldurulur) */}
                         <div>
                             <label className="flex items-center space-x-2 text-xs font-semibold text-gray-300 mb-1.5 tracking-wide">
                                 <span>Ad</span>
@@ -297,7 +271,6 @@ function SavedRecipientsPanel({
                             />
                         </div>
 
-                        {/* İkinci İsim (Opsiyonel) */}
                         <div>
                             <label className="flex items-center space-x-2 text-xs font-semibold text-gray-300 mb-1.5 tracking-wide">
                                 <span>İkinci Ad (Opsiyonel)</span>
@@ -312,7 +285,6 @@ function SavedRecipientsPanel({
                             />
                         </div>
 
-                        {/* Soyisim */}
                         <div>
                             <label className="flex items-center space-x-2 text-xs font-semibold text-gray-300 mb-1.5 tracking-wide">
                                 <span>Soyad</span>
@@ -328,7 +300,6 @@ function SavedRecipientsPanel({
                             />
                         </div>
 
-                        {/* Buttons */}
                         <div className="flex gap-2 pt-2">
                             <button
                                 type="button"
@@ -384,18 +355,20 @@ export default function SavedRecipientShowModal({
                                                     showRecipientForm,
                                                     setShowRecipientForm,
                                                     setShowTransferPanel,
-                                                }: {
-    onRecipientSelect?: (r: SavedRecipient) => void;
-    showRecipientForm?: boolean;
-    setShowRecipientForm?: (v: boolean) => void;
-    setShowTransferPanel?: (v: boolean) => void;
-}) {
+                                                    savedRecipients,
+                                                    onRefresh,
+                                                    isLoadingList
+                                                }: propsSavedRecipientPanel
+) {
     return (
         <SavedRecipientsPanel
             onRecipientSelect={onRecipientSelect}
             showRecipientForm={showRecipientForm}
             setShowTransferPanel={setShowTransferPanel}
             setShowRecipientForm={setShowRecipientForm}
+            savedRecipients={savedRecipients}
+            onRefresh={onRefresh}
+            isLoadingList={isLoadingList}
         />
     );
 }

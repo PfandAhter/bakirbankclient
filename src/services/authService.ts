@@ -4,7 +4,7 @@ import axios from 'axios';
 import {
     getAccessTokenFromSession,
     createUserSessionToken, deleteUserSessionToken
-} from '@/app/lib/store/cookieUtils';
+} from '@/src/hooks/login/cookieUtils';
 
 interface RegisterData {
     name: string;

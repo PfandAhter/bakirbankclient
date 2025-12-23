@@ -1,4 +1,4 @@
-import { useAuthStore } from '@/app/lib/store/authStore';
+import { useAuthStore } from '@/src/hooks/login/authStore';
 
 export const useAuth = () => {
     const store = useAuthStore();

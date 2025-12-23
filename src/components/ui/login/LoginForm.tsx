@@ -1,13 +1,13 @@
 'use client';
 
 import React, {useEffect, useState} from 'react';
-import {useAuth} from '@/app/lib/hooks/useAuth';
-import {Input} from '@/app/components/ui/Input';
-import {Button} from '@/app/components/ui/Button';
-import { useAlert } from "@/app/lib/hooks/useAlert";
-import AlertBox from "@/components/modals/AlertBox";
+import {useAuth} from '@/src/hooks/login/useAuth';
+import {Input} from '@/src/components/ui/Input';
+import {Button} from '@/src/components/ui/Button';
+import { useAlert } from "@/src/hooks/notification/useAlert";
+import AlertBox from "@/src/components/ui/notification/AlertBox";
 import {Mail, Lock, Eye, EyeOff, User} from 'lucide-react';
-import ForgotPasswordForm from "@/app/components/forms/auth/ForgotPasswordForm";
+import ForgotPasswordForm from "@/src/components/ui/login/ForgotPasswordForm";
 
 const LoginForm = ({
                        onSwitchToRegister,

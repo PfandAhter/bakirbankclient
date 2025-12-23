@@ -1,12 +1,12 @@
 import {Eye, EyeOff, Mail, Lock, User, Phone} from "lucide-react";
 import React, {useState} from "react";
-import {useAuth} from '@/app/lib/hooks/useAuth';
-import {Input} from '@/app/components/ui/Input';
-import {Button} from '@/app/components/ui/Button';
-import {useAlert} from "@/app/lib/hooks/useAlert";
-import AlertBox from "@/components/modals/AlertBox";
-import OTPVerificationModal from "@/app/components/OTPVerificationModal";
-import TermsAndPrivacyModal from '@/app/components/TermsAndPrivacyModal';
+import {useAuth} from '@/src/hooks/login/useAuth';
+import {Input} from '@/src/components/ui/Input';
+import {Button} from '@/src/components/ui/Button';
+import {useAlert} from "@/src/hooks/notification/useAlert";
+import AlertBox from "@/src/components/ui/notification/AlertBox";
+import OTPVerificationModal from "@/src/components/ui/register/OTPVerificationModal";
+import TermsAndPrivacyModal from '@/src/components/ui/register/TermsAndPrivacyModal';
 
 
 const RegisterForm = ({

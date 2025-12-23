@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import {login, register, logout, getCurrentUser, checkAuth} from '@/app/lib/api/services/authService';
+import {login, register, logout, getCurrentUser, checkAuth} from '@/src/services/authService';
 
 interface User {
     id: string;
