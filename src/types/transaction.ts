@@ -14,3 +14,13 @@ export interface Transaction {
     status: string;
     invoiceStatus?: InvoiceStatus;
 }
+
+export interface TransferData {
+    fromIBAN?: string;
+    toIBAN: string;
+    amount: string;
+    description: string;
+    toFirstName?: string;
+    toSecondName?: string;
+    toLastName?: string;
+}

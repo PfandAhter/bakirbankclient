@@ -1,10 +1,11 @@
 import type {Metadata} from 'next'
 import './globals.css'
-import {AuthProvider} from '@/src/providers/AuthProvider';
-import PopUpMap from "@/src/components/ui/atm-finder/PopUpMap";
-import {NotificationProvider} from "@/src/providers/NotificationProvider";
-import {MaintenanceProvider} from "@/src/providers/MaintenanceProvider";
-
+import { AuthProvider } from '@/src/providers/AuthProvider';
+import { PopUpMap } from "@/src/components/ui/atm-finder/PopUpMap";
+import { NotificationProvider } from "@/src/providers/NotificationProvider";
+import { MaintenanceProvider } from "@/src/providers/MaintenanceProvider";
+import { TransactionConfirmationModal } from "@/src/components/ui/transaction/TransactionAdditionalConfirmationModal";
+import { ConfirmationProvider } from "@/src/providers/ConfirmationProvider";
 
 export const metadata: Metadata = {
     title: 'BAKIRBANK A.Ş.',
@@ -25,12 +26,15 @@ export default function RootLayout({
         <html lang="tr">
         <body>
         <MaintenanceProvider>
-            <AuthProvider>
-                <NotificationProvider>
-                    {children}
-                    <PopUpMap />
-                </NotificationProvider>
-            </AuthProvider>
+            <ConfirmationProvider>
+                <AuthProvider>
+                    <NotificationProvider>
+                        {children}
+                        <PopUpMap />
+                        <TransactionConfirmationModal/>
+                    </NotificationProvider>
+                </AuthProvider>
+            </ConfirmationProvider>
         </MaintenanceProvider>
         </body>
         </html>
