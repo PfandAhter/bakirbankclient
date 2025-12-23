@@ -1,4 +1,4 @@
-import * as authService from '@/app/lib/api/services/authService';
+import * as authService from '@/src/services/authService';
 import { NextRequest} from 'next/server';
 import axios from 'axios';
 

@@ -1,13 +1,13 @@
 // src/components/chat/ChatWidget.tsx
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useInputAttachments } from '@/src/hooks/useInputAttachments';
 import { useWebSocket } from '@/src/hooks/useWebSocket';
 import { useChatWidget } from '@/src/hooks/useChatWidget';
 import { useChat } from '@/src/hooks/useChat';
-import { useAuth } from '@/app/lib/hooks/useAuth';
+import { useAuth } from '@/src/hooks/login/useAuth';
 import { InputAttachment, UserAccount, SavedAccount, ChatNotificationSendRequest } from '@/src/types/chat';
 import { FloatingChatButton } from './FloatingChatButton';
 import { ChatPanel } from './ChatPanel';
@@ -39,6 +39,13 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
         userId: user?.id,
         onMessageReceived: useCallback((notification: ChatNotificationSendRequest) => {
             console.log('Notification Received:', notification);
+
+            // Skip adding text message for 'qr' type - QR will be shown via qr-generated event
+            if (notification.type === 'qr') {
+                console.log('QR notification - waiting for qr-generated event');
+                return;
+            }
+
             addMessage({
                 id: `notif-${Date.now()}`,
                 role: 'assistant',
@@ -49,6 +56,28 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
             });
         }, [addMessage])
     });
+
+    // Listen for QR generated events from PopUpMap
+    useEffect(() => {
+        const handleQrGenerated = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            console.log('QR Generated event received:', detail);
+
+            if (detail?.qrUrl) {
+                addMessage({
+                    id: `qr-${Date.now()}`,
+                    role: 'assistant',
+                    content: detail.label || 'QR kodu hazır',
+                    timestamp: new Date(),
+                    type: 'qr_code',
+                    data: { qrUrl: detail.qrUrl, label: detail.label }
+                });
+            }
+        };
+
+        window.addEventListener('qr-generated', handleQrGenerated as EventListener);
+        return () => window.removeEventListener('qr-generated', handleQrGenerated as EventListener);
+    }, [addMessage]);
 
     const handleWidgetAction = useCallback((action: string, payload: any) => {
         if (action === 'account_selected') {

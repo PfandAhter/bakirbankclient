@@ -1,5 +1,5 @@
 import { Landmark } from 'lucide-react';
-import NotificationPanel from "@/app/components/atmui/NotificationPanel";
+import NotificationPanel from "@/src/components/ui/notification/NotificationPanel";
 
 interface HeaderProps {
     user: any;
