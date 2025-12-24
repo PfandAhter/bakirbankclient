@@ -1,6 +1,5 @@
 'use client';
 
-import { useAuth } from '@/app/lib/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import {
     User,
@@ -14,11 +13,14 @@ import {
     Wallet,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import NotificationPanel from '@/app/components/atmui/NotificationPanel';
-import ChatWidget from '@/app/components/ChatWidget';
+import NotificationPanel from '@/src/components/ui/notification/NotificationPanel';
+import { useAuth } from "@/src/hooks/login/useAuth";
+import { useChat } from "@/src/hooks/useChat";
+import { ChatWidget } from "@/src/components/ui/chat/ChatWidget";
 
 export default function HomePage() {
     const { user, isAuthenticated, logout, checkAuth } = useAuth();
+    const chat = useChat();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
 
@@ -70,7 +72,7 @@ export default function HomePage() {
         <div className="min-h-screen relative bg-[#0a0b0f] text-[#f8fafc] overflow-hidden">
             {/* subtle background */}
             <div
-                className="absolute inset-0 opacity-[0.04]"
+                className="absolute inset-0 opacity-[0.1]"
                 style={{
                     backgroundImage:
                         "url('/bakirbank-transparent.png')",
@@ -81,7 +83,10 @@ export default function HomePage() {
             />
 
             <div className="relative z-10">
-                {isAuthenticated && <ChatWidget />}
+
+                {isAuthenticated && (
+                    <ChatWidget />
+                )}
 
                 {/* HEADER */}
                 <header className="bg-[#0c0d13]/80 border-b border-[#1e222d] backdrop-blur-lg">

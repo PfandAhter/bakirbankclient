@@ -117,12 +117,21 @@ export async function register(userData: RegisterData) {
 
 export async function logout() {
     const headers = await getAuthHeaders();
-    try {
+    if(headers === null){
+        if(typeof window !== 'undefined') {
+            window.location.reload();
+        }
+    }
+    /*try {
         await axios.post(`${API_BASE_URL}/auth/logout`, {}, {headers});
     } catch (err) {
         console.error("Logout API error:", err);
-    }
+    }*/
     await deleteUserSessionToken();
+
+    if (typeof window !== 'undefined') {
+        window.location.reload();
+    }
 }
 
 
@@ -142,6 +151,10 @@ export async function getCurrentUser() {
         const res = await axios.post(`${API_BASE_URL}/account/api/v1/user/get/info`, {},{ headers, withCredentials: true });
         return res.data.user;
     } catch (err: any) {
+        console.log("Get current user error:", err);
+        //console.log("TEST ERRR RESPONSE:", err.response);
+        //console.log("TEST ERRR RESPONSE data:", err.response?.data);
+        //console.log("TEST ERRR RESPONSE data message:", err.response?.data?.message);
         if (err.response?.status === 401) {
             await deleteUserSessionToken();
         }

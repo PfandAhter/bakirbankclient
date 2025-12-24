@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAccessTokenFromSession } from '@/app/lib/store/cookieUtils';
-import { getCurrentUser } from '@/app/lib/api/services/authService';
+import { getAccessTokenFromSession } from '@/src/hooks/login/cookieUtils';
+import { getCurrentUser } from '@/src/services/authService';
 
 export async function GET() {
     try {

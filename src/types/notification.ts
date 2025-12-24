@@ -1,4 +1,4 @@
-export type NotificationType = 'success' | 'error' | 'warning' | 'info';
+export type NotificationType = 'success' | 'error' | 'warning' | 'info' | 'FORCE_LOGOUT' | 'CONFIRMATION_REQUIRED' | 'MAINTENANCE';
 
 export interface Notification {
     id: number;
@@ -8,4 +8,5 @@ export interface Notification {
     timestamp: string;
     isRead?: boolean;
     isDeleted?: boolean;
+    arguments?: Record<string, unknown>;
 }
