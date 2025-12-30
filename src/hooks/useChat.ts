@@ -261,7 +261,7 @@ export function useChat(): UseChatReturn {
             setMessages(prev => [...prev, {
                 id: `err-${Date.now()}`,
                 role: 'assistant',
-                content: 'Sorry, I encountered an error connecting to the bank services. Please try again.',
+                content: 'Üzgünüm, işleminizi şuan gerçekleştiremiyorum. Lütfen daha sonra tekrar deneyiniz.',
                 timestamp: new Date(),
                 type: 'text'
             }]);

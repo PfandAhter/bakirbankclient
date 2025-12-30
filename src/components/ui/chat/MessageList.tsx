@@ -111,10 +111,26 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, onWidgetActi
 
         const widget = renderWidget();
 
-        // If widget exists, show ONLY the widget (no text with raw data)
-        // If no widget, show text content
+        // If widget exists, show both the message text AND the widget
         if (widget) {
-            return widget;
+            // Check if there's actual text content to show (not just raw JSON data)
+            const hasTextContent = msg.content &&
+                !msg.content.startsWith('{') &&
+                !msg.content.startsWith('[') &&
+                msg.content.trim().length > 0;
+
+            return (
+                <div className="flex flex-col gap-3">
+                    {hasTextContent && (
+                        <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border-l-4 border-indigo-500 rounded-r-lg p-3">
+                            <p className="text-slate-200 text-sm leading-relaxed">
+                                {msg.content}
+                            </p>
+                        </div>
+                    )}
+                    {widget}
+                </div>
+            );
         }
 
         return (
