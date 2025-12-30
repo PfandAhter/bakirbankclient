@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import axios, { AxiosError } from 'axios';
 import * as authService from '@/src/services/authService';
 import { BaseResponse } from '@/src/types/response';
 

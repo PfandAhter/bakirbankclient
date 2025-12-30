@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logout } from '@/src/services/authService';
 import { BaseResponse } from '@/src/types/response';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     const requestId = crypto.randomUUID();
     const startTime = Date.now();
 

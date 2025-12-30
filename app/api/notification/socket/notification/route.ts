@@ -9,7 +9,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const NOTIFICATION_SERVER = API_BASE_URL + '/notification-websocket';
 
 // WebSocket proxy route
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     const requestId = crypto.randomUUID();
     const startTime = Date.now();
 

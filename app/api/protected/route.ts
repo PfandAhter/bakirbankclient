@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { BaseResponse } from '@/src/types/response';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     const requestId = crypto.randomUUID();
     const startTime = Date.now();
 

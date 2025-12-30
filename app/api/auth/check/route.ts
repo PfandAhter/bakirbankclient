@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAccessTokenFromSession } from '@/src/hooks/login/cookieUtils';
 import { getCurrentUser } from '@/src/services/authService';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
     const requestId = crypto.randomUUID();
     const startTime = Date.now();
 
