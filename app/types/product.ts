@@ -31,3 +31,10 @@ export interface FilterOptions {
     };
     ratings: number[];
 }
+
+export type FilterState = {
+    categories?: string[];
+    brands?: string[];
+    priceRange?: { min: number; max: number };
+    rating?: number[];
+};

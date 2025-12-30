@@ -1,5 +1,5 @@
 // startTPSAnimation.ts
-import {MutableRefObject} from "react";
+import { MutableRefObject } from "react";
 import mapboxgl from "mapbox-gl";
 
 export interface Coordinates {
@@ -32,25 +32,25 @@ interface StartTPSAnimationParams {
 }
 
 export const startTPSAnimation = ({
-                                      routeData,
-                                      viewState,
-                                      setViewState,
-                                      setViewTPS,
-                                      setFollowingRoute,
-                                      setAnimationProgress,
-                                      setAnimationProgressRef,
-                                      setAnimationInProgress,
-                                      setCameraPosition,
-                                      animationRef,
-                                      routeDataRef,
-                                      previousViewStateRef,
-                                      lastFrameTimeRef,
-                                      mapRef,
-                                      userMarkerRef,
-                                      userPosition,
-                                      shouldStopAnimation,
-                                      onAnimationStopped
-                                  }: StartTPSAnimationParams) => {
+    routeData,
+    viewState,
+    setViewState,
+    setViewTPS,
+    setFollowingRoute,
+    setAnimationProgress,
+    setAnimationProgressRef,
+    setAnimationInProgress,
+    setCameraPosition,
+    animationRef,
+    routeDataRef,
+    previousViewStateRef,
+    lastFrameTimeRef,
+    mapRef,
+    userMarkerRef,
+    userPosition,
+    shouldStopAnimation,
+    onAnimationStopped
+}: StartTPSAnimationParams) => {
 
     if (!routeData?.geometry?.coordinates || routeData.geometry.coordinates.length < 2) return;
 
@@ -77,7 +77,7 @@ export const startTPSAnimation = ({
 
     setViewTPS(true);
     setFollowingRoute(true);
-    previousViewStateRef.current = {...viewState};
+    previousViewStateRef.current = { ...viewState };
     setAnimationProgress(0);
     setAnimationInProgress(true);
     routeDataRef.current = routeData;
@@ -170,7 +170,7 @@ export const startTPSAnimation = ({
                         pitch: 60,
                         bearing: 30,
                         duration: 2000,
-                        zoom:16
+                        zoom: 16
                     });
             }
         }, 1000);
@@ -242,7 +242,7 @@ export const startTPSAnimation = ({
             bearing: smoothBearing
         };
 
-        setViewState(prev => {
+        setViewState((prev: any) => {
             if (prev.longitude === newViewState.longitude &&
                 prev.latitude === newViewState.latitude &&
                 prev.bearing === newViewState.bearing) {
@@ -272,22 +272,22 @@ export const startTPSAnimation = ({
 
     prepareCameraPosition(smoothBearing, interpolatedLng, interpolatedLat);
 
-    setTimeout(() =>{
+    setTimeout(() => {
         animationRef.current = requestAnimationFrame(animate);
-    },1000);
+    }, 1000);
 }
 
 export function setViewStateAfterAnimationUtil({
-                                                   setAnimationInProgress,
-                                                   setFollowingRoute,
-                                                   setViewTPS,
-                                                   userMarkerRef,
-                                                   userPosition,
-                                                   previousViewStateRef,
-                                                   setViewState,
-                                                   routeDataRef,
-                                                   mapRef
-                                               }: {
+    setAnimationInProgress,
+    setFollowingRoute,
+    setViewTPS,
+    userMarkerRef,
+    userPosition,
+    previousViewStateRef,
+    setViewState,
+    routeDataRef,
+    mapRef
+}: {
     setAnimationInProgress: (v: boolean) => void;
     setFollowingRoute: (v: boolean) => void;
     setViewTPS: (v: boolean) => void;

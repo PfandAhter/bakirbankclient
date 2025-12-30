@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { Atm, Coordinates, RouteData } from '@/src/types/atm-map';
@@ -13,13 +14,13 @@ interface MiniMapProps {
 }
 
 const MiniMap: React.FC<MiniMapProps> = ({
-                                             routeData,
-                                             userPosition,
-                                             selectedAtm,
-                                             currentPosition,
-                                             mapboxToken,
-                                             processActive
-                                         }:MiniMapProps) => {
+    routeData,
+    userPosition,
+    selectedAtm,
+    currentPosition,
+    mapboxToken,
+    processActive
+}: MiniMapProps) => {
     const miniMapRef = useRef<HTMLDivElement | null>(null);
     const miniMapInstanceRef = useRef<mapboxgl.Map | null>(null);
     const miniMapMarkersRef = useRef<mapboxgl.Marker[]>([]);

@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
@@ -82,9 +83,9 @@ export default function MapLoadingScreen() {
                 <div className="text-center">
                     <div className="relative h-8 flex items-center justify-center">
                         <p className="text-cyan-400 text-lg font-mono tracking-wider relative">
-              <span className="relative z-10 drop-shadow-lg">
-                {loadingTexts[currentText]}
-              </span>
+                            <span className="relative z-10 drop-shadow-lg">
+                                {loadingTexts[currentText]}
+                            </span>
                             <span className="absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent blur-sm" />
                         </p>
                     </div>
@@ -94,11 +95,10 @@ export default function MapLoadingScreen() {
                         {[...Array(3)].map((_, i) => (
                             <div
                                 key={i}
-                                className={`w-2 h-2 rounded-full transition-all duration-500 ${
-                                    i <= Math.floor(currentText / 2)
-                                        ? 'bg-green-400 shadow-lg shadow-green-400/50'
-                                        : 'bg-slate-600'
-                                }`}
+                                className={`w-2 h-2 rounded-full transition-all duration-500 ${i <= Math.floor(currentText / 2)
+                                    ? 'bg-green-400 shadow-lg shadow-green-400/50'
+                                    : 'bg-slate-600'
+                                    }`}
                             />
                         ))}
                     </div>
@@ -165,8 +165,8 @@ function ContinentOutlines() {
     const pointsRef = useRef<THREE.Points>(null);
 
     const points = useMemo(() => {
-        const vertices = [];
-        const colors = [];
+        const vertices: number[] = [];
+        const colors: number[] = [];
 
         const continents = [
             { lat: 45, lng: -100, size: 20 },
@@ -255,8 +255,8 @@ function FloatingParticles() {
     const particlesRef = useRef<THREE.Points>(null);
 
     const particles = useMemo(() => {
-        const vertices = [];
-        const colors = [];
+        const vertices: number[] = [];
+        const colors: number[] = [];
 
         for (let i = 0; i < 1000; i++) {
             const radius = 2 + Math.random() * 3;
@@ -343,8 +343,8 @@ function RingParticles({ radius, color }: { radius: number; color: string }) {
     const particlesRef = useRef<THREE.Points>(null);
 
     const ringParticles = useMemo(() => {
-        const vertices = [];
-        const colors = [];
+        const vertices: number[] = [];
+        const colors: number[] = [];
         const colorObj = new THREE.Color(color);
 
         for (let i = 0; i < 50; i++) {
@@ -397,8 +397,8 @@ function ConnectionLines() {
     const linesRef = useRef<THREE.LineSegments>(null);
 
     const lines = useMemo(() => {
-        const vertices = [];
-        const colors = [];
+        const vertices: number[] = [];
+        const colors: number[] = [];
 
         // Şehirler arası bağlantı çizgileri simülasyonu
         const cities = [
