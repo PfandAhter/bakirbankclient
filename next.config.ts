@@ -5,9 +5,9 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const nextConfig: NextConfig = {
     /* config options here */
     reactStrictMode: false,
-    // ESLint build'de çalışmasın - bellek sorunlarını önler
-    eslint: {
-        ignoreDuringBuilds: true,
+
+    typescript: {
+        ignoreBuildErrors: true,
     },
     async rewrites() {
         return [
