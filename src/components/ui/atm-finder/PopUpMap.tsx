@@ -9,7 +9,7 @@ import { uploadImageToImgBB } from '@/src/hooks/atm/useUploadImageToImgBB';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_API_KEY || 'pk.eyJ1IjoicGZhbmQwMCIsImEiOiJjbTlrMWV3eDYwYm1pMnZzYjVsdGJiYjllIn0.DMGe0r4wr1B7051y5Z5-Yw';
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_API_KEY;
 
 type PopUpMapProps = { atmSelected?: Atm };
 
