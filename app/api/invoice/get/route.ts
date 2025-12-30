@@ -21,14 +21,14 @@ export async function POST(request: NextRequest) {
             }, { status: 401 });
         }
 
-        const { transactionId } = await request.json();
+        const { invoiceId } = await request.json();
 
-        if (!transactionId) {
-            console.log(`[INVOICE_GET_PROXY][${requestId}] Validasyon hatası: TransactionId eksik.`);
+        if (!invoiceId) {
+            console.log(`[INVOICE_GET_PROXY][${requestId}] Validasyon hatası: Fatura bilgisi eksik.`);
             return NextResponse.json<BaseResponse>({
                 status: 'ERROR',
                 processCode: 'VALIDATION_ERR',
-                processMessage: 'Transaction ID gereklidir.'
+                processMessage: 'Dekont bilgisi alınamadı.'
             }, { status: 400 });
         }
 
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         console.log(`[INVOICE_GET_PROXY][${requestId}] Backend'e istek atılıyor: ${TARGET_URL}`);
 
         const response = await axios.post(TARGET_URL,
-            { id: transactionId },
+            { id: invoiceId },
             {
                 headers: authHeaders,
                 timeout: 15000

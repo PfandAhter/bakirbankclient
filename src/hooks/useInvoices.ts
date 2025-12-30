@@ -17,14 +17,14 @@ export const useInvoices = (
         return new Blob([byteArray], { type: contentType });
     };
 
-    const handleInvoiceClick = async (transactionId: string) => {
-        setLoadingInvoices(prev => ({ ...prev, [transactionId]: true }));
+    const handleInvoiceClick = async (invoiceId: string) => {
+        setLoadingInvoices(prev => ({ ...prev, [invoiceId]: true }));
         try {
             const response = await fetch('/api/invoice/get', {
                 method: 'POST',
                 credentials: "include",
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ transactionId }),
+                body: JSON.stringify({ invoiceId: invoiceId }),
             });
 
             const data = await response.json();
@@ -43,14 +43,14 @@ export const useInvoices = (
                 showAlert("success", "Dekont Hazır", "Yeni sekmede açıldı.");
 
                 setTransactions(prev => prev.map(t =>
-                    t.id === transactionId ? { ...t, invoiceStatus: 'COMPLETED' } : t
+                    t.id === invoiceId ? { ...t, invoiceStatus: 'COMPLETED' } : t
                 ));
             }
         } catch (err) {
             console.error("Invoice error:", err);
             showAlert("error", "Hata", "Dekont alınırken hata oluştu.");
         } finally {
-            setLoadingInvoices(prev => ({ ...prev, [transactionId]: false }));
+            setLoadingInvoices(prev => ({ ...prev, [invoiceId]: false }));
         }
     };
 
