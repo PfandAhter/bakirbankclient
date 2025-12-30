@@ -1,46 +1,70 @@
 // typescript
-import * as authService from '@/app/lib/api/services/authService';
-import { NextRequest } from 'next/server';
-import axios from 'axios';
+import { NextRequest, NextResponse } from 'next/server';
+import axios, { AxiosError } from 'axios';
+import * as authService from '@/src/services/authService';
+import { BaseResponse } from '@/src/types/response';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export async function GET(request: NextRequest) {
+    const requestId = crypto.randomUUID();
+    const { searchParams } = new URL(request.url);
+    const iban = searchParams.get('iban');
+
+    console.log(`[IBAN_CHECK_PROXY][${requestId}] Request başladı. IBAN: ${iban}`);
     try {
-        const url = new URL(request.url);
-        const iban = url.searchParams.get('iban');
         if (!iban) {
-            return new Response(JSON.stringify({ error: 'Missing iban query parameter' }), { status: 400 });
+            return NextResponse.json<BaseResponse>({
+                status: 'ERROR',
+                processCode: 'VALIDATION_ERR',
+                processMessage: 'IBAN parametresi zorunludur.'
+            }, { status: 400 });
         }
 
         const authHeaders = await authService.getAuthHeaders();
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-
         if (!authHeaders) {
-            return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+            return NextResponse.json<BaseResponse>({
+                status: 'ERROR',
+                processCode: 'AUTH_ERR',
+                processMessage: 'Yetkisiz erişim.'
+            }, { status: 401 });
         }
-
-        console.log("GET NAME BY IBAN REQUEST FOR IBAN: ", iban);
-
-        const response = await axios.get(
-            `${API_BASE_URL}/account/api/v1/account/get/user/by-iban`,
-            {
-                headers: authHeaders,
-                params: { iban },
-                withCredentials: true,
-                validateStatus: () => true
-            }
-        );
-
-        console.log("GET NAME BY IBAN RESPONSE: ", response.data);
-
-        if (response.status !== 200) {
-            return new Response(JSON.stringify(response.data ?? { message: response.statusText }), { status: response.status });
-        }
-
-        return new Response(JSON.stringify(response.data), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
+        const TARGET_URL = `${API_BASE_URL}/account/api/v1/account/get/user/by-iban`;
+        const response = await axios.get(TARGET_URL, {
+            headers: authHeaders,
+            params: { iban },
+            timeout: 10000
         });
-    } catch (err: any) {
-        return new Response(JSON.stringify({ error: err?.message || 'Internal server error' }), { status: 500 });
+
+        console.log(`[IBAN_CHECK_PROXY][${requestId}] Başarılı.`);
+        return NextResponse.json(response.data, { status: 200 });
+    } catch (error: unknown) {
+        let statusCode = 500;
+        let errorResponse: BaseResponse;
+
+        if (axios.isAxiosError(error)) {
+            const axiosError = error as AxiosError;
+            statusCode = axiosError.response?.status || 500;
+            const responseData = axiosError.response?.data as any;
+            console.error(`[IBAN_CHECK_PROXY][${requestId}] Backend Hatası:`, responseData);
+
+            if (responseData && (responseData.processCode || responseData.status)) {
+                errorResponse = responseData;
+            } else {
+                errorResponse = {
+                    status: 'ERROR',
+                    processCode: 'BACKEND_ERR',
+                    processMessage: 'IBAN sorgulanamadı.'
+                };
+            }
+        } else {
+            console.error(`[IBAN_CHECK_PROXY][${requestId}] Kritik Hata:`, error);
+            errorResponse = {
+                status: 'ERROR',
+                processCode: 'INTERNAL_ERR',
+                processMessage: 'Sistem hatası.'
+            };
+        }
+        return NextResponse.json(errorResponse, { status: statusCode });
     }
 }

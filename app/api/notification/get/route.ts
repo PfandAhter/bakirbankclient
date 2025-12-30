@@ -1,38 +1,68 @@
+import { NextRequest, NextResponse } from 'next/server';
+import axios, { AxiosError } from 'axios';
 import * as authService from '@/src/services/authService';
-import axios from 'axios';
+import { BaseResponse } from '@/src/types/response';
 
-export async function POST() {
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+export async function POST(request: NextRequest) {
+    const requestId = crypto.randomUUID();
+    const startTime = Date.now();
+
+    console.log(`[NOTIFICATION_GET_PROXY][${requestId}] Request başladı.`);
+
     try {
         const authHeaders = await authService.getAuthHeaders();
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-
         if (!authHeaders) {
-            return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+            return NextResponse.json<BaseResponse>({
+                status: 'ERROR',
+                processCode: 'AUTH_ERR',
+                processMessage: 'Oturum süresi dolmuş.'
+            }, { status: 401 });
         }
-        //const userId = await getUserId(authHeaders);
 
-        const response = await axios.post(`${API_BASE_URL}/notification/api/v1/notification/get`, { },{
-            headers: authHeaders
-        })
+        const TARGET_URL = `${API_BASE_URL}/notification/api/v1/notification/get`;
+        console.log(`[NOTIFICATION_GET_PROXY][${requestId}] Backend'e istek atılıyor: ${TARGET_URL}`);
 
-        if(response.status !== 200) {
-            const errorBody = await response.statusText;
-            return new Response(errorBody, { status: response.status });
+        const response = await axios.post(TARGET_URL, {}, {
+            headers: authHeaders,
+            timeout: 15000
+        });
+
+        const duration = Date.now() - startTime;
+        console.log(`[NOTIFICATION_GET_PROXY][${requestId}] Başarılı (${duration}ms).`);
+
+        return NextResponse.json(response.data.notifications, { status: 200 });
+
+    } catch (error: unknown) {
+        const duration = Date.now() - startTime;
+        let statusCode = 500;
+        let errorResponse: BaseResponse;
+
+        if (axios.isAxiosError(error)) {
+            const axiosError = error as AxiosError;
+            statusCode = axiosError.response?.status || 500;
+            const responseData = axiosError.response?.data as any;
+
+            console.error(`[NOTIFICATION_GET_PROXY][${requestId}] Backend Hatası (${statusCode}):`, responseData);
+
+            if (responseData && (responseData.processCode || responseData.status)) {
+                errorResponse = responseData;
+            } else {
+                errorResponse = {
+                    status: 'ERROR',
+                    processCode: 'BACKEND_ERR',
+                    processMessage: 'Bildirimler alınamadı.'
+                };
+            }
+        } else {
+            console.error(`[NOTIFICATION_GET_PROXY][${requestId}] Kritik Hata:`, error);
+            errorResponse = {
+                status: 'ERROR',
+                processCode: 'INTERNAL_ERR',
+                processMessage: 'Sistem hatası.'
+            };
         }
-        const data = response.data.notifications;
-
-        return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    } catch (err: any) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+        return NextResponse.json(errorResponse, { status: statusCode });
     }
-}
-
-
-async function getUserId(authHeaders: any) {
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-    const response = await axios.get(`${API_BASE_URL}/authentication/validate`, {
-        headers: authHeaders
-    });
-
-    return response.data.id;
 }

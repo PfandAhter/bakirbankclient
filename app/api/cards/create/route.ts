@@ -5,24 +5,13 @@ import { BaseResponse } from '@/src/types/response';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
     const requestId = crypto.randomUUID();
     const startTime = Date.now();
-    const { searchParams } = new URL(request.url);
-    const city = searchParams.get('city');
 
-    console.log(`[DISTRICT_LIST_PROXY][${requestId}] Request başladı. City: ${city}`);
+    console.log(`[CARD_CREATE_PROXY][${requestId}] Request başladı.`);
 
     try {
-        if (!city) {
-            console.log(`[DISTRICT_LIST_PROXY][${requestId}] Validasyon hatası: City eksik.`);
-            return NextResponse.json<BaseResponse>({
-                status: 'ERROR',
-                processCode: 'VALIDATION_ERR',
-                processMessage: 'City parametresi gereklidir.'
-            }, { status: 400 });
-        }
-
         const authHeaders = await authService.getAuthHeaders();
         if (!authHeaders) {
             return NextResponse.json<BaseResponse>({
@@ -32,19 +21,21 @@ export async function GET(request: NextRequest) {
             }, { status: 401 });
         }
 
-        const TARGET_URL = `${API_BASE_URL}/account/api/v1/branch/districts`;
-        console.log(`[DISTRICT_LIST_PROXY][${requestId}] Backend'e istek atılıyor: ${TARGET_URL}`);
+        const body = await request.json();
+        const TARGET_URL = `${API_BASE_URL}/account/api/v1/card/create`;
 
-        const response = await axios.get(TARGET_URL, {
-            params: { city },
+        console.log(`[CARD_CREATE_PROXY][${requestId}] Backend'e istek atılıyor: ${TARGET_URL}`);
+
+        const response = await axios.post(TARGET_URL, body, {
             headers: authHeaders,
-            timeout: 15000
+            timeout: 20000
         });
 
         const duration = Date.now() - startTime;
-        console.log(`[DISTRICT_LIST_PROXY][${requestId}] Başarılı (${duration}ms).`);
+        console.log(`[CARD_CREATE_PROXY][${requestId}] Başarılı. Süre: ${duration}ms.`);
 
-        return NextResponse.json(response.data.districts, { status: 200 });
+        // Backend 201 dönüyorsa biz de 201 dönüyoruz
+        return NextResponse.json(response.data, { status: 201 });
 
     } catch (error: unknown) {
         const duration = Date.now() - startTime;
@@ -56,25 +47,28 @@ export async function GET(request: NextRequest) {
             statusCode = axiosError.response?.status || 500;
             const responseData = axiosError.response?.data as any;
 
-            console.error(`[DISTRICT_LIST_PROXY][${requestId}] Backend Hatası (${statusCode}):`, responseData);
+            console.error(`[CARD_CREATE_PROXY][${requestId}] Backend Hatası (${statusCode}):`, responseData);
 
+            // Backend'den gelen standart hatayı koruyoruz
             if (responseData && (responseData.processCode || responseData.status)) {
                 errorResponse = responseData;
             } else {
+                // Standart dışı durumlar için
                 errorResponse = {
                     status: 'ERROR',
                     processCode: 'BACKEND_ERR',
-                    processMessage: 'İlçeler listelenemedi.'
+                    processMessage: 'Kart oluşturulurken sunucu hatası oluştu.'
                 };
             }
         } else {
-            console.error(`[DISTRICT_LIST_PROXY][${requestId}] Kritik Hata:`, error);
+            console.error(`[CARD_CREATE_PROXY][${requestId}] Kritik Hata:`, error);
             errorResponse = {
                 status: 'ERROR',
                 processCode: 'INTERNAL_ERR',
-                processMessage: 'Sistem hatası.'
+                processMessage: 'Sistem hatası oluştu.'
             };
         }
+
         return NextResponse.json(errorResponse, { status: statusCode });
     }
 }

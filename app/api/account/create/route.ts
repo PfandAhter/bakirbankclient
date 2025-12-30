@@ -1,65 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as authService from '@/app/lib/api/services/authService';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import * as authService from '@/src/services/authService';
+import { BaseResponse } from '@/src/types/response';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export async function POST(request: NextRequest) {
-    try {
-        // Frontend'den gelen body verisini al
-        const body = await request.json();
+    const requestId = crypto.randomUUID();
+    const startTime = Date.now();
 
-        // Auth cookie’yi HttpOnly cookie’den al
+    console.log(`[ACCOUNT_CREATE_PROXY][${requestId}] Request başladı.`);
+
+    try {
         const authHeaders = await authService.getAuthHeaders();
         if (!authHeaders) {
-            return NextResponse.json(
-                { message: "Unauthorized: No access token provided" },
-                { status: 401 }
-            );
+            return NextResponse.json<BaseResponse>({
+                status: 'ERROR',
+                processCode: 'AUTH_ERR',
+                processMessage: 'Oturum süresi dolmuş.'
+            }, { status: 401 });
         }
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
-        const response = axios.post(`${API_BASE_URL}/account/api/v1/account/create`, body,{
-            headers: authHeaders
+        const body = await request.json();
+        const TARGET_URL = `${API_BASE_URL}/account/api/v1/account/create`;
+        console.log(`[ACCOUNT_CREATE_PROXY][${requestId}] Backend'e istek atılıyor: ${TARGET_URL}`);
+        const response = await axios.post(TARGET_URL, body, {
+            headers: authHeaders,
+            timeout: 20000
         });
+        const duration = Date.now() - startTime;
+        console.log(`[ACCOUNT_CREATE_PROXY][${requestId}] Başarılı (${duration}ms).`);
 
-        if(response.status !== 200){
-            const errorBody = await response.statusText;
-            return new Response(errorBody, { status: response.status });
-        }
+        return NextResponse.json(response.data, { status: 200 });
+    } catch (error: unknown) {
+        const duration = Date.now() - startTime;
+        let statusCode = 500;
+        let errorResponse: BaseResponse;
 
-        // Backend’e istek at
-        /*const backendResponse = await fetch(
-            `${process.env.API_BASE_URL}/account/api/v1/account/create`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${accessToken}`,
-                },
-                body: JSON.stringify(body),
+        if (axios.isAxiosError(error)) {
+            const axiosError = error as AxiosError;
+            statusCode = axiosError.response?.status || 500;
+            const responseData = axiosError.response?.data as any;
+
+            console.error(`[ACCOUNT_CREATE_PROXY][${requestId}] Backend Hatası (${statusCode}):`, responseData);
+
+            if (responseData && (responseData.processCode || responseData.status)) {
+                errorResponse = responseData;
+            } else {
+                errorResponse = {
+                    status: 'ERROR',
+                    processCode: 'BACKEND_ERR',
+                    processMessage: 'Hesap oluşturulurken sunucu hatası.'
+                };
             }
-        );*/
-
-        // Backend'den gelen cevabı oku
-        const data = await response.json();
-
-        // Backend hata döndürdüyse yakala
-        if (!response.ok) {
-            return NextResponse.json(
-                {
-                    message: data.message || "Account creation failed",
-                    status: response.status,
-                },
-                { status: response.status }
-            );
+        } else {
+            console.error(`[ACCOUNT_CREATE_PROXY][${requestId}] Kritik Hata:`, error);
+            errorResponse = {
+                status: 'ERROR',
+                processCode: 'INTERNAL_ERR',
+                processMessage: 'Sistem hatası.'
+            };
         }
-
-        // Başarılı cevap
-        return NextResponse.json(data, { status: 200 });
-    } catch (error) {
-        console.error("Account creation route error:", error);
-        return NextResponse.json(
-            { message: "Internal Server Error" },
-            { status: 500 }
-        );
+        return NextResponse.json(errorResponse, { status: statusCode });
     }
 }

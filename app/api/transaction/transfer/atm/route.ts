@@ -1,30 +1,22 @@
-import { NextRequest, NextResponse } from 'next/server';
+// app/api/transaction/transfer/atm/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import axios, { AxiosError } from 'axios';
 import * as authService from '@/src/services/authService';
 import { BaseResponse } from '@/src/types/response';
+import { TransferMoneyATMRequest } from "@/src/types/transaction";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
     const requestId = crypto.randomUUID();
     const startTime = Date.now();
-    const { searchParams } = new URL(request.url);
-    const city = searchParams.get('city');
 
-    console.log(`[DISTRICT_LIST_PROXY][${requestId}] Request başladı. City: ${city}`);
+    console.log(`[ATM_TRANSFER_PROXY][${requestId}] Request başladı.`);
 
     try {
-        if (!city) {
-            console.log(`[DISTRICT_LIST_PROXY][${requestId}] Validasyon hatası: City eksik.`);
-            return NextResponse.json<BaseResponse>({
-                status: 'ERROR',
-                processCode: 'VALIDATION_ERR',
-                processMessage: 'City parametresi gereklidir.'
-            }, { status: 400 });
-        }
-
         const authHeaders = await authService.getAuthHeaders();
         if (!authHeaders) {
+            console.warn(`[ATM_TRANSFER_PROXY][${requestId}] Auth headers alınamadı.`);
             return NextResponse.json<BaseResponse>({
                 status: 'ERROR',
                 processCode: 'AUTH_ERR',
@@ -32,19 +24,28 @@ export async function GET(request: NextRequest) {
             }, { status: 401 });
         }
 
-        const TARGET_URL = `${API_BASE_URL}/account/api/v1/branch/districts`;
-        console.log(`[DISTRICT_LIST_PROXY][${requestId}] Backend'e istek atılıyor: ${TARGET_URL}`);
+        const body: TransferMoneyATMRequest = await request.json();
 
-        const response = await axios.get(TARGET_URL, {
-            params: { city },
+        console.log(`[ATM_TRANSFER_PROXY][${requestId}] Request body:`, {
+            atmId: body.atmId,
+            senderIban: body.senderIban?.slice(-4),
+            receiverIban: body.receiverIban?.slice(-4),
+            receiverTckn: body.receiverTckn ? '***' + body.receiverTckn.slice(-4) : undefined,
+            amount: body.amount
+        });
+
+        const TARGET_URL = `${API_BASE_URL}/transaction/api/v1/transaction/transfer/atm`;
+        console.log(`[ATM_TRANSFER_PROXY][${requestId}] Backend'e istek atılıyor: ${TARGET_URL}`);
+
+        const response = await axios.post(TARGET_URL, body, {
             headers: authHeaders,
-            timeout: 15000
+            timeout: 30000
         });
 
         const duration = Date.now() - startTime;
-        console.log(`[DISTRICT_LIST_PROXY][${requestId}] Başarılı (${duration}ms).`);
+        console.log(`[ATM_TRANSFER_PROXY][${requestId}] Başarılı (${duration}ms).`);
 
-        return NextResponse.json(response.data.districts, { status: 200 });
+        return NextResponse.json(response.data, { status: 200 });
 
     } catch (error: unknown) {
         const duration = Date.now() - startTime;
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
             statusCode = axiosError.response?.status || 500;
             const responseData = axiosError.response?.data as any;
 
-            console.error(`[DISTRICT_LIST_PROXY][${requestId}] Backend Hatası (${statusCode}):`, responseData);
+            console.error(`[ATM_TRANSFER_PROXY][${requestId}] Backend Hatası (${statusCode}) (${duration}ms):`, responseData);
 
             if (responseData && (responseData.processCode || responseData.status)) {
                 errorResponse = responseData;
@@ -64,17 +65,18 @@ export async function GET(request: NextRequest) {
                 errorResponse = {
                     status: 'ERROR',
                     processCode: 'BACKEND_ERR',
-                    processMessage: 'İlçeler listelenemedi.'
+                    processMessage: 'Transfer işlemi sırasında sunucu hatası oluştu.'
                 };
             }
         } else {
-            console.error(`[DISTRICT_LIST_PROXY][${requestId}] Kritik Hata:`, error);
+            console.error(`[ATM_TRANSFER_PROXY][${requestId}] Kritik Hata (${duration}ms):`, error);
             errorResponse = {
                 status: 'ERROR',
                 processCode: 'INTERNAL_ERR',
-                processMessage: 'Sistem hatası.'
+                processMessage: 'Sistem hatası oluştu.'
             };
         }
+
         return NextResponse.json(errorResponse, { status: statusCode });
     }
 }

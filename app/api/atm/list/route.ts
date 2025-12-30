@@ -1,4 +1,4 @@
-import * as authService from '@/app/lib/api/services/authService';
+import * as authService from '@/src/services/authService';
 import { NextRequest, NextResponse } from 'next/server';
 import axios, { AxiosError } from 'axios';
 
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Oturum süresi dolmuş veya yetkisiz erişim.' }, { status: 401 });
         }
 
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
         const TARGET_URL = `${API_BASE_URL}/atm/api/v1/atm/get`;
 
         console.log(`[ATM_PROXY][${requestId}] Backend'e istek atılıyor: ${TARGET_URL}`);

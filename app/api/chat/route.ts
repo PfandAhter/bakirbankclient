@@ -1,9 +1,9 @@
 // app/api/chat/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import * as authService from '@/app/lib/api/services/authService';
+import * as authService from '@/src/services/authService';
 import axios, { AxiosError } from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface ChatRequestBody {
     sessionId: string;
@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
 
         const duration = Date.now() - startTime;
         console.log(`[CHAT_PROXY][${requestId}] Başarılı. Süre: ${duration}ms. Status: ${response.status}`);
+        console.log(`[CHAT_PROXY][${requestId}] Response data:`, JSON.stringify(response.data, null, 2)); // response.data.response.text
 
         return NextResponse.json(response.data, { status: 200 });
     } catch (error: unknown) {

@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import * as authService from '@/src/services/authService';
-
+import { BaseResponse } from '@/src/types/response';
 
 interface RegisterData {
     name: string;
@@ -10,30 +10,41 @@ interface RegisterData {
     gsm: string;
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+    const requestId = crypto.randomUUID();
+    const startTime = Date.now();
+
+    console.log(`[AUTH_SIGNUP_PROXY][${requestId}] Request başladı.`);
+
     try {
         const body: RegisterData = await request.json();
 
         if (!body.name || !body.email || !body.password || !body.confirmPassword || !body.gsm) {
-            return NextResponse.json(
-                { success: false, message: "Tüm alanlar zorunludur" },
-                { status: 400 }
-            );
+            console.log(`[AUTH_SIGNUP_PROXY][${requestId}] Validasyon hatası: Eksik alanlar.`);
+            return NextResponse.json<BaseResponse>({
+                status: 'ERROR',
+                processCode: 'VALIDATION_ERR',
+                processMessage: 'Tüm alanlar zorunludur.'
+            }, { status: 400 });
         }
 
         const response = await authService.register(body);
+        const duration = Date.now() - startTime;
+        console.log(`[AUTH_SIGNUP_PROXY][${requestId}] Başarılı (${duration}ms).`);
 
-        console.log("Sign-up route.ts response log: ", response);
+        return NextResponse.json({
+            success: true,
+            message: response.processMessage || "Kayıt başarılı"
+        }, { status: 200 });
 
-        return NextResponse.json(
-            { success: true, message: response.processMessage || "Kayıt başarılı" },
-            { status: 200 }
-        );
-    } catch (error) {
-        console.error("API Gateway Error:", error);
-        return NextResponse.json(
-            { success: false, message: "Sunucuya ulaşılamadı" },
-            { status: 500 }
-        );
+    } catch (error: any) {
+        const duration = Date.now() - startTime;
+        console.error(`[AUTH_SIGNUP_PROXY][${requestId}] Hata (${duration}ms):`, error.message);
+
+        return NextResponse.json<BaseResponse>({
+            status: 'ERROR',
+            processCode: 'REGISTER_ERR',
+            processMessage: error.message || 'Sunucuya ulaşılamadı.'
+        }, { status: 500 });
     }
 }

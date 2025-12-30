@@ -1,35 +1,81 @@
-import * as authService from '@/app/lib/api/services/authService';
-import axios from 'axios';
-import {NextRequest} from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
+import axios, { AxiosError } from 'axios';
+import * as authService from '@/src/services/authService';
+import { BaseResponse } from '@/src/types/response';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export async function POST(request: NextRequest) {
+    const requestId = crypto.randomUUID();
+    const startTime = Date.now();
+
+    console.log(`[INVOICE_GET_PROXY][${requestId}] Request başladı.`);
+
     try {
         const authHeaders = await authService.getAuthHeaders();
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+        if (!authHeaders) {
+            return NextResponse.json<BaseResponse>({
+                status: 'ERROR',
+                processCode: 'AUTH_ERR',
+                processMessage: 'Oturum süresi dolmuş.'
+            }, { status: 401 });
+        }
+
         const { transactionId } = await request.json();
 
-        if (!authHeaders) {
-            return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+        if (!transactionId) {
+            console.log(`[INVOICE_GET_PROXY][${requestId}] Validasyon hatası: TransactionId eksik.`);
+            return NextResponse.json<BaseResponse>({
+                status: 'ERROR',
+                processCode: 'VALIDATION_ERR',
+                processMessage: 'Transaction ID gereklidir.'
+            }, { status: 400 });
         }
 
-        if(!transactionId){
-            return new Response();//todo: handle this.
+        const TARGET_URL = `${API_BASE_URL}/invoice/api/invoices/get/v2`;
+        console.log(`[INVOICE_GET_PROXY][${requestId}] Backend'e istek atılıyor: ${TARGET_URL}`);
+
+        const response = await axios.post(TARGET_URL,
+            { id: transactionId },
+            {
+                headers: authHeaders,
+                timeout: 15000
+            });
+
+        const duration = Date.now() - startTime;
+        console.log(`[INVOICE_GET_PROXY][${requestId}] Başarılı (${duration}ms).`);
+
+        return NextResponse.json(response.data.pdf, { status: 200 });
+
+    } catch (error: unknown) {
+        const duration = Date.now() - startTime;
+        let statusCode = 500;
+        let errorResponse: BaseResponse;
+
+        if (axios.isAxiosError(error)) {
+            const axiosError = error as AxiosError;
+            statusCode = axiosError.response?.status || 500;
+            const responseData = axiosError.response?.data as any;
+
+            console.error(`[INVOICE_GET_PROXY][${requestId}] Backend Hatası (${statusCode}):`, responseData);
+
+            if (responseData && (responseData.processCode || responseData.status)) {
+                errorResponse = responseData;
+            } else {
+                errorResponse = {
+                    status: 'ERROR',
+                    processCode: 'BACKEND_ERR',
+                    processMessage: 'Fatura alınamadı.'
+                };
+            }
+        } else {
+            console.error(`[INVOICE_GET_PROXY][${requestId}] Kritik Hata:`, error);
+            errorResponse = {
+                status: 'ERROR',
+                processCode: 'INTERNAL_ERR',
+                processMessage: 'Sistem hatası.'
+            };
         }
-
-        const responsev2 = await axios.post(`${API_BASE_URL}/invoice/api/invoices/get/v2`,
-            {id: transactionId},{
-            headers: authHeaders
-        });
-
-        if(responsev2.status !== 200) {
-            const errorBody = await responsev2.statusText;
-            return new Response(errorBody, { status: responsev2.status });
-            //return new Response(JSON.stringify({ error: 'Failed to fetch accounts' }), { status: responsev2.status });
-        }
-
-        const data = responsev2.data.pdf;
-        return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    } catch (err: any) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+        return NextResponse.json(errorResponse, { status: statusCode });
     }
 }

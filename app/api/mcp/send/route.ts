@@ -1,49 +1,70 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as authService from '@/app/lib/api/services/authService';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import * as authService from '@/src/services/authService';
+import { BaseResponse } from '@/src/types/response';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export async function POST(request: NextRequest) {
-    try {
-        const body = await request.json();
-        const authHeaders = await authService.getAuthHeaders();
+    const requestId = crypto.randomUUID();
+    const startTime = Date.now();
 
+    console.log(`[MCP_SEND_PROXY][${requestId}] Request başladı.`);
+
+    try {
+        const authHeaders = await authService.getAuthHeaders();
         if (!authHeaders) {
-            return NextResponse.json(
-                { message: "Unauthorized: No access token" },
-                { status: 401 }
-            );
+            return NextResponse.json<BaseResponse>({
+                status: 'ERROR',
+                processCode: 'AUTH_ERR',
+                processMessage: 'Oturum süresi dolmuş.'
+            }, { status: 401 });
         }
 
-        console.log("MCP SEND BODY: ", body);
+        const body = await request.json();
 
-        const response = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/mcpserver/v1/api/mcp/process`,
-            body,
-            { headers: authHeaders }
-        );
+        const TARGET_URL = `${API_BASE_URL}/mcpserver/v1/api/mcp/process`;
+        console.log(`[MCP_SEND_PROXY][${requestId}] Backend'e istek atılıyor: ${TARGET_URL}`);
 
+        const response = await axios.post(TARGET_URL, body, {
+            headers: authHeaders,
+            timeout: 30000
+        });
+
+        const duration = Date.now() - startTime;
+        console.log(`[MCP_SEND_PROXY][${requestId}] Başarılı (${duration}ms).`);
 
         return NextResponse.json(response.data, { status: 200 });
-    } catch (error: any) {
-        console.log("ALINAN HATA WHEN TRYING TO SEND MESSAGE MCP SERVER: ",error);
 
-        console.error("ERROR OBJECT: ", error.response.data.processMessage);
+    } catch (error: unknown) {
+        const duration = Date.now() - startTime;
+        let statusCode = 500;
+        let errorResponse: BaseResponse;
 
-        // BaseResponse varsa direkt dön
-        if (error.response && error.response.data) {
-            return NextResponse.json(error.response.data, {
-                status: error.response.status,
-            });
+        if (axios.isAxiosError(error)) {
+            const axiosError = error as AxiosError;
+            statusCode = axiosError.response?.status || 500;
+            const responseData = axiosError.response?.data as any;
+
+            console.error(`[MCP_SEND_PROXY][${requestId}] Backend Hatası (${statusCode}):`, responseData);
+
+            if (responseData && (responseData.processCode || responseData.status)) {
+                errorResponse = responseData;
+            } else {
+                errorResponse = {
+                    status: 'ERROR',
+                    processCode: 'BACKEND_ERR',
+                    processMessage: 'MCP mesaj gönderimi başarısız.'
+                };
+            }
+        } else {
+            console.error(`[MCP_SEND_PROXY][${requestId}] Kritik Hata:`, error);
+            errorResponse = {
+                status: 'ERROR',
+                processCode: 'INTERNAL_ERR',
+                processMessage: 'Sistem hatası.'
+            };
         }
-
-        // Diğer hatalar
-        return NextResponse.json(
-            {
-                status: "FAILED",
-                processCode: "SERVER ERROR",
-                processMessage: error.response.data.processMessage,
-            },
-            { status: 500 }
-        );
+        return NextResponse.json(errorResponse, { status: statusCode });
     }
 }

@@ -1,59 +1,74 @@
 import { NextRequest, NextResponse } from "next/server";
+import axios, { AxiosError } from 'axios';
 import * as authService from '@/src/services/authService';
-import axios from "axios";
+import { BaseResponse } from '@/src/types/response';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 /**
  * /api/account/transaction/transfer
  * Kullanıcıdan gelen para transferi isteğini backend'e yönlendirir.
  */
 export async function POST(request: NextRequest) {
-    try {
-        const body = await request.json();
-        const authHeaders = await authService.getAuthHeaders();
-        // Backend API URL
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
-        const API_ENDPOINT = `${API_BASE_URL}/transaction/api/v1/transaction/transfer`;
+    const requestId = crypto.randomUUID();
+    const startTime = Date.now();
 
-        // Axios isteği
-        const response = await axios.post(API_ENDPOINT, body, {
+    console.log(`[TRANSACTION_TRANSFER_PROXY][${requestId}] Request başladı.`);
+
+    try {
+        const authHeaders = await authService.getAuthHeaders();
+        if (!authHeaders) {
+            return NextResponse.json<BaseResponse>({
+                status: 'ERROR',
+                processCode: 'AUTH_ERR',
+                processMessage: 'Oturum süresi dolmuş.'
+            }, { status: 401 });
+        }
+
+        const body = await request.json();
+        const TARGET_URL = `${API_BASE_URL}/transaction/api/v1/transaction/transfer`;
+        console.log(`[TRANSACTION_TRANSFER_PROXY][${requestId}] Backend'e istek atılıyor: ${TARGET_URL}`);
+
+        const response = await axios.post(TARGET_URL, body, {
             headers: authHeaders,
             withCredentials: true,
-            validateStatus: () => true, // status kontrolünü manuel yapacağız
+            timeout: 20000
         });
 
-        // Backend yanıtı
-        if (response.status >= 400) {
-            return NextResponse.json(
-                {
-                    processCode: response.data?.processCode || "TRANSFER_FAILED",
-                    processMessage: response.data?.processMessage || "Transfer başarısız oldu.",
-                },
-                { status: response.status }
-            );
-        }
+        const duration = Date.now() - startTime;
+        console.log(`[TRANSACTION_TRANSFER_PROXY][${requestId}] Başarılı (${duration}ms).`);
 
-        // Başarılı yanıt
         return NextResponse.json(response.data, { status: 200 });
 
-    } catch (error: any) {
-        console.error("❌ Transfer route error:", error.message || error);
+    } catch (error: unknown) {
+        const duration = Date.now() - startTime;
+        let statusCode = 500;
+        let errorResponse: BaseResponse;
 
         if (axios.isAxiosError(error)) {
-            return NextResponse.json(
-                {
-                    processCode: "AXIOS_ERROR",
-                    processMessage: error.response?.data?.message || "Sunucuya bağlanırken hata oluştu.",
-                },
-                { status: error.response?.status || 500 }
-            );
-        }
+            const axiosError = error as AxiosError;
+            statusCode = axiosError.response?.status || 500;
+            const responseData = axiosError.response?.data as any;
 
-        return NextResponse.json(
-            {
-                processCode: "UNEXPECTED_ERROR",
-                processMessage: "Beklenmeyen bir hata oluştu.",
-            },
-            { status: 500 }
-        );
+            console.error(`[TRANSACTION_TRANSFER_PROXY][${requestId}] Backend Hatası (${statusCode}):`, responseData);
+
+            if (responseData && (responseData.processCode || responseData.status)) {
+                errorResponse = responseData;
+            } else {
+                errorResponse = {
+                    status: 'ERROR',
+                    processCode: 'BACKEND_ERR',
+                    processMessage: 'Transfer işlemi başarısız.'
+                };
+            }
+        } else {
+            console.error(`[TRANSACTION_TRANSFER_PROXY][${requestId}] Kritik Hata:`, error);
+            errorResponse = {
+                status: 'ERROR',
+                processCode: 'INTERNAL_ERR',
+                processMessage: 'Sistem hatası.'
+            };
+        }
+        return NextResponse.json(errorResponse, { status: statusCode });
     }
 }

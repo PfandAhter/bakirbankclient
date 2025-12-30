@@ -1,44 +1,69 @@
 import { NextRequest, NextResponse } from "next/server";
+import axios, { AxiosError } from 'axios';
 import * as authService from '@/src/services/authService';
-import axios from 'axios';
+import { BaseResponse } from '@/src/types/response';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export async function POST(request: NextRequest) {
-    try {
-        const body = await request.json();
-        const authHeaders = await authService.getAuthHeaders();
+    const requestId = crypto.randomUUID();
+    const startTime = Date.now();
 
+    console.log(`[TRANSACTION_LIST_PROXY][${requestId}] Request başladı.`);
+
+    try {
+        const authHeaders = await authService.getAuthHeaders();
         if (!authHeaders) {
-            return NextResponse.json(
-                { message: "Unauthorized: No access token" },
-                { status: 401 }
-            );
+            return NextResponse.json<BaseResponse>({
+                status: 'ERROR',
+                processCode: 'AUTH_ERR',
+                processMessage: 'Oturum süresi dolmuş.'
+            }, { status: 401 });
         }
 
-        const response = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/transaction/api/v1/transaction/transactionsv2`,
-            body,
-            { headers: authHeaders }
-        );
+        const body = await request.json();
+        const TARGET_URL = `${API_BASE_URL}/transaction/api/v1/transaction/transactionsv2`;
+        console.log(`[TRANSACTION_LIST_PROXY][${requestId}] Backend'e istek atılıyor: ${TARGET_URL}`);
+
+        const response = await axios.post(TARGET_URL, body, {
+            headers: authHeaders,
+            timeout: 15000
+        });
+
+        const duration = Date.now() - startTime;
+        console.log(`[TRANSACTION_LIST_PROXY][${requestId}] Başarılı (${duration}ms).`);
 
         return NextResponse.json(response.data, { status: 200 });
-    } catch (error: any) {
-        console.error("ERROR OBJECT: ", error.response.data.processMessage);
 
-        // BaseResponse varsa direkt dön
-        if (error.response && error.response.data) {
-            return NextResponse.json(error.response.data, {
-                status: error.response.status,
-            });
+    } catch (error: unknown) {
+        const duration = Date.now() - startTime;
+        let statusCode = 500;
+        let errorResponse: BaseResponse;
+
+        if (axios.isAxiosError(error)) {
+            const axiosError = error as AxiosError;
+            statusCode = axiosError.response?.status || 500;
+            const responseData = axiosError.response?.data as any;
+
+            console.error(`[TRANSACTION_LIST_PROXY][${requestId}] Backend Hatası (${statusCode}):`, responseData);
+
+            if (responseData && (responseData.processCode || responseData.status)) {
+                errorResponse = responseData;
+            } else {
+                errorResponse = {
+                    status: 'ERROR',
+                    processCode: 'BACKEND_ERR',
+                    processMessage: 'İşlemler listelenemedi.'
+                };
+            }
+        } else {
+            console.error(`[TRANSACTION_LIST_PROXY][${requestId}] Kritik Hata:`, error);
+            errorResponse = {
+                status: 'ERROR',
+                processCode: 'INTERNAL_ERR',
+                processMessage: 'Sistem hatası.'
+            };
         }
-
-        // Diğer hatalar
-        return NextResponse.json(
-            {
-                status: "FAILED",
-                processCode: "SERVER ERROR",
-                processMessage: error.response.data.processMessage,
-            },
-            { status: 500 }
-        );
+        return NextResponse.json(errorResponse, { status: statusCode });
     }
 }
