@@ -16,7 +16,7 @@ export const useRecipients = () => {
 
             if (res.ok) {
                 const data = await res.json();
-                setSavedRecipients(data);
+                setSavedRecipients(data.savedAccounts);
             }
         } catch (err) {
             console.error("Kayıtlı alıcılar getirilemedi:", err);

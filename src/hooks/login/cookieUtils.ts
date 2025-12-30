@@ -1,6 +1,6 @@
 import "server-only";
 import { SignJWT, jwtVerify } from "jose";
-import {cookies} from 'next/headers';
+import { cookies } from 'next/headers';
 
 const secretKey = process.env.SESSION_SECRET;
 const encodedKey = new TextEncoder().encode(secretKey);
@@ -8,7 +8,7 @@ const encodedKey = new TextEncoder().encode(secretKey);
 export async function createUserSessionToken(acctoken: string) {
     const cookieStore = await cookies();
     const expirestAt = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000) // 1 gün
-    const session = await encrypt({token: acctoken, expiresAt: expirestAt});
+    const session = await encrypt({ token: acctoken, expiresAt: expirestAt });
 
     cookieStore.set("mb_session", session, {
         httpOnly: true,
@@ -38,18 +38,18 @@ export async function decrypt(session: string | undefined = "") {
         });
         return payload;
     } catch (error) {
-        console.log("Failed to verify session",error);
+        console.log("Failed to verify session", error);
     }
 }
 
-export async function deleteUserSessionToken ()  {
+export async function deleteUserSessionToken() {
     const cookieStore = await cookies();
     cookieStore.delete("mb_session");
 }
 
 
 
-export async function getAccessTokenFromSession(): Promise<string | null>{
+export async function getAccessTokenFromSession(): Promise<string | null> {
     const cookieStore = await cookies();
     const session = cookieStore.get("mb_session")?.value;
 
@@ -58,7 +58,7 @@ export async function getAccessTokenFromSession(): Promise<string | null>{
     const data = await decrypt(session);
     if (!data || !data.token) return null;
 
-    return data.token;
+    return data.token as string;
 }
 
 /*export const getCookie = (name: string): string | null => {

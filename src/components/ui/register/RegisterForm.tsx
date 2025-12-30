@@ -1,18 +1,18 @@
-import {Eye, EyeOff, Mail, Lock, User, Phone} from "lucide-react";
-import React, {useState} from "react";
-import {useAuth} from '@/src/hooks/login/useAuth';
-import {Input} from '@/src/components/ui/Input';
-import {Button} from '@/src/components/ui/Button';
-import {useAlert} from "@/src/hooks/notification/useAlert";
+import { Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react";
+import React, { useState } from "react";
+import { useAuth } from '@/src/hooks/login/useAuth';
+import { Input } from '@/src/components/ui/Input';
+import { Button } from '@/src/components/ui/Button';
+import { useAlert } from "@/src/hooks/notification/useAlert";
 import AlertBox from "@/src/components/ui/notification/AlertBox";
 import OTPVerificationModal from "@/src/components/ui/register/OTPVerificationModal";
 import TermsAndPrivacyModal from '@/src/components/ui/register/TermsAndPrivacyModal';
 
 
 const RegisterForm = ({
-                          onSwitchToLogin,
-                          onSuccessfulRegister
-                      }: {
+    onSwitchToLogin,
+    onSuccessfulRegister
+}: {
     onSwitchToLogin?: () => void;
     onSuccessfulRegister?: () => void;
 }) => {
@@ -30,8 +30,8 @@ const RegisterForm = ({
         terms: false
     });
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
-    const {register, isLoading} = useAuth();
-    const {alert, showAlert} = useAlert();
+    const { register, isLoading } = useAuth();
+    const { alert, showAlert } = useAlert();
 
     const [showOTPModal, setShowOTPModal] = useState(false);
     const [registeredUserEmail, setRegisteredUserEmail] = useState<string | null>();
@@ -123,11 +123,11 @@ const RegisterForm = ({
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const {name, value, type, checked} = e.target;
+        const { name, value, type, checked } = e.target;
         if (name === "gsm") {
             const numericValue = value.replace(/\D/g, "");
             if (numericValue.length <= 10) {
-                setFormData(prev => ({...prev, [name]: numericValue}));
+                setFormData(prev => ({ ...prev, [name]: numericValue }));
             }
             return;
         }
@@ -165,7 +165,7 @@ const RegisterForm = ({
                     <div className="flex justify-center mb-4">
                         <div
                             className="w-16 h-16 bg-green-900 rounded-full flex items-center justify-center border border-green-700">
-                            <User className="w-8 h-8 text-green-400"/>
+                            <User className="w-8 h-8 text-green-400" />
                         </div>
                     </div>
                     <h1 className="text-3xl font-bold text-white mb-2">Hesap Oluştur</h1>
@@ -212,7 +212,7 @@ const RegisterForm = ({
                             Şifre
                         </label>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"/>
+                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                             <input
                                 type={showPassword ? 'text' : 'password'}
                                 name="password"
@@ -227,7 +227,7 @@ const RegisterForm = ({
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
                             >
-                                {showPassword ? <EyeOff className="h-5 w-5"/> : <Eye className="h-5 w-5"/>}
+                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                         </div>
                         {errors.password && (
@@ -240,7 +240,7 @@ const RegisterForm = ({
                             Şifre Tekrarı
                         </label>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"/>
+                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                             <input
                                 type={showConfirmPassword ? 'text' : 'password'}
                                 name="confirmPassword"
@@ -255,7 +255,7 @@ const RegisterForm = ({
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
                             >
-                                {showConfirmPassword ? <EyeOff className="h-5 w-5"/> : <Eye className="h-5 w-5"/>}
+                                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                         </div>
                         {errors.confirmPassword && (
@@ -274,23 +274,23 @@ const RegisterForm = ({
                                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 bg-gray-800 border-gray-600 rounded mt-1"
                             />
                             <span className="ml-2 text-sm text-gray-400">
-      <button
-          type="button"
-          onClick={() => setModalType('terms')}
-          className="text-blue-400 hover:text-blue-300 underline"
-      >
-        Kullanım Koşulları
-      </button>{' '}
+                                <button
+                                    type="button"
+                                    onClick={() => setModalType('terms')}
+                                    className="text-blue-400 hover:text-blue-300 underline"
+                                >
+                                    Kullanım Koşulları
+                                </button>{' '}
                                 ve{' '}
                                 <button
                                     type="button"
                                     onClick={() => setModalType('privacy')}
                                     className="text-blue-400 hover:text-blue-300 underline"
                                 >
-        Gizlilik Politikası
-      </button>
-      `nı okudum ve kabul ediyorum.
-    </span>
+                                    Gizlilik Politikası
+                                </button>
+                                `nı okudum ve kabul ediyorum.
+                            </span>
                         </label>
                         {errors.terms && (
                             <p className="text-sm text-red-400">{errors.terms}</p>
@@ -325,7 +325,7 @@ const RegisterForm = ({
                 />
             )}
 
-            <AlertBox type={alert.type} title={alert.title} message={alert.message}/>
+            {alert.type && <AlertBox type={alert.type} title={alert.title} message={typeof alert.message === 'string' ? alert.message : undefined} />}
         </div>
     );
 };

@@ -1,12 +1,15 @@
 import axios from 'axios';
-import { getToken, removeToken } from '@/src/services/authService';
+// getToken ve removeToken client-side'da (HttpOnly cookie) kullanılamaz.
+// import { getToken, removeToken } from '@/src/services/authService';
 
 const apiClient = axios.create({
     baseURL: 'http://localhost:8081/api',
+    withCredentials: true, // HttpOnly cookie'lerin gönderilmesi için gerekli
 });
 
-// Request interceptor - Her istekte token'ı header'a ekle
-apiClient.interceptors.request.use(
+// Request interceptor - Token header'a eklenemez çünkü HttpOnly.
+// Browser otomatik gönderir if withCredentials=true ve same-site/CORS ayarları doğruysa.
+/*apiClient.interceptors.request.use(
     (config) => {
         const token = getToken();
         if (token) {
@@ -17,16 +20,18 @@ apiClient.interceptors.request.use(
     (error) => {
         return Promise.reject(error);
     }
-);
+);*/
 
-// Response interceptor - 401 durumunda token'ı sil
+// Response interceptor - 401 durumunda login'e yönlendir
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            removeToken();
+            // removeToken(); // Client side cannot remove HttpOnly cookie directly
             // İsteğe bağlı: Login sayfasına yönlendir
-            window.location.href = '/login';
+            if (typeof window !== 'undefined') {
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }

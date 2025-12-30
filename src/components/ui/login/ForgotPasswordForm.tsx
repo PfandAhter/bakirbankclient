@@ -5,15 +5,15 @@ import { Input } from "@/src/components/ui/Input";
 import { Button } from "@/src/components/ui/Button";
 import { useAlert } from "@/src/hooks/notification/useAlert";
 import AlertBox from "@/src/components/ui/notification/AlertBox";
-import {InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator} from '@/components/ui/input-otp';
+import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from '@/components/ui/input-otp';
 
 interface ForgotPasswordFormProps {
     onBackToLogin: () => void;
 }
 
 const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
-                                                                   onBackToLogin,
-                                                               }) => {
+    onBackToLogin,
+}) => {
     const [step, setStep] = useState<1 | 2 | 3>(1);
     const [email, setEmail] = useState("");
     const [otp, setOtp] = useState("");
@@ -26,18 +26,18 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
         setLoading(true);
         if (!email) return showAlert("destructive", "Hata", "E-posta adresi gerekli.");
 
-        try{
+        try {
             await fetch(`/api/auth/password/send-reset-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email:email }),
+                body: JSON.stringify({ email: email }),
             });
 
             showAlert("success", "Kod Gönderildi", "E-postanıza doğrulama kodu gönderildi.");
             setStep(2);
-        }catch(error: any){
+        } catch (error: any) {
             showAlert("destructive", "Hata", error.message || "Kod gönderilemedi.");
-        }finally {
+        } finally {
             setLoading(false);
         }
     };
@@ -46,18 +46,18 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
         if (password !== confirmPassword) {
             return showAlert("destructive", "Hata", "Şifreler eşleşmiyor.");
         }
-        try{
+        try {
             await fetch(`/api/auth/password/reset-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, confirmPassword}),
+                body: JSON.stringify({ email, password, confirmPassword }),
             });
 
             showAlert("success", "Şifre Yenilendi", "Yeni şifrenizle giriş yapabilirsiniz.");
             onBackToLogin();
-        }catch(error: any){
+        } catch (error: any) {
             showAlert("destructive", "Hata", error.message || "Şifre sıfırlanamadı.");
-        }finally {
+        } finally {
             setLoading(true);
         }
     };
@@ -79,7 +79,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
                 showAlert("success", "Kod Onaylandı", "Şimdi yeni şifrenizi belirleyin.");
                 setTimeout(() => {
                     setStep(3);
-                },1000);
+                }, 1000);
             } catch (error: any) {
                 showAlert('destructive', 'Hata', error.message || 'Kod doğrulama başarısız.');
             } finally {
@@ -127,15 +127,15 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
                                 containerClassName="justify-center gap-3"
                             >
                                 <InputOTPGroup>
-                                    <InputOTPSlot index={0} inputMode="numeric" className="w-12 h-12 text-2xl"/>
-                                    <InputOTPSlot index={1} inputMode="numeric" className="w-12 h-12 text-2xl"/>
-                                    <InputOTPSlot index={2} inputMode="numeric" className="w-12 h-12 text-2xl"/>
+                                    <InputOTPSlot index={0} inputMode="numeric" className="w-12 h-12 text-2xl" />
+                                    <InputOTPSlot index={1} inputMode="numeric" className="w-12 h-12 text-2xl" />
+                                    <InputOTPSlot index={2} inputMode="numeric" className="w-12 h-12 text-2xl" />
                                 </InputOTPGroup>
-                                <InputOTPSeparator/>
+                                <InputOTPSeparator />
                                 <InputOTPGroup>
-                                    <InputOTPSlot index={3} inputMode="numeric" className="w-12 h-12 text-2xl"/>
-                                    <InputOTPSlot index={4} inputMode="numeric" className="w-12 h-12 text-2xl"/>
-                                    <InputOTPSlot index={5} inputMode="numeric" className="w-12 h-12 text-2xl"/>
+                                    <InputOTPSlot index={3} inputMode="numeric" className="w-12 h-12 text-2xl" />
+                                    <InputOTPSlot index={4} inputMode="numeric" className="w-12 h-12 text-2xl" />
+                                    <InputOTPSlot index={5} inputMode="numeric" className="w-12 h-12 text-2xl" />
                                 </InputOTPGroup>
                             </InputOTP>
                         </div>
@@ -181,7 +181,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
                     </button>
                 </div>
 
-                <AlertBox type={alert.type} title={alert.title} message={alert.message} />
+                {alert.type && <AlertBox type={alert.type} title={alert.title} message={typeof alert.message === 'string' ? alert.message : undefined} />}
             </div>
         </div>
     );

@@ -1,3 +1,5 @@
+import {BaseResponse} from "@/src/types/response";
+
 export interface SavedRecipient {
     id: string;
     nickname: string;
@@ -34,4 +36,12 @@ export interface NewAccountFormState {
     district: string;
     branchId: string;
     balance: number;
+}
+
+export interface AccountListResponse extends BaseResponse {
+    accounts?: Account[];
+}
+
+export interface SavedAccountListResponse extends BaseResponse {
+    savedAccounts?: SavedRecipient[];
 }

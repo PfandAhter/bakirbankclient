@@ -2,8 +2,8 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
-import { useAuth } from '@/app/lib/hooks/useAuth';
-import RegisterForm from '@/app/components/forms/auth/RegisterForm';
+import { useAuth } from '@/src/hooks/login/useAuth';
+import RegisterForm from '@/src/components/ui/register/RegisterForm';
 
 function SignUpContent() {
     const router = useRouter();

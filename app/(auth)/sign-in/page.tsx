@@ -2,8 +2,8 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
-import { useAuth } from '@/app/lib/hooks/useAuth';
-import LoginForm from '@/app/components/forms/auth/LoginForm';
+import { useAuth } from '@/src/hooks/login/useAuth';
+import LoginForm from '@/src/components/ui/login/LoginForm';
 
 function SignInContent() {
     const router = useRouter();

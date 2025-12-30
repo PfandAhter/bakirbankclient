@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import {login, register, logout, getCurrentUser, checkAuth} from '@/src/services/authService';
+import { login, register, logout, getCurrentUser, checkAuth } from '@/src/services/authService';
 
 interface User {
     id: string;
@@ -36,7 +36,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     isLoading: true,
     error: null,
     isAuthenticated: false,
-        setLoading: (loading:boolean) => set({ isLoading: loading }),
+
 
     login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
@@ -147,7 +147,7 @@ export const useAuthStore = create<AuthState>((set) => ({
             } else {
                 set({ user: null, isAuthenticated: false, isLoading: false });
             }
-        } catch (err) {
+        } catch (err: any) {
             console.log("GET CURRENT USER ERROR: ", err)
             set({
                 user: null,
