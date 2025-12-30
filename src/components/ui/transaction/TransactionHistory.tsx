@@ -53,7 +53,7 @@ export default function TransactionHistory({
                             </div>
                             <div className="flex items-center gap-4">
                                 {(t.invoiceStatus === 'COMPLETED' || t.invoiceStatus === 'PENDING') && (
-                                    <button onClick={() => onInvoiceClick(t.id, t.invoiceStatus!)} disabled={loadingInvoices[t.id] || t.invoiceStatus === 'PENDING'} className={`hidden group-hover:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${t.invoiceStatus === 'COMPLETED' ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20' : 'bg-amber-500/10 text-amber-400 cursor-wait'}`}>
+                                    <button onClick={() => onInvoiceClick(t.invoiceId, t.invoiceStatus!)} disabled={loadingInvoices[t.id] || t.invoiceStatus === 'PENDING'} className={`hidden group-hover:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${t.invoiceStatus === 'COMPLETED' ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20' : 'bg-amber-500/10 text-amber-400 cursor-wait'}`}>
                                         {loadingInvoices[t.id] ? <RefreshCw className="w-3 h-3 animate-spin" /> : t.invoiceStatus === 'COMPLETED' ? <><Download className="w-3 h-3" /> Dekont</> : <><Clock className="w-3 h-3" /> Hazırlanıyor</>}
                                     </button>
                                 )}

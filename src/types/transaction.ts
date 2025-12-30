@@ -11,6 +11,7 @@ export interface Transaction {
     date: string;
     category: string;
     channel: string;
+    invoiceId: string;
     status: string;
     invoiceStatus?: InvoiceStatus;
 }
