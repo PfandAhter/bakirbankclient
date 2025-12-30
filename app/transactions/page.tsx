@@ -166,7 +166,7 @@ export default function TransactionPage() {
                     isLoadingList={loadingRecipients}
                 />
 
-                <Header user={user} logout={logout} onLogoClick={() => router.push('/')} />
+                <Header user={user} pageName={"İşlemler"} logout={logout} onLogoClick={() => router.push('/')} />
 
                 <main className="max-w-7xl mx-auto px-6 py-8">
                     <ActiveAccountCard

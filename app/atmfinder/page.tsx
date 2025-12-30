@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/src/hooks/login/useAuth';
+import { useRouter } from 'next/navigation';
 //import { useATM } from '@/app/lib/hooks/useATM';
 
 // Components
@@ -12,7 +13,7 @@ import RouteTypeSelector from "@/src/components/ui/atm-finder/RouteTypeSelector"
 import DirectionsPanel from "@/src/components/ui/atm-finder/DirectionsPanel";
 import MiniMapPanel from "@/src/components/ui/atm-finder/MiniMapPanel";
 import SendMoneyPanel from "@/src/components/ui/atm-finder/SendMoneyPanel";
-import Header from "@/src/components/ui/Header";
+import { Header } from '@/src/components/ui/atm-finder/Header';
 import { RetryModal } from '@/src/components/ui/atm-finder/RetryModal';
 import { ActionFloatingButton } from '@/src/components/ui/atm-finder/ActionFloatingButton';
 
@@ -24,13 +25,13 @@ import { useAtmFilters } from '@/src/hooks/useAtmFilters';
 import { useATM } from '@/src/hooks/useAtm'
 import { Atm, MapCanvasHandle } from '@/src/types/atm-map';
 import ProtectedRoute from "../../src/providers/ProtectedRoute";
-import {router} from "next/client";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_API_KEY || '';
 
 export default function AtmFinderPage() {
     // 1. Auth & Data Hooks
     const { user, isAuthenticated, logout } = useAuth();
+    const router = useRouter();
 
     // ARTIK MANUEL FETCH YOK, HOOK VAR:
     const { atms, loading: atmLoading, error: atmError, refetch } = useATM();
@@ -170,7 +171,7 @@ export default function AtmFinderPage() {
     return (
         <ProtectedRoute>
             <div className="relative w-screen h-screen overflow-hidden">
-                <Header user={user} pageName={"Kartlarım"} logout={logout} onLogoClick={() => router.push('/')} />
+                <Header isAuthenticated={isAuthenticated} onLogoClick={() => router.push('/')} user={user} onLogout={logout || (() => { })} />
 
                 <div className={`relative w-full h-full ${atmError ? 'blur-sm' : ''} min-h-[400px] sm:min-h-[600px]`}>
                     <div style={{ height: "100vh", width: "100%" }}>

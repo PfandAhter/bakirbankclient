@@ -7,10 +7,11 @@ import NotificationPanel from "@/src/components/ui/notification/NotificationPane
 interface HeaderProps {
     isAuthenticated: boolean;
     user: any; // User type'ını kendi auth sisteminden alabilirsin
+    onLogoClick: () => void;
     onLogout: () => void;
 }
 
-export const Header = ({ isAuthenticated, user, onLogout }: HeaderProps) => {
+export const Header = ({ isAuthenticated, onLogoClick, user, onLogout }: HeaderProps) => {
     const router = useRouter();
 
     return (
@@ -18,8 +19,11 @@ export const Header = ({ isAuthenticated, user, onLogout }: HeaderProps) => {
             <div className="w-full">
                 <div className="flex justify-between items-center h-16 px-4">
                     <div className="flex items-center pl-70">
-                        <button onClick={() => router.push('/')} className="group flex items-center text-blue-400 hover:text-blue-300 transition-colors">
-                            <Landmark className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-colors"/>
+                        <button
+                            onClick={onLogoClick}
+                            className="group flex items-center text-blue-400 hover:text-blue-300 transition-colors"
+                        >
+                            <Landmark className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-colors" />
                             <span className="ml-2 text-2xl font-bold text-white group-hover:text-blue-300 transition-colors">BAKIRBANK</span>
                         </button>
                     </div>
