@@ -116,11 +116,16 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
                 const sorted = [...notificationsData].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
                 setNotifications(sorted);
 
-                channelRef.current?.postMessage({
-                    type: "INIT_NOTIFICATIONS",
-                    payload: sorted,
-                    source: tabId.current
-                });
+                try {
+                    channelRef.current?.postMessage({
+                        type: "INIT_NOTIFICATIONS",
+                        payload: sorted,
+                        source: tabId.current
+                    });
+                } catch (e) {
+                    // Channel may be closed if component unmounted
+                    console.warn("BroadcastChannel postMessage failed:", e);
+                }
 
                 if (retryInterval) {
                     clearInterval(retryInterval);

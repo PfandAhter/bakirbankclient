@@ -408,8 +408,10 @@ export const useDashboard = ({ isAuthenticated }: UseDashboardProps) => {
     useEffect(() => {
         if (selectedAccount?.id) {
             fetchCards(selectedAccount.id);
+            // Seçili hesap değiştiğinde işlemleri de o hesaba göre getir
+            fetchTransactions(selectedAccount.id, { size: 5 });
         }
-    }, [selectedAccount?.id, fetchCards]);
+    }, [selectedAccount?.id, fetchCards, fetchTransactions]);
 
     return {
         // Data

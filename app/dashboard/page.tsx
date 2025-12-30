@@ -26,6 +26,7 @@ import NotificationPanel from "@/src/components/ui/notification/NotificationPane
 import { AnalysisReportCard } from '@/src/components/ui/analysis/AnalysisReportCard';
 import { CreateAnalysisModal } from '@/src/components/ui/analysis/CreateAnalysisModal';
 import { useDashboard } from '@/src/hooks/useDashboard';
+import Header from "@/src/components/ui/Header";
 
 export default function DashboardPage() {
     const { user, isAuthenticated, logout } = useAuth();
@@ -117,33 +118,7 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
             {/* Header */}
-            <header className="bg-black/50 backdrop-blur-md border-b border-gray-800">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-16">
-                        <div className="flex items-center space-x-4">
-                            <button
-                                onClick={() => router.push('/')}
-                                className="group flex items-center text-blue-400 hover:text-blue-300 transition-colors"
-                            >
-                                <Landmark className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-colors" />
-                                <span className="ml-2 text-2xl font-bold text-white group-hover:text-blue-300 transition-colors">BAKIRBANK</span>
-                            </button>
-                            <span className="text-2xl font-bold text-white">Dashboard</span>
-                        </div>
-
-                        <div className="flex items-center space-x-4">
-                            <span className="text-gray-300">Hoş geldin, {user?.firstName || "Kullanıcı"}</span>
-                            <button
-                                onClick={handleLogout}
-                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
-                            >
-                                Çıkış Yap
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <NotificationPanel userId={user?.id || ""} />
-            </header>
+            <Header user={user} pageName={"Hesap Özetim"} logout={logout} onLogoClick={() => router.push('/')} />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Balance Card */}
@@ -254,44 +229,72 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {/* Accounts List */}
+                {/* Account Selector - Banking Style */}
                 <div className="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-xl mb-8">
                     <div className="p-6 border-b border-gray-700">
-                        <h3 className="text-xl font-semibold text-white">Hesaplarım</h3>
+                        <h3 className="text-xl font-semibold text-white">Hesap Seçimi</h3>
                     </div>
                     <div className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {accounts.map((account) => (
-                                <div
-                                    key={account.id}
-                                    onClick={() => setSelectedAccount(account)}
-                                    className={`p-4 rounded-xl border cursor-pointer transition-all ${selectedAccount?.id === account.id
-                                        ? 'border-blue-500 bg-blue-500/10'
-                                        : 'border-gray-700 bg-gray-700/30 hover:border-gray-600'
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                                            <Wallet className="w-5 h-5 text-white" />
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Dropdown Selector */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">
+                                    İşlem yapılacak hesabı seçin
+                                </label>
+                                <div className="relative">
+                                    <select
+                                        value={selectedAccount?.id || ''}
+                                        onChange={(e) => {
+                                            const account = accounts.find(a => a.id === e.target.value);
+                                            if (account) setSelectedAccount(account);
+                                        }}
+                                        className="w-full appearance-none bg-gray-700/50 border border-gray-600 text-white rounded-lg px-4 py-3 pr-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all cursor-pointer"
+                                    >
+                                        {accounts.map((account) => (
+                                            <option key={account.id} value={account.id}>
+                                                {account.name} - {account.iban?.slice(-8)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-2">
+                                    Toplam {accounts.length} hesap mevcut
+                                </p>
+                            </div>
+
+                            {/* Selected Account Details */}
+                            {selectedAccount && (
+                                <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-5 text-white">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                            <Wallet className="w-6 h-6" />
                                         </div>
                                         <div>
-                                            <p className="text-white font-medium">{account.name}</p>
-                                            <p className="text-gray-400 text-xs">{account.iban}</p>
+                                            <p className="font-semibold text-lg">{selectedAccount.name}</p>
+                                            <p className="text-blue-200 text-sm font-mono">{selectedAccount.iban}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between">
-                                        <p className="text-xl font-bold text-white">
-                                            {showBalance ? formatCurrency(account.balance) : '••••••'}
-                                        </p>
-                                        {cardCountByAccount[account.id] !== undefined && (
-                                            <div className="flex items-center gap-1 text-sm text-gray-400">
+                                    <div className="flex justify-between items-end">
+                                        <div>
+                                            <p className="text-blue-200 text-xs uppercase tracking-wider">Mevcut Bakiye</p>
+                                            <p className="text-2xl font-bold">
+                                                {showBalance ? formatCurrency(selectedAccount.balance) : '•••••••'}
+                                            </p>
+                                        </div>
+                                        {cardCountByAccount[selectedAccount.id] !== undefined && cardCountByAccount[selectedAccount.id] > 0 && (
+                                            <div className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full">
                                                 <CreditCard className="w-4 h-4" />
-                                                <span>{cardCountByAccount[account.id]} kart</span>
+                                                <span className="text-sm">{cardCountByAccount[selectedAccount.id]} kart</span>
                                             </div>
                                         )}
                                     </div>
                                 </div>
-                            ))}
+                            )}
                         </div>
                     </div>
                 </div>
@@ -302,7 +305,12 @@ export default function DashboardPage() {
                     <div className="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-xl">
                         <div className="p-6 border-b border-gray-700">
                             <div className="flex justify-between items-center">
-                                <h3 className="text-xl font-semibold text-white">Son İşlemler</h3>
+                                <div>
+                                    <h3 className="text-xl font-semibold text-white">Son İşlemler</h3>
+                                    {selectedAccount && (
+                                        <p className="text-sm text-blue-400 mt-1">{selectedAccount.name}</p>
+                                    )}
+                                </div>
                                 <button
                                     onClick={() => router.push('/transactions')}
                                     className="text-blue-400 hover:text-blue-300 transition-colors"
@@ -329,7 +337,7 @@ export default function DashboardPage() {
                                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${transaction.type === 'INCOME'
                                                     ? 'bg-green-600'
                                                     : 'bg-red-600'
-                                                }`}>
+                                                    }`}>
                                                     {transaction.type === 'INCOME'
                                                         ? <ArrowUpRight className="w-5 h-5 text-white" />
                                                         : <ArrowDownLeft className="w-5 h-5 text-white" />
@@ -344,7 +352,7 @@ export default function DashboardPage() {
                                                 <p className={`font-bold ${transaction.type === 'INCOME'
                                                     ? 'text-green-400'
                                                     : 'text-red-400'
-                                                }`}>
+                                                    }`}>
                                                     {transaction.type === 'INCOME' ? '+' : '-'}{formatCurrency(transaction.amount)}
                                                 </p>
                                                 <p className="text-gray-400 text-sm">{formatDate(transaction.date)}</p>

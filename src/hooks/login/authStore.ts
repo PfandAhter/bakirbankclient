@@ -50,9 +50,8 @@ export const useAuthStore = create<AuthState>((set) => ({
             });
             const data = await res.json();
 
-            console.log("TEST AUTHSTORE LOGIN RESPONSE:", data);
             if (!res.ok) {
-                throw new Error(data.message || 'Giriş başarısız');
+                throw new Error(data.processMessage || 'Giriş başarısız');
             }
 
             set({
@@ -92,9 +91,11 @@ export const useAuthStore = create<AuthState>((set) => ({
 
             const data = await res.json();
 
-            console.log("TEST AUTHSTORE REGISTER RESPONSE:", data);
             if (!res.ok) {
-                throw new Error(data.message || 'Kayıt başarısız');
+                if(data.processMessage === null){
+                    data.processMessage = 'Kayıt işlemi başarısız, lütfen daha sonra tekrar deneyiniz.';
+                }
+                throw new Error(data.processMessage);
             }
 
 

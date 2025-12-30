@@ -17,6 +17,7 @@ import { Shield, Bell, KeyRound, XCircle } from "lucide-react";
 import { useProfileData } from "@/src/hooks/useProfileData";
 import { useSessionHistory } from "@/src/hooks/useSessionHistory";
 import { ProfileTab } from "@/src/types/profile";
+import Header from "@/src/components/ui/Header";
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -56,24 +57,7 @@ export default function ProfilePage() {
         <ProtectedRoute>
             <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
                 {/* Header - Inline or Separated Component */}
-                <header className="bg-black/50 backdrop-blur-md border-b border-gray-800 sticky top-0 z-30">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between items-center h-16">
-                            <div className="flex items-center space-x-4">
-                                <button onClick={() => router.push('/')} className="group flex items-center text-blue-400 hover:text-blue-300 transition-colors">
-                                    <Landmark className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-colors"/>
-                                    <span className="ml-2 text-2xl font-bold text-white group-hover:text-blue-300">BAKIRBANK</span>
-                                </button>
-                                <span className="text-2xl font-bold text-white">Profil</span>
-                            </div>
-                            <div className="flex items-center space-x-4">
-                                <span className="text-gray-300 hidden sm:block">Hoş geldin, {user?.firstName} {user?.lastName}</span>
-                                <button onClick={logout} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium">Çıkış Yap</button>
-                            </div>
-                        </div>
-                    </div>
-                    <NotificationPanel userId={user?.id ?? "null"} />
-                </header>
+                <Header user={user} pageName={"Profilim"} logout={logout} onLogoClick={() => router.push('/')} />
 
                 {/* Main Content */}
                 <div className="max-w-5xl mx-auto py-10 px-4 flex flex-col md:flex-row gap-8">

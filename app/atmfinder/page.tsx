@@ -12,7 +12,7 @@ import RouteTypeSelector from "@/src/components/ui/atm-finder/RouteTypeSelector"
 import DirectionsPanel from "@/src/components/ui/atm-finder/DirectionsPanel";
 import MiniMapPanel from "@/src/components/ui/atm-finder/MiniMapPanel";
 import SendMoneyPanel from "@/src/components/ui/atm-finder/SendMoneyPanel";
-import { Header } from '@/src/components/ui/atm-finder/Header';
+import Header from "@/src/components/ui/Header";
 import { RetryModal } from '@/src/components/ui/atm-finder/RetryModal';
 import { ActionFloatingButton } from '@/src/components/ui/atm-finder/ActionFloatingButton';
 
@@ -24,6 +24,7 @@ import { useAtmFilters } from '@/src/hooks/useAtmFilters';
 import { useATM } from '@/src/hooks/useAtm'
 import { Atm, MapCanvasHandle } from '@/src/types/atm-map';
 import ProtectedRoute from "../../src/providers/ProtectedRoute";
+import {router} from "next/client";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_API_KEY || '';
 
@@ -169,7 +170,7 @@ export default function AtmFinderPage() {
     return (
         <ProtectedRoute>
             <div className="relative w-screen h-screen overflow-hidden">
-                <Header isAuthenticated={isAuthenticated} user={user} onLogout={logout || (() => { })} />
+                <Header user={user} pageName={"Kartlarım"} logout={logout} onLogoClick={() => router.push('/')} />
 
                 <div className={`relative w-full h-full ${atmError ? 'blur-sm' : ''} min-h-[400px] sm:min-h-[600px]`}>
                     <div style={{ height: "100vh", width: "100%" }}>

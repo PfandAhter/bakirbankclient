@@ -45,11 +45,11 @@ const LoginForm = ({
         return Object.keys(newErrors).length === 0;
     };
 
-    useEffect(() => {
+    /*useEffect(() => {
         if (loginAttempted && error) {
-            showAlert("destructive", "Login Failed", error);
+            showAlert("destructive", "Giriş işlemi başarısız.", error);
         }
-    }, [error, loginAttempted]);
+    }, [error, loginAttempted]);*/
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -68,15 +68,8 @@ const LoginForm = ({
 
                 showAlert(
                     "destructive",
-                    "Login Failed",
-                    <>
-                        <p>{error.message}</p>
-                        <ul className="list-inside list-disc text-sm mt-1">
-                            <li>Invalid email or password</li>
-                            <li>Account not verified</li>
-                            <li>Try resetting your password</li>
-                        </ul>
-                    </>
+                    "Giriş Başarısız",
+                    error.message || "E-posta veya şifre hatalı."
                 );
 
                 //setFormError('Login failed, please try again.');

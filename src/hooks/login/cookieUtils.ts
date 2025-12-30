@@ -2,7 +2,10 @@ import "server-only";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from 'next/headers';
 
-const secretKey = process.env.SESSION_SECRET;
+const secretKey = process.env.SESSION_SECRET || "default-secret-key-for-build";
+if (!process.env.SESSION_SECRET && process.env.NODE_ENV === 'production') {
+    console.warn("WARNING: SESSION_SECRET is not defined in environment variables!");
+}
 const encodedKey = new TextEncoder().encode(secretKey);
 
 export async function createUserSessionToken(acctoken: string) {

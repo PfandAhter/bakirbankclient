@@ -209,7 +209,7 @@ export const PopUpMap: React.FC<PopUpMapProps> = ({ atmSelected }) => {
                 ]);
 
                 // Bina İkonları Katmanı
-                if (points && !map.getSource("multiple-icons")) {
+                if (points && map && !map.getSource("multiple-icons")) {
                     map.addSource("multiple-icons", { type: "geojson", data: points });
 
                     map.addLayer({

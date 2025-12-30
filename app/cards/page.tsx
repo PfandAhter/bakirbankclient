@@ -17,6 +17,7 @@ import {
     Filter
 } from 'lucide-react';
 import NotificationPanel from '@/src/components/ui/notification/NotificationPanel';
+import Header from "@/src/components/ui/Header";
 
 export default function CardsPage() {
     const { user, logout, isAuthenticated } = useAuth();
@@ -44,27 +45,7 @@ export default function CardsPage() {
     return (
         <ProtectedRoute>
             <div className="min-h-screen bg-[#0a0b0f] text-[#f8fafc]">
-                <header className="bg-[#0c0d13]/80 border-b border-[#1e222d] backdrop-blur-lg sticky top-0 z-40">
-                    <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                            <Landmark className="h-7 w-7 text-blue-500" />
-                            <span className="text-xl font-bold tracking-tight">BAKIRBANK</span>
-                            <span className="text-gray-600">|</span>
-                            <span className="text-gray-300 font-medium">Kartlarım</span>
-                        </div>
-
-                        <div className="flex items-center gap-4">
-                            <div className="hidden md:flex items-center gap-2 text-sm text-gray-400 bg-[#1e222d] px-3 py-1.5 rounded-full border border-gray-800">
-                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"/>
-                                {user?.firstName} {user?.lastName}
-                            </div>
-                            <button onClick={() => router.push('/')} className="hover:text-white text-gray-400">
-                                <LogOut className="w-5 h-5" />
-                            </button>
-                            <NotificationPanel userId={user?.id ?? 'null'} />
-                        </div>
-                    </div>
-                </header>
+                <Header user={user} pageName={"Kartlarım"} logout={logout} onLogoClick={() => router.push('/')} />
 
                 <main className="max-w-7xl mx-auto px-6 py-8">
                     <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">

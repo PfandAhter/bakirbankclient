@@ -106,15 +106,8 @@ const RegisterForm = ({
             } catch (error: any) {
                 showAlert(
                     "destructive",
-                    "Registration Failed",
-                    <>
-                        <p>{error.message}</p>
-                        <ul className="list-inside list-disc text-sm mt-1">
-                            <li>Invalid email or password</li>
-                            <li>Email may in usage</li>
-                            <li>Please try again</li>
-                        </ul>
-                    </>
+                    "Kayıt Başarısız",
+                    error.message || "Bir hata oluştu, lütfen tekrar deneyin."
                 );
 
             }
