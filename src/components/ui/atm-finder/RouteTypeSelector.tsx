@@ -1,6 +1,6 @@
 'use client';
 
-import {useState, useRef, useEffect} from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface RouteTypeSelectorProps {
     selectedRouteType: string;
@@ -8,14 +8,14 @@ interface RouteTypeSelectorProps {
     disabled?: boolean;
 }
 
-const RouteTypeSelector = ({selectedRouteType, onRouteTypeChange, disabled = false}: RouteTypeSelectorProps) => {
+const RouteTypeSelector = ({ selectedRouteType, onRouteTypeChange, disabled = false }: RouteTypeSelectorProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const routeTypes = [
-        {value: 'walking', label: 'Yürüyerek', emoji: '🚶'},
-        {value: 'cycling', label: 'Bisiklet', emoji: '🚴'},
-        {value: 'driving', label: 'Araba', emoji: '🚗'}
+        { value: 'walking', label: 'Yürüyerek', emoji: '🚶' },
+        { value: 'cycling', label: 'Bisiklet', emoji: '🚴' },
+        { value: 'driving', label: 'Araba', emoji: '🚗' }
     ];
 
     const currentType = routeTypes.find(type => type.value === selectedRouteType) || routeTypes[0];
@@ -43,14 +43,14 @@ const RouteTypeSelector = ({selectedRouteType, onRouteTypeChange, disabled = fal
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 disabled={disabled}
                 className={`
-                    w-14 h-14 rounded-full 
+                    w-11 h-11 sm:w-14 sm:h-14 rounded-full 
                     bg-[#ccccc] backdrop-blur-md border border-white/20
                     flex items-center justify-center
                     transition-all duration-300 ease-out
                     ${disabled
-                    ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:bg-black/90 hover:border-white/30 hover:scale-105 cursor-pointer'
-                }
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:bg-black/90 hover:border-white/30 hover:scale-105 cursor-pointer'
+                    }
                     ${isOpen ? 'bg-black/90 border-white/40 scale-105' : ''}
                     shadow-lg hover:shadow-xl
                     relative z-20
@@ -58,9 +58,8 @@ const RouteTypeSelector = ({selectedRouteType, onRouteTypeChange, disabled = fal
                 title={`Rota Tipi: ${currentType.label}`}
             >
                 <span
-                    className={`text-2xl transition-transform duration-300 ${
-                        isOpen ? 'rotate-12 scale-110' : ''
-                    }`}
+                    className={`text-xl sm:text-2xl transition-transform duration-300 ${isOpen ? 'rotate-12 scale-110' : ''
+                        }`}
                 >
                     {currentType.emoji}
                 </span>
@@ -71,9 +70,9 @@ const RouteTypeSelector = ({selectedRouteType, onRouteTypeChange, disabled = fal
                     absolute top-2 right-0 
                     transition-all duration-500 ease-out
                     ${isOpen
-                    ? 'opacity-100 translate-y-0 pointer-events-auto'
-                    : 'opacity-0 -translate-y-4 pointer-events-none'
-                }
+                        ? 'opacity-100 translate-y-0 pointer-events-auto'
+                        : 'opacity-0 -translate-y-4 pointer-events-none'
+                    }
                 `}
             >
                 <div className="bg-black/80 backdrop-blur-md border border-white/20 rounded-full shadow-xl overflow-hidden">
@@ -88,9 +87,9 @@ const RouteTypeSelector = ({selectedRouteType, onRouteTypeChange, disabled = fal
                                     hover:bg-white/20 hover:text-white hover:scale-110
                                     transform
                                     ${isOpen
-                                    ? 'translate-y-0 opacity-100'
-                                    : `translate-y-${(index + 1) * -8} opacity-0`
-                                }
+                                        ? 'translate-y-0 opacity-100'
+                                        : `translate-y-${(index + 1) * -8} opacity-0`
+                                    }
                                 `}
                                 style={{
                                     transitionDelay: isOpen ? `${index * 100}ms` : '0ms'

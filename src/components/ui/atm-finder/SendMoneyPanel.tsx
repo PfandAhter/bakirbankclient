@@ -1,9 +1,9 @@
 "use client";
 
-import React, {useState, useEffect} from "react";
-import {useAccounts} from "@/src/hooks/useAccounts";
-import {useTransactions} from "@/src/hooks/useTransaction";
-import {useNotify} from "@/src/hooks/notification/useNotify";
+import React, { useState, useEffect } from "react";
+import { useAccounts } from "@/src/hooks/useAccounts";
+import { useTransactions } from "@/src/hooks/useTransaction";
+import { useNotify } from "@/src/hooks/notification/useNotify";
 import {
     X,
     CreditCard,
@@ -38,7 +38,7 @@ interface AtmPanelProps {
     isAuthenticated: boolean;
 }
 
-const AtmPanel: React.FC<AtmPanelProps> = ({isOpen, togglePanel, selectedAtm, isAuthenticated}) => {
+const AtmPanel: React.FC<AtmPanelProps> = ({ isOpen, togglePanel, selectedAtm, isAuthenticated }) => {
     const notify = useNotify();
 
     const {
@@ -66,7 +66,7 @@ const AtmPanel: React.FC<AtmPanelProps> = ({isOpen, togglePanel, selectedAtm, is
         }
     };
 
-    const {atmTransfer, fetchRecipientByIban, isTransferLoading, isIbanLoading} = useTransactions({
+    const { atmTransfer, fetchRecipientByIban, isTransferLoading, isIbanLoading } = useTransactions({
         selectedAccountId: selectedAccount?.iban,
         showAlert
     });
@@ -91,7 +91,7 @@ const AtmPanel: React.FC<AtmPanelProps> = ({isOpen, togglePanel, selectedAtm, is
     }, [isOpen]);
 
     const formatCurrency = (value: number, currency: string) => {
-        return new Intl.NumberFormat('tr-TR', {style: 'currency', currency: currency}).format(value);
+        return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: currency }).format(value);
     };
 
     const maskName = (name: string) => {
@@ -157,7 +157,7 @@ const AtmPanel: React.FC<AtmPanelProps> = ({isOpen, togglePanel, selectedAtm, is
         };
 
         if (identifier.length === 11 && !identifier.startsWith("TR")) {
-            const success = await atmTransfer({...baseParams, receiverTckn: identifier});
+            const success = await atmTransfer({ ...baseParams, receiverTckn: identifier });
             if (success) togglePanel();
         } else if (identifier.length === 26 && identifier.startsWith("TR")) {
             if (!nameInput.trim()) {
@@ -206,19 +206,19 @@ const AtmPanel: React.FC<AtmPanelProps> = ({isOpen, togglePanel, selectedAtm, is
                             onClick={togglePanel}
                             className="rounded-full p-1 hover:bg-white/20 transition-colors"
                         >
-                            <X className="h-5 w-5"/>
+                            <X className="h-5 w-5" />
                         </button>
                     </div>
                 </div>
 
                 {/* Body */}
-                <div className="p-6 space-y-5">
+                <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 max-h-[60vh] overflow-y-auto">
 
                     {/* Hesap Seçimi */}
                     <div className="space-y-1.5">
                         <label
                             className="text-xs font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-1">
-                            <CreditCard className="w-3.5 h-3.5"/> Gönderen Hesap
+                            <CreditCard className="w-3.5 h-3.5" /> Gönderen Hesap
                         </label>
                         <div className="relative">
                             <select
@@ -244,8 +244,8 @@ const AtmPanel: React.FC<AtmPanelProps> = ({isOpen, togglePanel, selectedAtm, is
                             </select>
                             <div
                                 className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-                                {isAccountsLoading ? <Loader2 className="h-4 w-4 animate-spin"/> :
-                                    <ChevronDown className="h-4 w-4"/>}
+                                {isAccountsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> :
+                                    <ChevronDown className="h-4 w-4" />}
                             </div>
                         </div>
                     </div>
@@ -254,7 +254,7 @@ const AtmPanel: React.FC<AtmPanelProps> = ({isOpen, togglePanel, selectedAtm, is
                     <div className="space-y-1.5">
                         <label
                             className="text-xs font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-1">
-                            <User className="w-3.5 h-3.5"/> Alıcı TC / IBAN
+                            <User className="w-3.5 h-3.5" /> Alıcı TC / IBAN
                         </label>
                         <div className="relative">
                             <input
@@ -267,14 +267,14 @@ const AtmPanel: React.FC<AtmPanelProps> = ({isOpen, togglePanel, selectedAtm, is
                             />
                             <div
                                 className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                                {isIbanLoading ? <Loader2 className="h-4 w-4 animate-spin"/> :
+                                {isIbanLoading ? <Loader2 className="h-4 w-4 animate-spin" /> :
                                     <span className="font-mono text-xs">ID</span>}
                             </div>
                         </div>
                         {ibanNotFound && (
                             <div className="flex items-center gap-1.5 mt-1.5 text-red-600 animate-in fade-in slide-in-from-top-1 duration-200">
                                 <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                 </svg>
                                 <span className="text-xs font-medium">Bu IBAN`a sahip kişi sistemde bulunamadı.</span>
                             </div>
@@ -287,7 +287,7 @@ const AtmPanel: React.FC<AtmPanelProps> = ({isOpen, togglePanel, selectedAtm, is
                             className="rounded-xl bg-blue-50 border border-blue-100 p-4 animate-in slide-in-from-top-2 duration-300">
                             <div className="mb-3 flex items-start gap-2">
                                 <div className="mt-0.5 rounded-full bg-blue-100 p-1">
-                                    <User className="h-3 w-3 text-blue-600"/>
+                                    <User className="h-3 w-3 text-blue-600" />
                                 </div>
                                 <div>
                                     <p className="text-xs text-blue-600 font-semibold">Alıcı Doğrulandı</p>
@@ -308,12 +308,12 @@ const AtmPanel: React.FC<AtmPanelProps> = ({isOpen, togglePanel, selectedAtm, is
                         </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         {/* Tutar */}
                         <div className="space-y-1.5">
                             <label
                                 className="text-xs font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-1">
-                                <Banknote className="w-3.5 h-3.5"/> Tutar
+                                <Banknote className="w-3.5 h-3.5" /> Tutar
                             </label>
                             <div className="relative">
                                 <input
@@ -335,7 +335,7 @@ const AtmPanel: React.FC<AtmPanelProps> = ({isOpen, togglePanel, selectedAtm, is
                         <div className="space-y-1.5">
                             <label
                                 className="text-xs font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-1">
-                                <FileText className="w-3.5 h-3.5"/> Açıklama
+                                <FileText className="w-3.5 h-3.5" /> Açıklama
                             </label>
                             <input
                                 type="text"
@@ -350,7 +350,7 @@ const AtmPanel: React.FC<AtmPanelProps> = ({isOpen, togglePanel, selectedAtm, is
                 </div>
 
                 {/* Footer */}
-                <div className="border-t border-gray-100 bg-gray-50 px-6 py-4 flex gap-3">
+                <div className="border-t border-gray-100 bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 flex gap-2 sm:gap-3">
                     <button
                         onClick={togglePanel}
                         className="flex-1 rounded-xl bg-white border border-gray-300 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 active:translate-y-0.5 transition-all"
@@ -364,11 +364,11 @@ const AtmPanel: React.FC<AtmPanelProps> = ({isOpen, togglePanel, selectedAtm, is
                     >
                         {isTransferLoading ? (
                             <>
-                                <Loader2 className="w-4 h-4 animate-spin"/> Gönderiliyor...
+                                <Loader2 className="w-4 h-4 animate-spin" /> Gönderiliyor...
                             </>
                         ) : (
                             <>
-                                <Send className="w-4 h-4"/> Transfer Yap
+                                <Send className="w-4 h-4" /> Transfer Yap
                             </>
                         )}
                     </button>

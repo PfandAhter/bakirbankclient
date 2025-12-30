@@ -65,10 +65,10 @@ const ControlPanel = ({
 
     // bg-gradient-to-br
     return (
-        <div className={`fixed top-18 right-2 w-[350px] max-w-[90vw] max-h-screen p-6 
+        <div className={`fixed top-16 sm:top-18 right-2 sm:right-2 w-[280px] sm:w-[320px] lg:w-[350px] max-w-[90vw] max-h-[80vh] sm:max-h-screen p-4 sm:p-5 lg:p-6 
                         bg-[#ccccc] from-slate-800 via-slate-700 to-slate-900 
                         backdrop-blur-lg bg-opacity-95 text-white 
-                        rounded-3xl shadow-2xl border border-slate-600/30
+                        rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-600/30
                         overflow-y-auto z-50 transition-all duration-300
                         ${isControlPanelDisabled ? 'opacity-20 pointer-events-none invisible' : ''}`}>
 

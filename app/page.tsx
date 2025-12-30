@@ -90,18 +90,19 @@ export default function HomePage() {
 
                 {/* HEADER */}
                 <header className="bg-[#0c0d13]/80 border-b border-[#1e222d] backdrop-blur-lg">
-                    <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-16">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center h-14 sm:h-16">
                         <div className="flex items-center">
-                            <Landmark className="h-7 w-7 text-blue-400" />
-                            <h1 className="ml-2 text-2xl font-bold text-white tracking-tight" style={{ transform: 'scaleY(1.3)', transformOrigin: 'center' }}>
+                            <Landmark className="h-6 w-6 sm:h-7 sm:w-7 text-blue-400" />
+                            <h1 className="ml-2 text-xl sm:text-2xl font-bold text-white tracking-tight" style={{ transform: 'scaleY(1.3)', transformOrigin: 'center' }}>
                                 BAKIRBANK
                             </h1>
                         </div>
 
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2 sm:space-x-4">
                             {isAuthenticated ? (
-                                <div className="flex items-center space-x-4">
-                                    <div className="flex items-center space-x-3">
+                                <div className="flex items-center space-x-2 sm:space-x-4">
+                                    {/* User Info - Hidden on mobile */}
+                                    <div className="hidden md:flex items-center space-x-3">
                                         <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center shadow-md">
                                             <User className="w-5 h-5 text-white" />
                                         </div>
@@ -118,15 +119,15 @@ export default function HomePage() {
 
                                     <button
                                         onClick={() => router.push('/dashboard')}
-                                        className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 shadow-md font-medium text-sm"
+                                        className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 transition-all duration-300 shadow-md font-medium text-xs sm:text-sm"
                                     >
                                         <BarChart3 className="w-4 h-4" />
-                                        <span>Dashboard</span>
+                                        <span className="hidden sm:inline">Dashboard</span>
                                     </button>
 
                                     <button
                                         onClick={() => router.push('/atmfinder')}
-                                        className="bg-[#1e293b] hover:bg-[#334155] text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-all duration-300 font-medium text-sm"
+                                        className="hidden sm:flex bg-[#1e293b] hover:bg-[#334155] text-white px-4 py-2 rounded-lg items-center space-x-2 transition-all duration-300 font-medium text-sm"
                                     >
                                         <MapPinned className="w-4 h-4" />
                                         <span>ATM Bul</span>
@@ -134,25 +135,25 @@ export default function HomePage() {
 
                                     <button
                                         onClick={handleLogout}
-                                        className="bg-[#7f1d1d] hover:bg-[#991b1b] text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-all font-medium text-sm"
+                                        className="bg-[#7f1d1d] hover:bg-[#991b1b] text-white px-3 sm:px-4 py-2 rounded-lg flex items-center space-x-1 sm:space-x-2 transition-all font-medium text-xs sm:text-sm"
                                     >
                                         <LogOut className="w-4 h-4" />
-                                        <span>Çıkış</span>
+                                        <span className="hidden sm:inline">Çıkış</span>
                                     </button>
 
                                     <NotificationPanel userId={user?.id || 'null'} />
                                 </div>
                             ) : (
-                                <div className="space-x-2">
+                                <div className="flex space-x-2">
                                     <button
                                         onClick={() => router.push('/sign-in')}
-                                        className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white px-5 py-2.5 rounded-lg transition-all font-semibold text-sm tracking-wide"
+                                        className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg transition-all font-semibold text-xs sm:text-sm tracking-wide"
                                     >
                                         Giriş Yap
                                     </button>
                                     <button
                                         onClick={() => router.push('/sign-up')}
-                                        className="border border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white px-5 py-2.5 rounded-lg transition-all font-semibold text-sm tracking-wide"
+                                        className="hidden sm:block border border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white px-5 py-2.5 rounded-lg transition-all font-semibold text-sm tracking-wide"
                                     >
                                         Kayıt Ol
                                     </button>
@@ -163,9 +164,9 @@ export default function HomePage() {
                 </header>
 
                 {/* HERO */}
-                <section className="py-24 text-center px-6">
+                <section className="py-12 sm:py-16 lg:py-24 text-center px-4 sm:px-6">
                     <div className="max-w-5xl mx-auto">
-                        <h2 className="text-5xl font-bold mb-6 leading-tight tracking-tight">
+                        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 leading-tight tracking-tight">
                             {isAuthenticated ? (
                                 <>
                                     Hoş geldiniz,{' '}
@@ -175,29 +176,29 @@ export default function HomePage() {
                                 </>
                             ) : (
                                 <>
-                                    Finansın Gücü, <br />
+                                    Finansın Gücü, <br className="sm:hidden" />
                                     <span className="text-blue-400">Güvenilir Geleceğiniz</span>
                                 </>
                             )}
                         </h2>
-                        <p className="text-gray-400 text-lg mb-12 font-normal leading-relaxed">
+                        <p className="text-gray-400 text-base sm:text-lg mb-8 sm:mb-12 font-normal leading-relaxed px-2">
                             {isAuthenticated
                                 ? 'Hesaplarınızı yönetin, işlemlerinizi takip edin ve finansal hedeflerinize ulaşın.'
                                 : 'Güvenli, hızlı ve modern bankacılık deneyimi için doğru adrestesiniz.'}
                         </p>
 
                         {isAuthenticated && (
-                            <div className="flex justify-center gap-4">
+                            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
                                 <button
                                     onClick={() => router.push('/dashboard')}
-                                    className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white px-8 py-3 rounded-lg font-semibold text-base flex items-center space-x-2 transition-all shadow-lg tracking-wide"
+                                    className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white px-6 sm:px-8 py-3 rounded-lg font-semibold text-sm sm:text-base flex items-center justify-center space-x-2 transition-all shadow-lg tracking-wide"
                                 >
                                     <BarChart3 className="w-5 h-5" />
                                     <span>Dashboard'a Git</span>
                                 </button>
                                 <button
                                     onClick={() => router.push('/transactions')}
-                                    className="bg-[#1e293b] hover:bg-[#334155] text-white px-8 py-3 rounded-lg font-semibold text-base flex items-center space-x-2 transition-all tracking-wide"
+                                    className="bg-[#1e293b] hover:bg-[#334155] text-white px-6 sm:px-8 py-3 rounded-lg font-semibold text-sm sm:text-base flex items-center justify-center space-x-2 transition-all tracking-wide"
                                 >
                                     <CreditCard className="w-5 h-5" />
                                     <span>İşlemler</span>
@@ -208,20 +209,20 @@ export default function HomePage() {
                 </section>
 
                 {/* FEATURE GRID */}
-                <section className="py-20 px-6">
+                <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6">
                     <div className="max-w-7xl mx-auto">
-                        <div className="text-center mb-12">
-                            <h3 className="text-3xl font-bold text-white mb-3 tracking-tight">
+                        <div className="text-center mb-8 sm:mb-12">
+                            <h3 className="text-2xl sm:text-3xl font-bold text-white mb-2 sm:mb-3 tracking-tight">
                                 {isAuthenticated ? 'Hesap Yönetimi' : 'Özellikler'}
                             </h3>
-                            <p className="text-gray-400 text-base font-normal">
+                            <p className="text-gray-400 text-sm sm:text-base font-normal">
                                 {isAuthenticated
                                     ? 'Bankacılığınızı tam kontrol altına alın'
                                     : 'Modern bankacılığın temel hizmetleri'}
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-6">
                             {[
                                 {
                                     name: 'Dashboard',
@@ -262,17 +263,17 @@ export default function HomePage() {
                                 <div
                                     key={item.name}
                                     onClick={() => handleProtectedAction(item.path)}
-                                    className={`relative p-6 rounded-2xl border border-[#1e222d] bg-gradient-to-br ${item.color} cursor-pointer group transition-all duration-500 hover:scale-[1.02] hover:border-blue-500/50`}
+                                    className={`relative p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-[#1e222d] bg-gradient-to-br ${item.color} cursor-pointer group transition-all duration-500 hover:scale-[1.02] hover:border-blue-500/50`}
                                 >
-                                    <div className="absolute inset-0 before:content-[''] before:absolute before:inset-0 before:bg-gradient-to-tr before:from-white/10 before:to-transparent rounded-2xl" />
+                                    <div className="absolute inset-0 before:content-[''] before:absolute before:inset-0 before:bg-gradient-to-tr before:from-white/10 before:to-transparent rounded-xl sm:rounded-2xl" />
                                     <div className="relative z-10">
-                                        <div className="w-12 h-12 bg-[#0f172a] rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-inner">
+                                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#0f172a] rounded-lg sm:rounded-xl flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform shadow-inner">
                                             {item.icon}
                                         </div>
-                                        <h3 className="text-lg font-bold text-white mb-2 tracking-tight">
+                                        <h3 className="text-base sm:text-lg font-bold text-white mb-1 sm:mb-2 tracking-tight">
                                             {item.name}
                                         </h3>
-                                        <p className="text-gray-400 text-sm font-normal leading-relaxed">{item.desc}</p>
+                                        <p className="text-gray-400 text-xs sm:text-sm font-normal leading-relaxed hidden sm:block">{item.desc}</p>
                                         {isAuthenticated && (
                                             <p className="mt-3 text-green-400 text-sm font-semibold tracking-wide">
                                                 ✓ Erişim sağlandı

@@ -46,7 +46,7 @@ export default function ProfilePage() {
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
                 <div className="text-center">
-                    <RefreshCw className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-4"/>
+                    <RefreshCw className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-4" />
                     <p className="text-white">Profil bilgileri yükleniyor...</p>
                 </div>
             </div>
@@ -60,11 +60,11 @@ export default function ProfilePage() {
                 <Header user={user} pageName={"Profilim"} logout={logout} onLogoClick={() => router.push('/')} />
 
                 {/* Main Content */}
-                <div className="max-w-5xl mx-auto py-10 px-4 flex flex-col md:flex-row gap-8">
+                <div className="max-w-5xl mx-auto py-6 sm:py-8 lg:py-10 px-4 sm:px-6 flex flex-col md:flex-row gap-4 sm:gap-6 lg:gap-8">
 
                     <ProfileSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-                    <main className="flex-1 bg-gray-800/70 rounded-2xl shadow-2xl border border-gray-700 p-8">
+                    <main className="flex-1 bg-gray-800/70 rounded-xl sm:rounded-2xl shadow-2xl border border-gray-700 p-4 sm:p-6 lg:p-8">
                         <form onSubmit={handleSubmit} className="space-y-8">
 
                             {/* Tab Contents */}
@@ -88,7 +88,7 @@ export default function ProfilePage() {
                             {/* Basit placeholder içerikler */}
                             {activeTab === "security" && (
                                 <div>
-                                    <h1 className="text-2xl font-bold text-white mb-4 flex items-center gap-2"><Shield className="w-5 h-5 text-green-400"/> Güvenlik Ayarları</h1>
+                                    <h1 className="text-2xl font-bold text-white mb-4 flex items-center gap-2"><Shield className="w-5 h-5 text-green-400" /> Güvenlik Ayarları</h1>
                                     <p className="text-gray-300 mb-2">İki adımlı doğrulama: Kapalı</p>
                                     <button type="button" className="bg-green-600 px-4 py-2 rounded-lg text-white text-sm">Etkinleştir</button>
                                 </div>
@@ -96,17 +96,17 @@ export default function ProfilePage() {
 
                             {activeTab === "notifications" && (
                                 <div>
-                                    <h1 className="text-2xl font-bold text-white mb-4 flex items-center gap-2"><Bell className="w-5 h-5 text-pink-400"/> Bildirim Ayarları</h1>
+                                    <h1 className="text-2xl font-bold text-white mb-4 flex items-center gap-2"><Bell className="w-5 h-5 text-pink-400" /> Bildirim Ayarları</h1>
                                     <div className="space-y-2">
-                                        <label className="flex items-center gap-2 text-gray-300"><input type="checkbox" defaultChecked/> E-posta Bildirimleri</label>
-                                        <label className="flex items-center gap-2 text-gray-300"><input type="checkbox"/> SMS Bildirimleri</label>
+                                        <label className="flex items-center gap-2 text-gray-300"><input type="checkbox" defaultChecked /> E-posta Bildirimleri</label>
+                                        <label className="flex items-center gap-2 text-gray-300"><input type="checkbox" /> SMS Bildirimleri</label>
                                     </div>
                                 </div>
                             )}
 
                             {activeTab === "accounts" && (
                                 <div>
-                                    <h1 className="text-2xl font-bold text-white mb-4 flex items-center gap-2"><KeyRound className="w-5 h-5 text-indigo-400"/> Kayıtlı Hesaplarım</h1>
+                                    <h1 className="text-2xl font-bold text-white mb-4 flex items-center gap-2"><KeyRound className="w-5 h-5 text-indigo-400" /> Kayıtlı Hesaplarım</h1>
                                     <div className="space-y-2 text-gray-300">
                                         <p>Google hesabı bağlı</p>
                                         <p>Apple hesabı bağlı</p>
@@ -116,7 +116,7 @@ export default function ProfilePage() {
 
                             {activeTab === "freeze" && (
                                 <div>
-                                    <h1 className="text-2xl font-bold text-white mb-4 flex items-center gap-2"><XCircle className="w-5 h-5 text-red-400"/> Hesabı Dondur</h1>
+                                    <h1 className="text-2xl font-bold text-white mb-4 flex items-center gap-2"><XCircle className="w-5 h-5 text-red-400" /> Hesabı Dondur</h1>
                                     <p className="text-red-400 mb-4">Hesabınızı geçici olarak dondurabilirsiniz.</p>
                                     <button type="button" className="bg-red-600 px-4 py-2 rounded-lg text-white hover:bg-red-700 transition-colors">Hesabı Dondur</button>
                                 </div>
@@ -126,7 +126,7 @@ export default function ProfilePage() {
                             {(activeTab === "profile" || activeTab === "password") && (
                                 <div className="flex justify-end pt-4 border-t border-gray-700 mt-6">
                                     <button type="submit" className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg transition-colors font-medium">
-                                        <Save className="w-5 h-5"/> Değişiklikleri Kaydet
+                                        <Save className="w-5 h-5" /> Değişiklikleri Kaydet
                                     </button>
                                 </div>
                             )}

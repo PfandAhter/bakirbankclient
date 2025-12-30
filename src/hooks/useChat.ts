@@ -80,8 +80,6 @@ export function useChat(): UseChatReturn {
 
             const data = await response.json();
 
-            console.log('[useChat] Full response data:', JSON.stringify(data, null, 2));
-
             // Handle Assistant Response
             if (data.message) {
                 const botMsg: ChatMessage = {

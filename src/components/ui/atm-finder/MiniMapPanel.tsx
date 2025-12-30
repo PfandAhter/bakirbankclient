@@ -179,13 +179,13 @@ const MiniMap: React.FC<MiniMapProps> = ({
 
     return (
         <div
-            className={`mini-map-container ${mapboxToken ? 'visible' : 'hidden'}`}
+            className={`mini-map-container ${mapboxToken ? 'visible' : 'hidden'} hidden md:block`}
             style={{
                 position: 'absolute',
                 top: '20px',
                 left: '20px',
-                width: '300px',
-                height: '300px',
+                width: 'clamp(200px, 25vw, 300px)',
+                height: 'clamp(200px, 25vw, 300px)',
                 borderRadius: '8px',
                 overflow: 'hidden',
                 boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',

@@ -124,7 +124,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
                     });
                 } catch (e) {
                     // Channel may be closed if component unmounted
-                    console.warn("BroadcastChannel postMessage failed:", e);
+                    // console.warn("BroadcastChannel postMessage failed:", e);
                 }
 
                 if (retryInterval) {

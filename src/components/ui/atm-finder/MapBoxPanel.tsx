@@ -30,6 +30,8 @@ interface MapCanvasProps {
     shouldStopAnimation?: boolean;
     setUserPosition: (position: Coordinates) => void;
     onAnimationStopped?: () => void;
+    centerOnUserTrigger?: number;
+    userPosition?: Coordinates | null;
 }
 
 const MapCanvas = forwardRef<
@@ -54,7 +56,9 @@ const MapCanvas = forwardRef<
     routeData,
     shouldStopAnimation,
     setUserPosition,
-    onAnimationStopped
+    onAnimationStopped,
+    centerOnUserTrigger = 0,
+    userPosition: externalUserPosition
 }: MapCanvasProps, ref) => {
     // Map loaded state - gates ATM marker creation until map is ready
     const [isMapLoaded, setIsMapLoaded] = useState(false);
@@ -261,6 +265,8 @@ const MapCanvas = forwardRef<
             atmEl.style.cursor = 'pointer';
             atmEl.style.zIndex = '10'; // Diğer layerların üstünde kalsın
             atmEl.textContent = '🏧';
+            atmEl.style.pointerEvents = 'auto'; // Bunu ekledim.
+
             atmEl.setAttribute('data-atm-id', atm.id);
 
             const marker = new mapboxgl.Marker({
@@ -401,6 +407,35 @@ const MapCanvas = forwardRef<
         }
     }, [routeType]);
 
+    // Listen to centerOnUserTrigger to fly camera and move marker to user's position
+    useEffect(() => {
+        if (!mapRef.current || !isMapLoaded || centerOnUserTrigger === 0) return;
+        if (!externalUserPosition) return;
+
+        const map = mapRef.current;
+
+        // Fly camera to user's position
+        map.flyTo({
+            center: [externalUserPosition.longitude, externalUserPosition.latitude],
+            zoom: 16,
+            pitch: 0,
+            bearing: 0,
+            duration: 1500,
+            essential: true
+        });
+
+        // Also move the user marker to user's position
+        if (markerRef.current) {
+            markerRef.current.setLngLat([externalUserPosition.longitude, externalUserPosition.latitude]);
+        }
+
+        // Update local marker coordinates state
+        setMarkerCoordinates({
+            latitude: externalUserPosition.latitude,
+            longitude: externalUserPosition.longitude
+        });
+    }, [centerOnUserTrigger, isMapLoaded, externalUserPosition]);
+
 
     useEffect(() => {
         if (navigator.geolocation) {
@@ -428,7 +463,7 @@ const MapCanvas = forwardRef<
 
         try {
             (mapboxgl as any).telemetry = false;
-        } catch(e) {}
+        } catch (e) { }
 
         const map = new mapboxgl.Map({
             container: mapContainerRef.current as HTMLDivElement,

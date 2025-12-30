@@ -16,6 +16,7 @@ import SendMoneyPanel from "@/src/components/ui/atm-finder/SendMoneyPanel";
 import { Header } from '@/src/components/ui/atm-finder/Header';
 import { RetryModal } from '@/src/components/ui/atm-finder/RetryModal';
 import { ActionFloatingButton } from '@/src/components/ui/atm-finder/ActionFloatingButton';
+import { FindMeButton } from '@/src/components/ui/atm-finder/FindMeButton';
 
 
 // Hooks & Types
@@ -195,6 +196,8 @@ export default function AtmFinderPage() {
                             setUserPosition={mapLogic.setUserPosition}
                             shouldStopAnimation={shouldStopAnimation}
                             startAnimation={() => { }}
+                            centerOnUserTrigger={mapLogic.centerOnUserTrigger}
+                            userPosition={mapLogic.userPosition}
                         />
                     </div>
 
@@ -214,7 +217,7 @@ export default function AtmFinderPage() {
                         />
                     )}
 
-                    <div className="fixed top-20 right-95 flex items-end gap-3 z-[1000]">
+                    <div className="fixed top-16 sm:top-20 right-2 sm:right-4 lg:right-95 flex items-end gap-2 sm:gap-3 z-[1000]">
                         <SendMoneyPanel
                             isOpen={isSendMoneyPanelOpen}
                             togglePanel={() => { setIsSendMoneyPanelOpen(!isSendMoneyPanelOpen); setIsControlPanelDisabled(false); }}
@@ -226,6 +229,12 @@ export default function AtmFinderPage() {
                             selectedRouteType={selectedRouteType}
                             onRouteTypeChange={changeRouteType}
                             disabled={animationInProgress}
+                        />
+
+                        <FindMeButton
+                            onClick={mapLogic.centerOnUser}
+                            disabled={animationInProgress}
+                            hasUserPosition={!!mapLogic.userPosition}
                         />
 
                         <ControlPanel

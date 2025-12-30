@@ -149,7 +149,7 @@ export const useAuthStore = create<AuthState>((set) => ({
                 set({ user: null, isAuthenticated: false, isLoading: false });
             }
         } catch (err: any) {
-            console.log("GET CURRENT USER ERROR: ", err)
+            // console.log("GET CURRENT USER ERROR: ", err)
             set({
                 user: null,
                 isAuthenticated: false,

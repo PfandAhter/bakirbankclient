@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/src/hooks/login/useAuth';
 import { useRouter } from 'next/navigation';
 import { useCards } from '@/src/hooks/useCards';
@@ -47,17 +47,17 @@ export default function CardsPage() {
             <div className="min-h-screen bg-[#0a0b0f] text-[#f8fafc]">
                 <Header user={user} pageName={"Kartlarım"} logout={logout} onLogoClick={() => router.push('/')} />
 
-                <main className="max-w-7xl mx-auto px-6 py-8">
-                    <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 sm:mb-8 gap-4">
                         <div>
-                            <h1 className="text-2xl font-bold text-white mb-1">Kart Portföyü</h1>
-                            <p className="text-gray-400 text-sm">Aktif kartlarınızı yönetin veya yeni başvuru yapın.</p>
+                            <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">Kart Portföyü</h1>
+                            <p className="text-gray-400 text-xs sm:text-sm">Aktif kartlarınızı yönetin veya yeni başvuru yapın.</p>
                         </div>
 
                         <div className="flex gap-3 w-full md:w-auto">
                             {/* Account Filter */}
                             <div className="relative flex-1 md:w-64">
-                                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4"/>
+                                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
                                 <select
                                     value={selectedAccountFilter}
                                     onChange={(e) => setSelectedAccountFilter(e.target.value)}

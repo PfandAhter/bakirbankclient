@@ -18,6 +18,9 @@ export const useMapLogic = () => {
     const [is3D, setIs3D] = useState(false);
     const [cameraPosition, setCameraPosition] = useState<Coordinates | null>(null);
 
+    // Trigger counter to force effect to run on every button click
+    const [centerOnUserTrigger, setCenterOnUserTrigger] = useState(0);
+
     useEffect(() => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(position => {
@@ -49,6 +52,13 @@ export const useMapLogic = () => {
         setIs3D(prev => !prev);
     }, [is3D]);
 
+    const centerOnUser = useCallback(() => {
+        if (userPosition) {
+            // Increment trigger to force the effect to run
+            setCenterOnUserTrigger(prev => prev + 1);
+        }
+    }, [userPosition]);
+
     return {
         viewState,
         setViewState,
@@ -57,6 +67,8 @@ export const useMapLogic = () => {
         is3D,
         toggle3D,
         cameraPosition,
-        setCameraPosition
+        setCameraPosition,
+        centerOnUser,
+        centerOnUserTrigger
     };
 };
