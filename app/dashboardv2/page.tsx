@@ -268,7 +268,7 @@ export default function DashboardPage() {
                                     className={`p-4 rounded-xl border cursor-pointer transition-all ${selectedAccount?.id === account.id
                                         ? 'border-blue-500 bg-blue-500/10'
                                         : 'border-gray-700 bg-gray-700/30 hover:border-gray-600'
-                                    }`}
+                                        }`}
                                 >
                                     <div className="flex items-center gap-3 mb-2">
                                         <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -329,7 +329,7 @@ export default function DashboardPage() {
                                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${transaction.type === 'INCOME'
                                                     ? 'bg-green-600'
                                                     : 'bg-red-600'
-                                                }`}>
+                                                    }`}>
                                                     {transaction.type === 'INCOME'
                                                         ? <ArrowUpRight className="w-5 h-5 text-white" />
                                                         : <ArrowDownLeft className="w-5 h-5 text-white" />
@@ -344,7 +344,7 @@ export default function DashboardPage() {
                                                 <p className={`font-bold ${transaction.type === 'INCOME'
                                                     ? 'text-green-400'
                                                     : 'text-red-400'
-                                                }`}>
+                                                    }`}>
                                                     {transaction.type === 'INCOME' ? '+' : '-'}{formatCurrency(transaction.amount)}
                                                 </p>
                                                 <p className="text-gray-400 text-sm">{formatDate(transaction.date)}</p>

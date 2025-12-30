@@ -1,15 +1,15 @@
 import TransferForm from "@/src/components/ui/transaction/TransferForm";
 import AlertBox from "@/src/components/ui/notification/AlertBox";
-import {CheckCircle2, Send, X} from "lucide-react";
-import {useAlert} from "@/src/hooks/notification/useAlert";
-import {useState} from "react";
-import {v4 as uuidv4} from "uuid";
+import { CheckCircle2, Send, X } from "lucide-react";
+import { useAlert } from "@/src/hooks/notification/useAlert";
+import { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
-import {Account, SavedRecipient} from "@/src/types/account";
-import {TransferData} from "@/src/types/transaction";
-import {currencySymbols} from "@/src/types/currency";
+import { Account, SavedRecipient } from "@/src/types/account";
+import { TransferData } from "@/src/types/transaction";
+import { currencySymbols } from "@/src/types/currency";
 import TransferConfirmation from "@/src/components/ui/transaction/TransferConfirmation";
-import {useTransfer} from "@/src/hooks/transaction/useTransfer";
+import { useTransfer } from "@/src/hooks/transaction/useTransfer";
 
 interface TransferMoneyPanelProps {
     fromAccounts: Account[];
@@ -21,14 +21,14 @@ interface TransferMoneyPanelProps {
 }
 
 export default function TransferMoneyPanel({
-                                               fromAccounts,
-                                               selectedAccount,
-                                               selectedSavedRecipient,
-                                               onClose,
-                                               onSuccess,
-                                               fetchTransaction,
-                                           }: TransferMoneyPanelProps) {
-    const {alert, showAlert} = useAlert();
+    fromAccounts,
+    selectedAccount,
+    selectedSavedRecipient,
+    onClose,
+    onSuccess,
+    fetchTransaction,
+}: TransferMoneyPanelProps) {
+    const { alert, showAlert } = useAlert();
 
     const [idempotencyKey, setIdempotencyKey] = useState(uuidv4());
 
@@ -88,7 +88,7 @@ export default function TransferMoneyPanel({
                 <AlertBox
                     type={alert.type}
                     title={alert.title ?? ""}
-                    message={alert.message ?? undefined}
+                    message={typeof alert.message === 'string' ? alert.message : undefined}
                 />
             )}
 
@@ -97,7 +97,7 @@ export default function TransferMoneyPanel({
                     <div className="flex items-center space-x-3">
                         <div
                             className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center shadow-lg">
-                            <Send className="w-5 h-5 text-white"/>
+                            <Send className="w-5 h-5 text-white" />
                         </div>
                         <h2 className="text-xl font-bold tracking-tight">
                             {confirmStep ? "İşlemi Onayla" : "Para Transferi"}
@@ -107,7 +107,7 @@ export default function TransferMoneyPanel({
                         onClick={handleClose}
                         className="text-gray-400 hover:text-white hover:bg-[#1e293b] p-2 rounded-lg transition-all"
                     >
-                        <X className="w-5 h-5"/>
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 
@@ -115,7 +115,7 @@ export default function TransferMoneyPanel({
                     <div className="p-8 text-center">
                         <div
                             className="w-20 h-20 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <CheckCircle2 className="w-12 h-12 text-green-500 animate-pulse"/>
+                            <CheckCircle2 className="w-12 h-12 text-green-500 animate-pulse" />
                         </div>
                         <h2 className="text-2xl font-bold mb-2">Transfer Başarılı!</h2>
                         <button

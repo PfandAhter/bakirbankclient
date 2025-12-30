@@ -82,7 +82,7 @@ export default function TransactionPage() {
         return (
             <div className="min-h-screen bg-[#0a0b0f] flex items-center justify-center">
                 <div className="text-center">
-                    <RefreshCw className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-4"/>
+                    <RefreshCw className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-4" />
                     <p className="text-gray-300 text-base font-normal tracking-wide">Hesap bilgileri yükleniyor...</p>
                 </div>
             </div>
@@ -96,7 +96,7 @@ export default function TransactionPage() {
                     <AlertBox
                         type={alert.type}
                         title={alert.title ?? ""}
-                        message={alert.message ?? undefined}
+                        message={typeof alert.message === 'string' ? alert.message : undefined}
                     />
                 )}
 
@@ -112,7 +112,7 @@ export default function TransactionPage() {
                             onCityChange={fetchDistricts}
                             onDistrictChange={fetchBranches}
                         />
-                        <button onClick={() => toggleModal('accountCreation', false)} className="absolute top-4 right-4 text-white"><X className="w-6 h-6"/></button>
+                        <button onClick={() => toggleModal('accountCreation', false)} className="absolute top-4 right-4 text-white"><X className="w-6 h-6" /></button>
                     </div>
                 )}
 
@@ -146,11 +146,11 @@ export default function TransactionPage() {
                         toAccount={selectedAccount}
                         onClose={() => toggleModal('deposit', false)}
                         onSuccess={async () => {
-                            if(selectedAccount) {
+                            if (selectedAccount) {
                                 const newBalance = selectedAccount.balance + 100;
-                                const updatedAccounts = accounts.map(a => a.id === selectedAccount.id ? {...a, balance: newBalance} : a);
+                                const updatedAccounts = accounts.map(a => a.id === selectedAccount.id ? { ...a, balance: newBalance } : a);
                                 setAccounts(updatedAccounts);
-                                setSelectedAccount({...selectedAccount, balance: newBalance});
+                                setSelectedAccount({ ...selectedAccount, balance: newBalance });
                             }
                         }}
                     />

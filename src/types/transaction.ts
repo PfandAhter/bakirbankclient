@@ -24,3 +24,18 @@ export interface TransferData {
     toSecondName?: string;
     toLastName?: string;
 }
+
+export interface TransferMoneyATMRequest {
+    atmId: string;
+    senderIban: string;
+    senderFirstName: string;
+    senderSecondName?: string;
+    senderLastName: string;
+    receiverIban?: string;
+    receiverTckn?: string;
+    receiverFirstName?: string;
+    receiverSecondName?: string;
+    receiverLastName?: string;
+    amount: number;
+    description: string;
+}

@@ -80,7 +80,7 @@ export default function CreateCardModal({ isOpen, onClose, onSubmit, accounts }:
                     <div>
                         <label className="block text-gray-400 text-sm mb-2">Kart Markası</label>
                         <div className="grid grid-cols-3 gap-3">
-                            {(['VISA', 'MASTERCARD', 'AMEX'] as CardNetwork[]).map((b) => (
+                            {(['VISA', 'MASTERCARD', 'AMEX', 'TROY'] as CardNetwork[]).map((b) => (
                                 <button
                                     key={b}
                                     type="button"

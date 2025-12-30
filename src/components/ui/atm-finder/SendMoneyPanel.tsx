@@ -1,14 +1,19 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-
-interface Account {
-    iban: string;
-    name: string;
-    balance: number;
-    currency: string;
-}
+import React, {useState, useEffect} from "react";
+import {useAccounts} from "@/src/hooks/useAccounts";
+import {useTransactions} from "@/src/hooks/useTransaction";
+import {useNotify} from "@/src/hooks/notification/useNotify";
+import {
+    X,
+    CreditCard,
+    User,
+    Banknote,
+    FileText,
+    Send,
+    ChevronDown,
+    Loader2
+} from "lucide-react";
 
 interface Atm {
     id: string;
@@ -30,46 +35,77 @@ interface AtmPanelProps {
     isOpen: boolean;
     togglePanel: () => void;
     selectedAtm: Atm | null;
+    isAuthenticated: boolean;
 }
 
-const AtmPanel: React.FC<AtmPanelProps> = ({ isOpen, togglePanel, selectedAtm }) => {
-    const [accounts, setAccounts] = useState<Account[]>([]);
-    const [selectedAccountIban, setSelectedAccountIban] = useState("");
+const AtmPanel: React.FC<AtmPanelProps> = ({isOpen, togglePanel, selectedAtm, isAuthenticated}) => {
+    const notify = useNotify();
+
+    const {
+        accounts,
+        selectedAccount,
+        setSelectedAccount,
+        isLoading: isAccountsLoading
+    } = useAccounts(isAuthenticated);
+
+    useEffect(() => {
+        if (!isAccountsLoading && accounts && accounts.length > 0 && !selectedAccount) {
+            setSelectedAccount(accounts[0]);
+        }
+    }, [accounts, isAccountsLoading, selectedAccount, setSelectedAccount]);
+
+    const showAlert = (type: string, title: string, message: string) => {
+        if (type === "error") {
+            notify.error(title, message);
+        } else if (type === "warning") {
+            notify.warning(title, message);
+        } else if (type === "info") {
+            notify.info(title, message);
+        } else {
+            notify.success(title, message);
+        }
+    };
+
+    const {atmTransfer, fetchRecipientByIban, isTransferLoading, isIbanLoading} = useTransactions({
+        selectedAccountId: selectedAccount?.iban,
+        showAlert
+    });
+
     const [identifier, setIdentifier] = useState("");
     const [amount, setAmount] = useState("");
     const [description, setDescription] = useState("");
     const [namePreview, setNamePreview] = useState("");
     const [nameInput, setNameInput] = useState("");
     const [isIbanMode, setIsIbanMode] = useState(false);
+    const [ibanNotFound, setIbanNotFound] = useState(false);
 
     useEffect(() => {
-        if (!isOpen) return;
-
-        const fetchAccounts = async () => {
-            try {
-                const response = await axios.post("http://localhost:8081/api/v1/account/get", {
-                    token: "test",
-                });
-                if (response.status === 200) {
-                    setAccounts(response.data.accounts || []);
-                    localStorage.setItem("senderFirstName", response.data.firstName);
-                    localStorage.setItem("senderSecondName", response.data.secondName);
-                    localStorage.setItem("senderLastName", response.data.lastName);
-                }
-            } catch (error) {
-                console.error("Hesaplar alınamadı:", error);
-            }
-        };
-
-        fetchAccounts();
+        if (isOpen) {
+            setIdentifier("");
+            setAmount("");
+            setDescription("");
+            setNamePreview("");
+            setNameInput("");
+            setIsIbanMode(false);
+        }
     }, [isOpen]);
 
-    const handleIdentifierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatCurrency = (value: number, currency: string) => {
+        return new Intl.NumberFormat('tr-TR', {style: 'currency', currency: currency}).format(value);
+    };
+
+    const maskName = (name: string) => {
+        return name.split(" ").map(p =>
+            p.length > 2 ? p.slice(0, 2) + "*".repeat(p.length - 2) : p[0] + "*"
+        ).join(" ");
+    };
+
+    const handleIdentifierChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setIdentifier(value);
+        setIbanNotFound(false);
 
         if (value.length > 11 && !value.startsWith("TR")) {
-            alert("Lütfen geçerli bir TC veya IBAN giriniz.");
             return;
         }
 
@@ -80,22 +116,16 @@ const AtmPanel: React.FC<AtmPanelProps> = ({ isOpen, togglePanel, selectedAtm })
         } else if (value.length >= 26) {
             setIsIbanMode(true);
 
-            axios
-                .get(`http://localhost:8081/api/v1/account/get/user/by-iban?iban=${value}`)
-                .then((res) => {
-                    const { firstName, secondName, lastName } = res.data;
+            const recipient = await fetchRecipientByIban(value, { silent: true });
 
-                    const maskedFirst = firstName?.slice(0, 2) + "*".repeat(firstName.length - 2 || 0);
-                    const maskedSecond = secondName ? secondName.slice(0, 2) + "*".repeat(secondName.length - 2) : "";
-                    const maskedLast = lastName?.slice(0, 2) + "*".repeat(lastName.length - 2 || 0);
-
-                    setNamePreview([maskedFirst, maskedSecond, maskedLast].filter(Boolean).join(" "));
-                })
-                .catch((err) => {
-                    console.error("IBAN ile kullanıcı bulunamadı:", err);
-                    setNamePreview("");
-                    setNameInput("");
-                });
+            if (recipient) {
+                setNamePreview(maskName(recipient.fullName));
+                setIbanNotFound(false);
+            } else {
+                setNamePreview("");
+                setNameInput("");
+                setIbanNotFound(true);
+            }
         } else {
             setIsIbanMode(false);
             setNamePreview("");
@@ -103,161 +133,244 @@ const AtmPanel: React.FC<AtmPanelProps> = ({ isOpen, togglePanel, selectedAtm })
         }
     };
 
-    const handleSend = () => {
+    const handleSend = async () => {
+        if (!selectedAtm) {
+            notify.error("Hata", "Lütfen bir ATM seçiniz.");
+            return;
+        }
+        if (!selectedAccount) {
+            notify.error("Hata", "Lütfen bir hesap seçiniz.");
+            return;
+        }
         if (Number(amount) <= 0) {
-            alert("Lütfen geçerli bir tutar girin.");
+            notify.error("Hata", "Lütfen geçerli bir tutar girin.");
             return;
         }
 
+        const baseParams = {
+            atmId: selectedAtm.id,
+            senderIban: selectedAccount.iban,
+            senderFirstName: selectedAccount.name.split(" ")[0] || "",
+            senderLastName: selectedAccount.name.split(" ").slice(-1)[0] || "",
+            amount,
+            description,
+        };
+
         if (identifier.length === 11 && !identifier.startsWith("TR")) {
-            axios
-                .post("http://localhost:8082/api/v1/transaction/transfer/atm", {
-                    atmId: selectedAtm.id,
-                    senderIban: selectedAccountIban,
-                    senderFirstName: localStorage.getItem("senderFirstName"),
-                    senderSecondName: localStorage.getItem("senderSecondName"),
-                    senderLastName: localStorage.getItem("senderLastName"),
-                    receiverTckn: identifier,
-                    amount,
-                    description,
-                })
-                .then(() => alert("Transfer başarılı."))
-                .catch(console.error);
+            const success = await atmTransfer({...baseParams, receiverTckn: identifier});
+            if (success) togglePanel();
         } else if (identifier.length === 26 && identifier.startsWith("TR")) {
             if (!nameInput.trim()) {
-                alert("Lütfen alıcının tam adını giriniz.");
+                notify.error("Hata", "Lütfen alıcının tam adını giriniz.");
                 return;
             }
 
-            let receiverFirstName = "";
+            const parts = nameInput.trim().split(" ");
+            const receiverFirstName = parts[0];
+            const receiverLastName = parts[parts.length - 1];
             let receiverSecondName = "";
-            let receiverLastName = "";
 
-            const parts = nameInput.split(" ");
-            if (parts.length === 3) {
-                [receiverFirstName, receiverSecondName, receiverLastName] = parts;
-            } else {
-                [receiverFirstName, receiverLastName] = parts;
+            if (parts.length > 2) {
+                receiverSecondName = parts.slice(1, -1).join(" ");
             }
 
-            axios
-                .post("http://localhost:8082/api/v1/transaction/transfer/atm", {
-                    atmId: selectedAtm.id,
-                    senderIban: selectedAccountIban,
-                    senderFirstName: localStorage.getItem("senderFirstName"),
-                    senderSecondName: localStorage.getItem("senderSecondName"),
-                    senderLastName: localStorage.getItem("senderLastName"),
-                    receiverIban: identifier,
-                    receiverFirstName,
-                    receiverSecondName,
-                    receiverLastName,
-                    amount,
-                    description,
-                })
-                .then(() => alert("Transfer başarılı."))
-                .catch(console.error);
+            const success = await atmTransfer({
+                ...baseParams,
+                receiverIban: identifier,
+                receiverFirstName,
+                receiverSecondName,
+                receiverLastName,
+            });
+            if (success) togglePanel();
         } else {
-            alert("Geçerli bir TC veya IBAN giriniz.");
+            notify.error("Hata", "Geçerli bir TC veya IBAN giriniz.");
         }
     };
 
-    if (!isOpen) return null;
+    if (!isOpen || !selectedAtm) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+        <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all duration-300">
             <div
-                className="
-          w-[95%] max-w-md rounded-2xl bg-white p-6 shadow-2xl
-          animate-[slideIn_0.3s_ease-out] font-sans
-        "
-            >
-                <h2 className="mb-5 text-center text-xl font-bold text-gray-800">
-                    {selectedAtm.name} ATM - Para Gönder
-                </h2>
+                className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-gray-200 animate-in fade-in zoom-in-95 duration-200">
 
-                <label className="block mb-3 text-sm font-medium text-gray-700">
-                    Hesap Seç:
-                    <select
-                        className="mt-1 w-full rounded-lg border border-gray-300 p-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                        onChange={(e) => setSelectedAccountIban(e.target.value)}
-                        value={selectedAccountIban}
-                    >
-                        <option value="">-- Hesap Seçiniz --</option>
-                        {accounts.map((account, index) => (
-                            <option key={index} value={account.iban}>
-                                {account.name} - {account.balance} ({account.currency})
-                            </option>
-                        ))}
-                    </select>
-                </label>
+                {/* Header */}
+                <div className="relative bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+                    <div className="flex items-center justify-between text-white">
+                        <div>
+                            <h2 className="text-lg font-bold">{selectedAtm.name}</h2>
+                            <p className="text-xs text-blue-100 opacity-80">Para Transfer İşlemi</p>
+                        </div>
+                        <button
+                            onClick={togglePanel}
+                            className="rounded-full p-1 hover:bg-white/20 transition-colors"
+                        >
+                            <X className="h-5 w-5"/>
+                        </button>
+                    </div>
+                </div>
 
-                <label className="block mb-3 text-sm font-medium text-gray-700">
-                    Alıcı TC / IBAN:
-                    <input
-                        type="text"
-                        value={identifier}
-                        onChange={handleIdentifierChange}
-                        maxLength={26}
-                        minLength={11}
-                        className="mt-1 w-full rounded-lg border border-gray-300 p-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                    />
-                </label>
+                {/* Body */}
+                <div className="p-6 space-y-5">
 
-                {isIbanMode && namePreview && (
-                    <>
-                        <p className="mb-2 text-sm text-gray-600">
-                            Alıcı İsim Önizleme: <strong>{namePreview}</strong>
-                        </p>
-                        <label className="block mb-3 text-sm font-medium text-gray-700">
-                            Alıcının Tam Adı:
+                    {/* Hesap Seçimi */}
+                    <div className="space-y-1.5">
+                        <label
+                            className="text-xs font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-1">
+                            <CreditCard className="w-3.5 h-3.5"/> Gönderen Hesap
+                        </label>
+                        <div className="relative">
+                            <select
+                                className="w-full appearance-none rounded-xl border border-gray-300 bg-gray-50 p-3 pl-4 pr-10 text-sm font-medium text-gray-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all disabled:opacity-60"
+                                onChange={(e) => {
+                                    const account = accounts?.find(acc => acc.iban === e.target.value);
+                                    if (account) setSelectedAccount(account);
+                                }}
+                                value={selectedAccount?.iban || ""}
+                                disabled={isAccountsLoading}
+                            >
+                                {isAccountsLoading ? (
+                                    <option>Hesaplar yükleniyor...</option>
+                                ) : (accounts && accounts.length > 0) ? (
+                                    accounts.map((account, index) => (
+                                        <option key={index} value={account.iban}>
+                                            {account.name} — {formatCurrency(account.balance, account.currency)}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <option value="">Hesap bulunamadı</option>
+                                )}
+                            </select>
+                            <div
+                                className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                                {isAccountsLoading ? <Loader2 className="h-4 w-4 animate-spin"/> :
+                                    <ChevronDown className="h-4 w-4"/>}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Alıcı Bilgisi */}
+                    <div className="space-y-1.5">
+                        <label
+                            className="text-xs font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-1">
+                            <User className="w-3.5 h-3.5"/> Alıcı TC / IBAN
+                        </label>
+                        <div className="relative">
                             <input
                                 type="text"
-                                placeholder="Örn: Ahmet Kemal Taner"
+                                value={identifier}
+                                onChange={handleIdentifierChange}
+                                maxLength={26}
+                                placeholder="TR00 0000..."
+                                className="w-full rounded-xl border border-gray-300 p-3 pl-10 text-sm font-medium focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                            />
+                            <div
+                                className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                                {isIbanLoading ? <Loader2 className="h-4 w-4 animate-spin"/> :
+                                    <span className="font-mono text-xs">ID</span>}
+                            </div>
+                        </div>
+                        {ibanNotFound && (
+                            <div className="flex items-center gap-1.5 mt-1.5 text-red-600 animate-in fade-in slide-in-from-top-1 duration-200">
+                                <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                                </svg>
+                                <span className="text-xs font-medium">Bu IBAN`a sahip kişi sistemde bulunamadı.</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Dinamik İsim Alanı (IBAN Modunda) */}
+                    {isIbanMode && namePreview && (
+                        <div
+                            className="rounded-xl bg-blue-50 border border-blue-100 p-4 animate-in slide-in-from-top-2 duration-300">
+                            <div className="mb-3 flex items-start gap-2">
+                                <div className="mt-0.5 rounded-full bg-blue-100 p-1">
+                                    <User className="h-3 w-3 text-blue-600"/>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-blue-600 font-semibold">Alıcı Doğrulandı</p>
+                                    <p className="text-sm font-bold text-gray-800">{namePreview}</p>
+                                </div>
+                            </div>
+
+                            <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                                Alıcının Tam Adı (Güvenlik için gereklidir)
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="Ad Soyad giriniz"
                                 value={nameInput}
                                 onChange={(e) => setNameInput(e.target.value)}
-                                className="mt-1 w-full rounded-lg border border-gray-300 p-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                className="w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm focus:border-blue-500 focus:outline-none transition-colors"
                             />
-                            <small className="text-xs text-gray-500">
-                                Lütfen alıcının tam adını ve soyadını giriniz.
-                            </small>
-                        </label>
-                    </>
-                )}
+                        </div>
+                    )}
 
-                <label className="block mb-3 text-sm font-medium text-gray-700">
-                    Gönderilecek Tutar (TL):
-                    <input
-                        type="number"
-                        min="0"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="mt-1 w-full rounded-lg border border-gray-300 p-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                    />
-                </label>
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* Tutar */}
+                        <div className="space-y-1.5">
+                            <label
+                                className="text-xs font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-1">
+                                <Banknote className="w-3.5 h-3.5"/> Tutar
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    placeholder="0.00"
+                                    className="w-full rounded-xl border border-gray-300 p-3 pl-10 text-sm font-medium focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                />
+                                <div
+                                    className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                                    <span className="font-sans font-bold text-gray-500">₺</span>
+                                </div>
+                            </div>
+                        </div>
 
-                <label className="block mb-3 text-sm font-medium text-gray-700">
-                    Açıklama:
-                    <input
-                        type="text"
-                        value={description}
-                        maxLength={50}
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="mt-1 w-full rounded-lg border border-gray-300 p-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                    />
-                </label>
+                        {/* Açıklama */}
+                        <div className="space-y-1.5">
+                            <label
+                                className="text-xs font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-1">
+                                <FileText className="w-3.5 h-3.5"/> Açıklama
+                            </label>
+                            <input
+                                type="text"
+                                value={description}
+                                maxLength={50}
+                                onChange={(e) => setDescription(e.target.value)}
+                                placeholder="Örn: Kira"
+                                className="w-full rounded-xl border border-gray-300 p-3 text-sm font-medium focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                            />
+                        </div>
+                    </div>
+                </div>
 
-                <div className="mt-5 flex gap-3">
-                    <button
-                        onClick={handleSend}
-                        className="flex-1 rounded-lg bg-blue-600 py-2 text-white font-semibold hover:bg-blue-700 active:scale-95 transition"
-                    >
-                        Gönder
-                    </button>
+                {/* Footer */}
+                <div className="border-t border-gray-100 bg-gray-50 px-6 py-4 flex gap-3">
                     <button
                         onClick={togglePanel}
-                        className="flex-1 rounded-lg bg-gray-200 py-2 text-gray-700 font-semibold hover:bg-gray-300 active:scale-95 transition"
+                        className="flex-1 rounded-xl bg-white border border-gray-300 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 active:translate-y-0.5 transition-all"
                     >
-                        Kapat
+                        İptal
+                    </button>
+                    <button
+                        onClick={handleSend}
+                        disabled={isTransferLoading}
+                        className="flex-[2] flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-200 hover:bg-blue-700 active:translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+                    >
+                        {isTransferLoading ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin"/> Gönderiliyor...
+                            </>
+                        ) : (
+                            <>
+                                <Send className="w-4 h-4"/> Transfer Yap
+                            </>
+                        )}
                     </button>
                 </div>
             </div>
