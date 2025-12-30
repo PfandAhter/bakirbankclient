@@ -1,9 +1,9 @@
 'use client';
 
-import React, {useState, useEffect, useRef} from 'react';
-import {InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator} from '@/components/ui/input-otp';
-import {Button} from '@/src/components/ui/Button';
-import {useAlert} from '@/src/hooks/notification/useAlert';
+import React, { useState, useEffect, useRef } from 'react';
+import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from '@/components/ui/input-otp';
+import { Button } from '@/src/components/ui/Button';
+import { useAlert } from '@/src/hooks/notification/useAlert';
 import AlertBox from "@/src/components/ui/notification/AlertBox";
 
 interface OTPVerificationModalProps {
@@ -13,15 +13,15 @@ interface OTPVerificationModalProps {
 }
 
 const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
-                                                                       userEmail,
-                                                                       onVerified,
-                                                                       onCancel,
-                                                                   }) => {
+    userEmail,
+    onVerified,
+    onCancel,
+}) => {
     const [otpValue, setOtpValue] = useState('');
     const [loading, setLoading] = useState(false);
     const [timeLeft, setTimeLeft] = useState(600); // 10 dakika = 600 saniye
     const [resendDisabled, setResendDisabled] = useState(false);
-    const {alert, showAlert} = useAlert();
+    const { alert, showAlert } = useAlert();
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Sayaç başlatma
@@ -73,8 +73,8 @@ const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
             try {
                 const response = await fetch(`/api/account/user/otp/verify`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({otp: numericValue, email: userEmail}),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ otp: numericValue, email: userEmail }),
                 });
 
                 if (!response.ok) throw new Error('OTP doğrulama başarısız.');
@@ -98,8 +98,8 @@ const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
         try {
             await fetch(`/api/account/user/otp/cancel`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({email: userEmail}),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: userEmail }),
             });
 
             showAlert('destructive', 'Kayıt İptal Edildi', 'Hesabınız silindi.');
@@ -120,8 +120,8 @@ const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
         try {
             const response = await fetch(`/api/account/user/otp/resend`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({email: userEmail}),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: userEmail }),
             });
 
             if (!response.ok) throw new Error('Kod yeniden gönderilemedi.');
@@ -164,15 +164,15 @@ const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
                         containerClassName="justify-center gap-3"
                     >
                         <InputOTPGroup>
-                            <InputOTPSlot index={0} inputMode="numeric" className="w-12 h-12 text-2xl"/>
-                            <InputOTPSlot index={1} inputMode="numeric" className="w-12 h-12 text-2xl"/>
-                            <InputOTPSlot index={2} inputMode="numeric" className="w-12 h-12 text-2xl"/>
+                            <InputOTPSlot index={0} inputMode="numeric" className="w-12 h-12 text-2xl" />
+                            <InputOTPSlot index={1} inputMode="numeric" className="w-12 h-12 text-2xl" />
+                            <InputOTPSlot index={2} inputMode="numeric" className="w-12 h-12 text-2xl" />
                         </InputOTPGroup>
-                        <InputOTPSeparator/>
+                        <InputOTPSeparator />
                         <InputOTPGroup>
-                            <InputOTPSlot index={3} inputMode="numeric" className="w-12 h-12 text-2xl"/>
-                            <InputOTPSlot index={4} inputMode="numeric" className="w-12 h-12 text-2xl"/>
-                            <InputOTPSlot index={5} inputMode="numeric" className="w-12 h-12 text-2xl"/>
+                            <InputOTPSlot index={3} inputMode="numeric" className="w-12 h-12 text-2xl" />
+                            <InputOTPSlot index={4} inputMode="numeric" className="w-12 h-12 text-2xl" />
+                            <InputOTPSlot index={5} inputMode="numeric" className="w-12 h-12 text-2xl" />
                         </InputOTPGroup>
                     </InputOTP>
                 </div>
@@ -191,11 +191,10 @@ const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
                     <Button
                         onClick={handleResend}
                         disabled={resendDisabled || loading}
-                        className={`w-full ${
-                            resendDisabled
+                        className={`w-full ${resendDisabled
                                 ? 'bg-gray-600 cursor-not-allowed'
                                 : 'bg-blue-600 hover:bg-blue-700'
-                        } text-white`}
+                            } text-white`}
                     >
                         {resendDisabled
                             ? 'Yeniden Gönder (10 dk sonra aktif olur)'
@@ -203,7 +202,7 @@ const OTPVerificationModal: React.FC<OTPVerificationModalProps> = ({
                     </Button>
                 </div>
             </div>
-            <AlertBox type={alert.type} title={alert.title} message={alert.message}/>
+            {alert.type && <AlertBox type={alert.type} title={alert.title} message={typeof alert.message === 'string' ? alert.message : undefined} />}
         </div>
     );
 };

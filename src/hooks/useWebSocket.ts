@@ -7,6 +7,8 @@ import SockJS from 'sockjs-client';
 import {ChatNotificationSendRequest} from '../types/chat';
 import {useMaintenance} from '../providers/MaintenanceProvider';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 interface UseWebSocketProps {
     userId?: string;
     onMessageReceived?: (message: ChatNotificationSendRequest) => void;
@@ -25,7 +27,7 @@ export function useWebSocket({userId, onMessageReceived}: UseWebSocketProps = {}
     useEffect(() => {
         if (!userId) return;
 
-        const WS_URL = 'http://localhost:8080/notification/chat-websocket';
+        const WS_URL = `${API_BASE_URL}/notification/chat-websocket`;
         const socket = new SockJS(WS_URL);
 
         const client = new Client({
