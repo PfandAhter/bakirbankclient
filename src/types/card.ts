@@ -2,18 +2,22 @@ import {BaseResponse} from "@/src/types/response";
 
 export type CardType = 'CREDIT' | 'DEBIT';
 export type CardNetwork = 'VISA' | 'MASTERCARD' | 'AMEX' | 'TROY';
-export type CardStatus = 'ACTIVE' | 'BLOCKED' | 'EXPIRED';
+export type CardStatus = 'ACTIVE' | 'BLOCKED' | 'EXPIRED' | 'PENDING_APPROVAL' | 'CANCELLED';
 
 export interface Card {
     id: string;
     cardNumber: string;
+    lastFourDigits: string;
     cardHolderName: string;
     expirationDate: string;
-    cvv: string;
+    cvv: string; //TODO: DEPRECATED
     expiryDate: string;
     type: CardType;
     status: CardStatus;
     network: CardNetwork;
+    availableAmount:number;
+    limitAmount:number;
+
     balance?: number;
     creditLimit?: number;
     usedCredit?: number;
