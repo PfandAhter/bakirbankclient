@@ -295,7 +295,13 @@ export const useDashboard = ({ isAuthenticated }: UseDashboardProps) => {
 
             if (response.ok) {
                 const data: AnalysisReportListResponse = await response.json();
-                setAnalysisReports(data.analysisReports || []);
+                // En yeniden eskiye doğru sırala
+                const sortedReports = (data.analysisReports || []).sort((a, b) => {
+                    const dateA = new Date(a.createdAt).getTime();
+                    const dateB = new Date(b.createdAt).getTime();
+                    return dateB - dateA; // Descending order (newest first)
+                });
+                setAnalysisReports(sortedReports);
             }
         } catch (error) {
             console.error('Error fetching analysis reports:', error);
