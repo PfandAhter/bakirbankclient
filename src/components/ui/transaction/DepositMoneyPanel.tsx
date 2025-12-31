@@ -99,6 +99,30 @@ export default function DepositMoneyPanel({
             return;
         }
 
+        // Kart son kullanma tarihi validasyonu
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth() + 1; // 1-12
+        const currentYear = currentDate.getFullYear() % 100; // Son 2 hane (örn: 2024 -> 24)
+
+        const expiryMonth = parseInt(formData.expiryMonth, 10);
+        const expiryYear = parseInt(formData.expiryYear, 10);
+
+        if (isNaN(expiryMonth) || isNaN(expiryYear)) {
+            showAlert("error", "Hata", "Geçerli bir son kullanma tarihi giriniz.");
+            return;
+        }
+
+        if (expiryMonth < 1 || expiryMonth > 12) {
+            showAlert("error", "Hata", "Geçerli bir ay giriniz (01-12).");
+            return;
+        }
+
+        // Kart süresi dolmuş mu kontrol et
+        if (expiryYear < currentYear || (expiryYear === currentYear && expiryMonth < currentMonth)) {
+            showAlert("error", "Kart Süresi Dolmuş", "Kartınızın son kullanma tarihi geçmiş. Lütfen geçerli bir kart kullanınız.");
+            return;
+        }
+
         const amount = parseFloat(formData.amount);
         if (isNaN(amount) || amount <= 0) {
             showAlert("error", "Hata", "Geçerli bir tutar giriniz.");
@@ -124,7 +148,10 @@ export default function DepositMoneyPanel({
             if (response.ok) {
                 setSuccess(true);
                 showAlert("success", "Başarılı", data.processMessage || "Para yatırma işlemi başarılı.");
-                await onSuccess();
+
+                setTimeout(() => {
+                    onSuccess();
+                }, 1500);
             } else {
                 // Backend'den gelen hata mesajını göster (limit aşımı vb.)
                 setError({

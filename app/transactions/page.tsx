@@ -30,7 +30,7 @@ export default function TransactionPage() {
     const { user, isAuthenticated, logout } = useAuth();
     const { alert, showAlert } = useAlert();
 
-    const { accounts, selectedAccount, setSelectedAccount, isLoading, createAccount, setAccounts } = useAccounts(isAuthenticated);
+    const { accounts, selectedAccount, setSelectedAccount, isLoading, createAccount, setAccounts, fetchAccountData } = useAccounts(isAuthenticated);
     const { transactions, setTransactions, fetchTransactions, page, setPage, totalPages } = useTransactions({
         selectedAccountId: selectedAccount?.id,
         showAlert
@@ -146,12 +146,9 @@ export default function TransactionPage() {
                         toAccount={selectedAccount}
                         onClose={() => toggleModal('deposit', false)}
                         onSuccess={async () => {
-                            if (selectedAccount) {
-                                const newBalance = selectedAccount.balance + 100;
-                                const updatedAccounts = accounts.map(a => a.id === selectedAccount.id ? { ...a, balance: newBalance } : a);
-                                setAccounts(updatedAccounts);
-                                setSelectedAccount({ ...selectedAccount, balance: newBalance });
-                            }
+                            await fetchAccountData();
+                            await fetchTransactions();
+                            setModals(prev => ({ ...prev, deposit: false }));
                         }}
                     />
                 )}
