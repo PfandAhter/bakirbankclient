@@ -116,21 +116,31 @@ export function useChat(): UseChatReturn {
                         botMsg.type = 'transaction_list';
                         botMsg.data = args;
                     } else if (fnName === 'transfer_money') {
-                        // Handle both PENDING_CONFIRMATION and VALIDATION_SUCCESS
-                        if (args.status === 'PENDING_CONFIRMATION' || args.processCode === 'VALIDATION_SUCCESS') {
+                        // Only show confirmation for VALIDATION_SUCCESS (pending confirmation)
+                        // H-0001 and other success codes mean transfer is complete, don't show confirmation again
+                        if (args.processCode === 'VALIDATION_SUCCESS') {
                             botMsg.type = 'transfer_confirmation';
-                            // Build preview data from args if not provided
+
+                            // Try to get original transfer args from different sources
+                            const originalArgs = pendingRequest.originalArgs ||
+                                pendingRequest.options?.originalArgs ||
+                                pendingTransferContextRef.current ||
+                                {};
+
+                            // Build preview data from original args if available
                             botMsg.data = args.preview || {
-                                fromAccountIban: args.fromIBAN,
-                                toIban: args.toIBAN,
-                                toName: [args.toFirstName, args.toSecondName, args.toLastName].filter(Boolean).join(' '),
-                                amount: args.amount,
+                                fromAccountIban: originalArgs.fromIBAN || args.fromIBAN,
+                                toIban: originalArgs.toIBAN || args.toIBAN,
+                                toName: [originalArgs.toFirstName || args.toFirstName, originalArgs.toSecondName || args.toSecondName, originalArgs.toLastName || args.toLastName].filter(Boolean).join(' ') || 'Alıcı',
+                                amount: originalArgs.amount || args.amount || 0,
                                 currency: 'TRY',
-                                description: args.description || args.processMessage
+                                description: args.processMessage || originalArgs.description || 'Transfer onayı bekleniyor'
                             };
+
+                            console.log('[useChat] Transfer confirmation data:', botMsg.data);
                         } else {
-                            botMsg.type = 'transfer_result';
-                            botMsg.data = args;
+                            // H-0001, success, or any other status = transfer complete, just show text
+                            botMsg.type = 'text';
                         }
                     }
                 } else if (lastToolResult) {
@@ -155,23 +165,21 @@ export function useChat(): UseChatReturn {
                         botMsg.type = 'transaction_list';
                         botMsg.data = { transactions: result.transactions };
                     } else if (fnName === 'transfer_money') {
-                        // Handle VALIDATION_SUCCESS or PENDING_CONFIRMATION from result
-                        if (result.status === 'PENDING_CONFIRMATION' ||
-                            result.processCode === 'VALIDATION_SUCCESS' ||
-                            result.status === '1') {
+                        // Only show confirmation for VALIDATION_SUCCESS
+                        if (result.processCode === 'VALIDATION_SUCCESS') {
                             botMsg.type = 'transfer_confirmation';
                             // Build preview data from toolArgs and result
                             botMsg.data = result.preview || {
                                 fromAccountIban: toolArgs.fromIBAN,
                                 toIban: toolArgs.toIBAN,
-                                toName: [toolArgs.toFirstName, toolArgs.toSecondName, toolArgs.toLastName].filter(Boolean).join(' '),
-                                amount: toolArgs.amount,
+                                toName: [toolArgs.toFirstName, toolArgs.toSecondName, toolArgs.toLastName].filter(Boolean).join(' ') || 'Alıcı',
+                                amount: toolArgs.amount || 0,
                                 currency: 'TRY',
-                                description: toolArgs.description || result.processMessage
+                                description: result.processMessage || toolArgs.description
                             };
-                        } else if (result.status) {
-                            botMsg.type = 'transfer_result';
-                            botMsg.data = result;
+                        } else {
+                            // H-0001, success, or any other status = transfer complete, just show text
+                            botMsg.type = 'text';
                         }
                     }
                 }
@@ -179,54 +187,70 @@ export function useChat(): UseChatReturn {
                 // Fallback: Detect transfer confirmation from message content pattern
                 // This handles cases where the backend doesn't send separate lastToolResult data
                 if (botMsg.type === 'text' && botMsg.content) {
-                    const confirmationPatterns = [
-                        /transfer özeti/i,
-                        /onaylıyor musunuz/i,
-                        /doğrulanmıştır.*onaylıyor/i,
-                        /işlem ücreti/i,
-                        /transfer.*onay/i
+                    // First check if this is a SUCCESS message - don't show confirmation for completed transfers
+                    const successPatterns = [
+                        /başarıyla tamamlandı/i,
+                        /transfer tamamlandı/i,
+                        /işlem başarılı/i,
+                        /başarıyla gerçekleşti/i,
+                        /successfully completed/i,
+                        /transfer completed/i
                     ];
 
-                    const containsConfirmation = confirmationPatterns.some(pattern =>
+                    const isSuccessMessage = successPatterns.some(pattern =>
                         pattern.test(botMsg.content)
                     );
 
-                    // Check if we have transfer data from a previous message or session data
-                    if (containsConfirmation && data.transferPreview) {
-                        console.log('[useChat] Detected transfer confirmation from text content');
-                        botMsg.type = 'transfer_confirmation';
-                        botMsg.data = data.transferPreview;
-                    } else if (containsConfirmation && data.lastToolCall) {
-                        // Try to extract from lastToolCall if available
-                        const toolCall = data.lastToolCall;
-                        if (toolCall.name === 'transfer_money' && toolCall.args) {
-                            console.log('[useChat] Building transfer preview from lastToolCall args');
+                    // Only check for confirmation if it's NOT a success message
+                    if (!isSuccessMessage) {
+                        const confirmationPatterns = [
+                            /transfer özeti/i,
+                            /onaylıyor musunuz/i,
+                            /doğrulanmıştır.*onaylıyor/i,
+                            /işlem ücreti/i
+                        ];
+
+                        const containsConfirmation = confirmationPatterns.some(pattern =>
+                            pattern.test(botMsg.content)
+                        );
+
+                        // Check if we have transfer data from a previous message or session data
+                        if (containsConfirmation && data.transferPreview) {
+                            console.log('[useChat] Detected transfer confirmation from text content');
                             botMsg.type = 'transfer_confirmation';
-                            botMsg.data = {
-                                fromAccountIban: toolCall.args.fromIBAN,
-                                toIban: toolCall.args.toIBAN,
-                                toName: [toolCall.args.toFirstName, toolCall.args.toSecondName, toolCall.args.toLastName].filter(Boolean).join(' '),
-                                amount: toolCall.args.amount,
-                                currency: 'TRY',
-                                description: toolCall.args.description
-                            };
-                        }
-                    } else if (containsConfirmation && pendingTransferContextRef.current) {
-                        // Use stored transfer context from previous tool call
-                        const ctx = pendingTransferContextRef.current;
-                        // Only use if context is recent (within last 60 seconds)
-                        if (ctx.timestamp && (Date.now() - ctx.timestamp) < 60000) {
-                            console.log('[useChat] Using pendingTransferContext for confirmation');
-                            botMsg.type = 'transfer_confirmation';
-                            botMsg.data = {
-                                fromAccountIban: ctx.fromIBAN,
-                                toIban: ctx.toIBAN,
-                                toName: [ctx.toFirstName, ctx.toSecondName, ctx.toLastName].filter(Boolean).join(' '),
-                                amount: ctx.amount,
-                                currency: 'TRY',
-                            };
-                            // Clear the context after use
-                            pendingTransferContextRef.current = null;
+                            botMsg.data = data.transferPreview;
+                        } else if (containsConfirmation && data.lastToolCall) {
+                            // Try to extract from lastToolCall if available
+                            const toolCall = data.lastToolCall;
+                            if (toolCall.name === 'transfer_money' && toolCall.args) {
+                                console.log('[useChat] Building transfer preview from lastToolCall args');
+                                botMsg.type = 'transfer_confirmation';
+                                botMsg.data = {
+                                    fromAccountIban: toolCall.args.fromIBAN,
+                                    toIban: toolCall.args.toIBAN,
+                                    toName: [toolCall.args.toFirstName, toolCall.args.toSecondName, toolCall.args.toLastName].filter(Boolean).join(' '),
+                                    amount: toolCall.args.amount,
+                                    currency: 'TRY',
+                                    description: toolCall.args.description
+                                };
+                            }
+                        } else if (containsConfirmation && pendingTransferContextRef.current) {
+                            // Use stored transfer context from previous tool call
+                            const ctx = pendingTransferContextRef.current;
+                            // Only use if context is recent (within last 60 seconds)
+                            if (ctx.timestamp && (Date.now() - ctx.timestamp) < 60000) {
+                                console.log('[useChat] Using pendingTransferContext for confirmation');
+                                botMsg.type = 'transfer_confirmation';
+                                botMsg.data = {
+                                    fromAccountIban: ctx.fromIBAN,
+                                    toIban: ctx.toIBAN,
+                                    toName: [ctx.toFirstName, ctx.toSecondName, ctx.toLastName].filter(Boolean).join(' '),
+                                    amount: ctx.amount,
+                                    currency: 'TRY',
+                                };
+                                // Clear the context after use
+                                pendingTransferContextRef.current = null;
+                            }
                         }
                     }
                 }

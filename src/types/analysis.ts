@@ -5,7 +5,7 @@ export type AnalyzeRange = 'LAST_7_DAYS' | 'LAST_30_DAYS';
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
 
 export interface AnalysisReportDTO {
-    id: number;
+    id: string;
     accountId: string;
     invoiceId: string;
     analysisRange: string;

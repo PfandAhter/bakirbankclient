@@ -45,7 +45,7 @@ export default function CardsPage() {
     return (
         <ProtectedRoute>
             <div className="min-h-screen bg-[#0a0b0f] text-[#f8fafc]">
-                <Header user={user} pageName={"Kartlarım"} logout={logout} onLogoClick={() => router.push('/')} />
+                <Header user={user} pageName={"| Kartlarım"} logout={logout} onLogoClick={() => router.push('/')} />
 
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 sm:mb-8 gap-4">

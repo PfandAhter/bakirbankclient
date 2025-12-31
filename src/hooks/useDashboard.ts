@@ -350,7 +350,7 @@ export const useDashboard = ({ isAuthenticated }: UseDashboardProps) => {
             const response = await fetch('/api/invoice/get', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ transactionId: invoiceId })
+                body: JSON.stringify({ invoiceId: invoiceId })
             });
 
             if (response.ok) {

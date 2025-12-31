@@ -12,6 +12,12 @@ export interface Transaction {
     category: string;
     channel: string;
     invoiceId: string;
+    receiverIBAN: string;
+    receiverFullName: string;
+    receiverTCKN?: string;
+    receiverFirstName: string;
+    receiverSecondName?: string;
+    receiverLastName: string;
     status: string;
     invoiceStatus?: InvoiceStatus;
 }

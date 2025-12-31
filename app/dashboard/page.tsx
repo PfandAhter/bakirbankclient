@@ -26,6 +26,7 @@ import NotificationPanel from "@/src/components/ui/notification/NotificationPane
 import { AnalysisReportCard } from '@/src/components/ui/analysis/AnalysisReportCard';
 import { CreateAnalysisModal } from '@/src/components/ui/analysis/CreateAnalysisModal';
 import { useDashboard } from '@/src/hooks/useDashboard';
+import Header from "@/src/components/ui/Header";
 
 export default function DashboardPage() {
     const { user, isAuthenticated, logout } = useAuth();
@@ -117,33 +118,7 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
             {/* Header */}
-            <header className="bg-black/50 backdrop-blur-md border-b border-gray-800">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-16">
-                        <div className="flex items-center space-x-4">
-                            <button
-                                onClick={() => router.push('/')}
-                                className="group flex items-center text-blue-400 hover:text-blue-300 transition-colors"
-                            >
-                                <Landmark className="h-8 w-8 text-blue-400 group-hover:text-blue-300 transition-colors" />
-                                <span className="ml-2 text-2xl font-bold text-white group-hover:text-blue-300 transition-colors">BAKIRBANK</span>
-                            </button>
-                            <span className="text-2xl font-bold text-white">Dashboard</span>
-                        </div>
-
-                        <div className="flex items-center space-x-4">
-                            <span className="text-gray-300">Hoş geldin, {user?.firstName || "Kullanıcı"}</span>
-                            <button
-                                onClick={handleLogout}
-                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
-                            >
-                                Çıkış Yap
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <NotificationPanel userId={user?.id || ""} />
-            </header>
+            <Header user={user} pageName={"| Hesap Özetim"} logout={logout} onLogoClick={() => router.push('/')} />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Balance Card */}

@@ -24,7 +24,7 @@ export const Header = ({ isAuthenticated, onLogoClick, user, onLogout }: HeaderP
                             className="group flex items-center text-blue-400 hover:text-blue-300 transition-colors"
                         >
                             <Landmark className="h-6 w-6 sm:h-8 sm:w-8 text-blue-400 group-hover:text-blue-300 transition-colors" />
-                            <span className="ml-1.5 sm:ml-2 text-lg sm:text-2xl font-bold text-white group-hover:text-blue-300 transition-colors">BAKIRBANK</span>
+                            <span className="ml-1.5 sm:ml-2 text-lg sm:text-2xl font-bold text-white group-hover:text-blue-300 transition-colors">BAKIRBANK | ATM Bul</span>
                         </button>
                     </div>
 

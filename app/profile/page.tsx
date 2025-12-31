@@ -57,7 +57,7 @@ export default function ProfilePage() {
         <ProtectedRoute>
             <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
                 {/* Header - Inline or Separated Component */}
-                <Header user={user} pageName={"Profilim"} logout={logout} onLogoClick={() => router.push('/')} />
+                <Header user={user} pageName={"| Profilim"} logout={logout} onLogoClick={() => router.push('/')} />
 
                 {/* Main Content */}
                 <div className="max-w-5xl mx-auto py-6 sm:py-8 lg:py-10 px-4 sm:px-6 flex flex-col md:flex-row gap-4 sm:gap-6 lg:gap-8">
