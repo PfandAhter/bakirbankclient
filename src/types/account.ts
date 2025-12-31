@@ -15,6 +15,10 @@ export interface Account {
     currency: string;
     iban: string;
     balance: number;
+    dailyTransferLimit: number;
+    dailyWithdrawLimit: number;
+    dailyDepositLimit: number;
+    description?: string;
 }
 
 export interface AccountData {

@@ -270,16 +270,21 @@ export default function DashboardPage() {
                                         : 'border-gray-700 bg-gray-700/30 hover:border-gray-600'
                                         }`}
                                 >
-                                    <div className="flex items-center gap-3 mb-2">
+                                    <div className="flex items-center gap-3 mb-3">
                                         <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                                             <Wallet className="w-5 h-5 text-white" />
                                         </div>
-                                        <div>
-                                            <p className="text-white font-medium">{account.name}</p>
-                                            <p className="text-gray-400 text-xs">{account.iban}</p>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-white font-medium truncate">{account.name}</p>
+                                            <p className="text-gray-400 text-xs truncate">{account.iban}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between">
+
+                                    {account.description && (
+                                        <p className="text-gray-500 text-xs mb-3 italic">{account.description}</p>
+                                    )}
+
+                                    <div className="flex items-center justify-between mb-3">
                                         <p className="text-xl font-bold text-white">
                                             {showBalance ? formatCurrency(account.balance) : '••••••'}
                                         </p>
@@ -289,6 +294,28 @@ export default function DashboardPage() {
                                                 <span>{cardCountByAccount[account.id]} kart</span>
                                             </div>
                                         )}
+                                    </div>
+
+                                    {/* Günlük Limitler */}
+                                    <div className="pt-3 border-t border-gray-700/50 space-y-2">
+                                        <p className="text-gray-500 text-xs font-medium mb-2">Günlük Limitler</p>
+                                        <div className="grid grid-cols-3 gap-2 text-xs">
+                                            <div className="bg-gray-800/50 rounded-lg p-2 text-center">
+                                                <Send className="w-3 h-3 text-blue-400 mx-auto mb-1" />
+                                                <p className="text-gray-400">Transfer</p>
+                                                <p className="text-white font-medium">{formatCurrency(account.dailyTransferLimit)}</p>
+                                            </div>
+                                            <div className="bg-gray-800/50 rounded-lg p-2 text-center">
+                                                <ArrowUpRight className="w-3 h-3 text-red-400 mx-auto mb-1" />
+                                                <p className="text-gray-400">Çekim</p>
+                                                <p className="text-white font-medium">{formatCurrency(account.dailyWithdrawLimit)}</p>
+                                            </div>
+                                            <div className="bg-gray-800/50 rounded-lg p-2 text-center">
+                                                <ArrowDownLeft className="w-3 h-3 text-green-400 mx-auto mb-1" />
+                                                <p className="text-gray-400">Yatırma</p>
+                                                <p className="text-white font-medium">{formatCurrency(account.dailyDepositLimit)}</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
