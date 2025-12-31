@@ -1,5 +1,5 @@
-import {useState, useEffect, useCallback} from 'react';
-import {Transaction} from '@/src/types/transaction';
+import { useState, useEffect, useCallback } from 'react';
+import { Transaction } from '@/src/types/transaction';
 
 interface UseTransactionsProps {
     selectedAccountId?: string;
@@ -28,7 +28,7 @@ interface RecipientInfo {
     fullName: string;
 }
 
-export const useTransactions = ({selectedAccountId, showAlert}: UseTransactionsProps) => {
+export const useTransactions = ({ selectedAccountId, showAlert }: UseTransactionsProps) => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
@@ -36,6 +36,8 @@ export const useTransactions = ({selectedAccountId, showAlert}: UseTransactionsP
     const [filterDate, setFilterDate] = useState<'ALL' | 'WEEK' | 'MONTH'>('ALL');
     const [isTransferLoading, setIsTransferLoading] = useState(false);
     const [isIbanLoading, setIsIbanLoading] = useState(false);
+    const [isDepositLoading, setIsDepositLoading] = useState(false);
+    const [isWithdrawLoading, setIsWithdrawLoading] = useState(false);
 
     const fetchTransactions = async () => {
         if (!selectedAccountId) return;
@@ -43,7 +45,7 @@ export const useTransactions = ({selectedAccountId, showAlert}: UseTransactionsP
             const response = await fetch('/api/account/transaction/list', {
                 method: 'POST',
                 credentials: "include",
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     page,
                     size: 5,
@@ -73,7 +75,7 @@ export const useTransactions = ({selectedAccountId, showAlert}: UseTransactionsP
             const response = await fetch('/api/transaction/transfer/atm', {
                 method: 'POST',
                 credentials: "include",
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(params),
             });
 
@@ -168,6 +170,80 @@ export const useTransactions = ({selectedAccountId, showAlert}: UseTransactionsP
         }
     }, [showAlert]);
 
+    /**
+     * Para yatırma işlemi
+     * @param accountId - Hesap ID
+     * @param amount - Yatırılacak miktar (pozitif değer)
+     */
+    const deposit = async (accountId: string, amount: number): Promise<boolean> => {
+        setIsDepositLoading(true);
+        try {
+            const response = await fetch('/api/transaction/deposit', {
+                method: 'POST',
+                credentials: "include",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    accountId,
+                    amount: Math.abs(amount) // Deposit için pozitif (category: DEPOSIT route tarafında eklenir)
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showAlert("success", "Başarılı", data.processMessage || "Para yatırma işlemi başarılı.");
+                await fetchTransactions();
+                return true;
+            } else {
+                showAlert("error", data.processCode || "Hata", data.processMessage || "Para yatırma işlemi başarısız.");
+                return false;
+            }
+        } catch (err) {
+            console.error("Deposit error:", err);
+            showAlert("error", "Sunucu Hatası", "Para yatırma işlemi sırasında bir hata oluştu.");
+            return false;
+        } finally {
+            setIsDepositLoading(false);
+        }
+    };
+
+    /**
+     * Para çekme işlemi
+     * @param accountId - Hesap ID
+     * @param amount - Çekilecek miktar (pozitif değer, category: WITHDRAW olarak gönderilir)
+     */
+    const withdraw = async (accountId: string, amount: number): Promise<boolean> => {
+        setIsWithdrawLoading(true);
+        try {
+            const response = await fetch('/api/transaction/withdraw', {
+                method: 'POST',
+                credentials: "include",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    accountId,
+                    amount: Math.abs(amount) // Withdraw için pozitif (category: WITHDRAW route tarafında eklenir)
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showAlert("success", "Başarılı", data.processMessage || "Para çekme işlemi başarılı.");
+                await fetchTransactions();
+                return true;
+            } else {
+                showAlert("error", data.processCode || "Hata", data.processMessage || "Para çekme işlemi başarısız.");
+                return false;
+            }
+        } catch (err) {
+            console.error("Withdraw error:", err);
+            showAlert("error", "Sunucu Hatası", "Para çekme işlemi sırasında bir hata oluştu.");
+            return false;
+        } finally {
+            setIsWithdrawLoading(false);
+        }
+    };
+
     useEffect(() => {
         fetchTransactions();
     }, [selectedAccountId, page, filterType, filterDate]);
@@ -187,6 +263,10 @@ export const useTransactions = ({selectedAccountId, showAlert}: UseTransactionsP
         getUserByIban,
         fetchRecipientByIban,
         isTransferLoading,
-        isIbanLoading
+        isIbanLoading,
+        deposit,
+        withdraw,
+        isDepositLoading,
+        isWithdrawLoading
     };
 };
