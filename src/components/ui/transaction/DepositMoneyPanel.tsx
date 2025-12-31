@@ -10,8 +10,11 @@ import {
     DollarSign,
     CheckCircle2,
     Wallet,
-    Loader2
+    Loader2,
+    AlertTriangle
 } from "lucide-react";
+import { useAlert } from "@/src/hooks/notification/useAlert";
+import AlertBox from "@/src/components/ui/notification/AlertBox";
 
 interface Account {
     id: string;
@@ -28,11 +31,13 @@ interface DepositMoneyPanelProps {
 }
 
 export default function DepositMoneyPanel({
-                                              toAccount,
-                                              onClose,
-                                              onSuccess,
-                                          }: DepositMoneyPanelProps) {
+    toAccount,
+    onClose,
+    onSuccess,
+}: DepositMoneyPanelProps) {
     // --- STATE ---
+    const { alert, showAlert } = useAlert();
+
     const [formData, setFormData] = useState({
         cardNumber: "",
         cardHolder: "",
@@ -45,6 +50,7 @@ export default function DepositMoneyPanel({
     const [isFlipped, setIsFlipped] = useState(false); // Kartın dönme durumu
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [error, setError] = useState<{ code: string; message: string } | null>(null);
     const [cardType, setCardType] = useState<"visa" | "mastercard" | "default">("default");
 
     // --- HELPERS ---
@@ -87,19 +93,70 @@ export default function DepositMoneyPanel({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
 
-        // Simüle edilmiş bir işlem süresi
-        setTimeout(async () => {
+        if (!toAccount) {
+            showAlert("error", "Hata", "Hesap seçilmedi.");
+            return;
+        }
+
+        const amount = parseFloat(formData.amount);
+        if (isNaN(amount) || amount <= 0) {
+            showAlert("error", "Hata", "Geçerli bir tutar giriniz.");
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch('/api/transaction/deposit', {
+                method: 'POST',
+                credentials: "include",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    accountId: toAccount.id,
+                    amount: amount
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setSuccess(true);
+                showAlert("success", "Başarılı", data.processMessage || "Para yatırma işlemi başarılı.");
+                await onSuccess();
+            } else {
+                // Backend'den gelen hata mesajını göster (limit aşımı vb.)
+                setError({
+                    code: data.processCode || "HATA",
+                    message: data.processMessage || "Para yatırma işlemi başarısız."
+                });
+                showAlert("error", data.processCode || "Hata", data.processMessage || "Para yatırma işlemi başarısız.");
+            }
+        } catch (err) {
+            console.error("Deposit error:", err);
+            setError({
+                code: "SUNUCU_HATASI",
+                message: "Para yatırma işlemi sırasında bir hata oluştu."
+            });
+            showAlert("error", "Sunucu Hatası", "Para yatırma işlemi sırasında bir hata oluştu.");
+        } finally {
             setLoading(false);
-            setSuccess(true);
-            await onSuccess();
-        }, 2000);
+        }
     };
 
     // --- RENDER ---
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 px-4 overflow-y-auto py-10">
+            {/* Alert Box - Hata/Başarı mesajları için */}
+            {alert.type && (
+                <AlertBox
+                    type={alert.type}
+                    title={alert.title ?? ""}
+                    message={typeof alert.message === 'string' ? alert.message : undefined}
+                />
+            )}
+
             <div className="bg-[#0c0d13] border border-[#1e222d] rounded-2xl shadow-2xl w-full max-w-lg text-white relative flex flex-col">
 
                 {/* Header */}
@@ -120,6 +177,19 @@ export default function DepositMoneyPanel({
                         <X className="w-5 h-5" />
                     </button>
                 </div>
+
+                {/* Error Display - Panel içi hata gösterimi */}
+                {error && (
+                    <div className="mx-6 mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
+                        <div className="flex items-start space-x-3">
+                            <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-red-400 font-semibold text-sm">{error.code}</p>
+                                <p className="text-red-300 text-sm mt-1">{error.message}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {success ? (
                     // --- BAŞARILI EKRANI ---
@@ -145,9 +215,8 @@ export default function DepositMoneyPanel({
                         {/* --- GÖRSEL KART ALANI --- */}
                         <div className="perspective-1000 w-full h-56 flex justify-center mb-4">
                             <div
-                                className={`relative w-full max-w-[360px] h-full transition-all duration-700 transform-style-3d ${
-                                    isFlipped ? "rotate-y-180" : ""
-                                }`}
+                                className={`relative w-full max-w-[360px] h-full transition-all duration-700 transform-style-3d ${isFlipped ? "rotate-y-180" : ""
+                                    }`}
                             >
                                 {/* --- KART ÖN YÜZ --- */}
                                 <div className="absolute w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 text-white shadow-2xl backface-hidden border border-white/10 flex flex-col justify-between overflow-hidden">
@@ -179,14 +248,14 @@ export default function DepositMoneyPanel({
                                         <div className="flex flex-col">
                                             <span className="text-[10px] text-gray-400 uppercase tracking-wider">Kart Sahibi</span>
                                             <span className="font-medium tracking-wide uppercase truncate max-w-[200px]">
-                        {formData.cardHolder || "AD SOYAD"}
-                      </span>
+                                                {formData.cardHolder || "AD SOYAD"}
+                                            </span>
                                         </div>
                                         <div className="flex flex-col items-end">
                                             <span className="text-[10px] text-gray-400 uppercase tracking-wider">SKT</span>
                                             <span className="font-mono">
-                        {formData.expiryMonth || "AA"}/{formData.expiryYear || "YY"}
-                      </span>
+                                                {formData.expiryMonth || "AA"}/{formData.expiryYear || "YY"}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -195,7 +264,7 @@ export default function DepositMoneyPanel({
                                 <div className="absolute w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shadow-2xl backface-hidden rotate-y-180 border border-white/10 overflow-hidden">
                                     {/* Manyetik Şerit */}
                                     <div className="w-full h-12 bg-black/80 mt-6 relative">
-                                        <div className="absolute w-full h-full bg-repeat opacity-20" style={{backgroundImage: 'linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000), linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000)', backgroundSize: '4px 4px', backgroundPosition: '0 0, 2px 2px'}}></div>
+                                        <div className="absolute w-full h-full bg-repeat opacity-20" style={{ backgroundImage: 'linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000), linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000)', backgroundSize: '4px 4px', backgroundPosition: '0 0, 2px 2px' }}></div>
                                     </div>
 
                                     {/* İmza ve CVV */}
@@ -250,7 +319,7 @@ export default function DepositMoneyPanel({
                                     name="cardHolder"
                                     placeholder="AD SOYAD"
                                     value={formData.cardHolder}
-                                    onChange={(e) => setFormData({...formData, cardHolder: e.target.value.toUpperCase()})}
+                                    onChange={(e) => setFormData({ ...formData, cardHolder: e.target.value.toUpperCase() })}
                                     onFocus={() => setIsFlipped(false)}
                                     className="w-full bg-[#1e293b] border border-[#1e222d] text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-600"
                                     required
