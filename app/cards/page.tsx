@@ -14,7 +14,8 @@ import {
     Landmark,
     LogOut,
     CreditCard,
-    Filter
+    Filter,
+    Sparkles
 } from 'lucide-react';
 import NotificationPanel from '@/src/components/ui/notification/NotificationPanel';
 import Header from "@/src/components/ui/Header";
@@ -44,24 +45,33 @@ export default function CardsPage() {
 
     return (
         <ProtectedRoute>
-            <div className="min-h-screen bg-[#0a0b0f] text-[#f8fafc]">
+            <div className="min-h-screen bg-[#0a0b0f] text-[#f8fafc] relative">
+                {/* Gryffindor ambient background */}
+                <div className="fixed inset-0 pointer-events-none">
+                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#740001]/8 rounded-full blur-[120px] translate-x-1/3 -translate-y-1/3" />
+                    <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#D3A625]/5 rounded-full blur-[100px] -translate-x-1/3 translate-y-1/3" />
+                </div>
+
                 <Header user={user} pageName={"| Kartlarım"} logout={logout} onLogoClick={() => router.push('/')} />
 
-                <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
+                <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 sm:mb-8 gap-4">
                         <div>
-                            <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">Kart Portföyü</h1>
+                            <h1 className="text-xl sm:text-2xl font-bold text-white mb-1 flex items-center gap-2">
+                                <CreditCard className="w-6 h-6 text-[#D3A625]" />
+                                Kart Portföyü
+                            </h1>
                             <p className="text-gray-400 text-xs sm:text-sm">Aktif kartlarınızı yönetin veya yeni başvuru yapın.</p>
                         </div>
 
                         <div className="flex gap-3 w-full md:w-auto">
                             {/* Account Filter */}
                             <div className="relative flex-1 md:w-64">
-                                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
+                                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-[#D3A625]/60 w-4 h-4" />
                                 <select
                                     value={selectedAccountFilter}
                                     onChange={(e) => setSelectedAccountFilter(e.target.value)}
-                                    className="w-full pl-9 pr-4 py-2.5 bg-[#1e222d] border border-gray-700 rounded-lg text-sm text-white focus:border-blue-500 outline-none appearance-none"
+                                    className="w-full pl-9 pr-4 py-2.5 bg-[#0f1015] border border-[#740001]/30 rounded-lg text-sm text-white focus:border-[#D3A625] outline-none appearance-none"
                                 >
                                     <option value="all">Tüm Hesaplar</option>
                                     {accounts.map(acc => (
@@ -72,9 +82,9 @@ export default function CardsPage() {
 
                             <button
                                 onClick={() => setIsCreateModalOpen(true)}
-                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-lg shadow-blue-900/20"
+                                className="flex items-center gap-2 bg-gradient-to-r from-[#740001] to-[#8B1A1A] hover:from-[#8B1A1A] hover:to-[#9f2020] text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-lg shadow-[#740001]/20 border border-[#D3A625]/20"
                             >
-                                <Plus className="w-4 h-4" />
+                                <Sparkles className="w-4 h-4 text-[#D3A625]" />
                                 <span className="hidden md:inline">Yeni Kart Oluştur</span>
                                 <span className="md:hidden">Yeni</span>
                             </button>
@@ -83,19 +93,19 @@ export default function CardsPage() {
 
                     {loading ? (
                         <div className="flex flex-col items-center justify-center h-64">
-                            <RefreshCw className="w-8 h-8 text-blue-500 animate-spin mb-4" />
+                            <RefreshCw className="w-8 h-8 text-[#D3A625] animate-spin mb-4" />
                             <p className="text-gray-400">Kart bilgileri yükleniyor...</p>
                         </div>
                     ) : cards.length === 0 ? (
-                        <div className="bg-[#1e222d]/50 border border-dashed border-gray-700 rounded-2xl p-12 text-center">
-                            <CreditCard className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                        <div className="bg-[#0f1015]/80 border border-dashed border-[#740001]/40 rounded-2xl p-12 text-center">
+                            <CreditCard className="w-16 h-16 text-[#740001]/50 mx-auto mb-4" />
                             <h3 className="text-xl font-bold text-white mb-2">Bu hesapta kart bulunmuyor</h3>
                             <p className="text-gray-400 mb-6 max-w-md mx-auto">
                                 Seçili hesap için henüz bir kart tanımlanmamış. Hemen yeni bir kart başvurusu yaparak harcamaya başlayabilirsiniz.
                             </p>
                             <button
                                 onClick={() => setIsCreateModalOpen(true)}
-                                className="text-blue-400 hover:text-blue-300 font-medium"
+                                className="text-[#D3A625] hover:text-[#EEBA30] font-medium"
                             >
                                 + Yeni Kart Ekle
                             </button>

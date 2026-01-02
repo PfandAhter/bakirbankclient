@@ -6,7 +6,7 @@ import { Input } from '@/src/components/ui/Input';
 import { Button } from '@/src/components/ui/Button';
 import { useAlert } from "@/src/hooks/notification/useAlert";
 import AlertBox from "@/src/components/ui/notification/AlertBox";
-import { Mail, Lock, Eye, EyeOff, User } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, Shield, Sparkles } from 'lucide-react';
 import ForgotPasswordForm from "@/src/components/ui/login/ForgotPasswordForm";
 
 const LoginForm = ({
@@ -45,12 +45,6 @@ const LoginForm = ({
         return Object.keys(newErrors).length === 0;
     };
 
-    /*useEffect(() => {
-        if (loginAttempted && error) {
-            showAlert("destructive", "Giriş işlemi başarısız.", error);
-        }
-    }, [error, loginAttempted]);*/
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setFormError(null);
@@ -71,8 +65,6 @@ const LoginForm = ({
                     "Giriş Başarısız",
                     error.message || "E-posta veya şifre hatalı."
                 );
-
-                //setFormError('Login failed, please try again.');
             }
         }
     };
@@ -87,17 +79,28 @@ const LoginForm = ({
     };
 
     return (
-        <div className="min-h-screen bg-black flex items-center justify-center p-4">
-            <div className="w-full max-w-md mx-auto bg-gray-900 rounded-2xl shadow-2xl border border-gray-800 p-8">
+        <div className="min-h-screen bg-[#0a0b0f] flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Gryffindor ambient background */}
+            <div className="fixed inset-0 pointer-events-none">
+                <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-[#740001]/10 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2" />
+                <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-[#D3A625]/8 rounded-full blur-[100px] translate-x-1/3 translate-y-1/3" />
+            </div>
+
+            <div className="relative w-full max-w-md mx-auto bg-[#0f1015]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#740001]/30 p-8">
+                {/* Subtle glow effect */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#740001]/5 to-transparent pointer-events-none" />
+
                 {/* Header */}
-                <div className="text-center mb-8">
+                <div className="relative text-center mb-8">
                     <div className="flex justify-center mb-4">
-                        <div
-                            className="w-16 h-16 bg-green-900 rounded-full flex items-center justify-center border border-green-700">
-                            <User className="w-8 h-8 text-green-400" />
+                        <div className="relative w-16 h-16 bg-gradient-to-br from-[#740001] to-[#5C0001] rounded-full flex items-center justify-center border-2 border-[#D3A625]/30 shadow-lg">
+                            <Shield className="w-8 h-8 text-[#D3A625]" />
+                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#D3A625]/10 to-transparent pointer-events-none" />
                         </div>
                     </div>
-                    <h1 className="text-3xl font-bold text-white mb-2">BAKIRBANK`a Hoş Geldiniz</h1>
+                    <h1 className="text-3xl font-bold text-white mb-2">
+                        <span className="text-[#D3A625]">BAKIR</span>BANK'a Hoş Geldiniz
+                    </h1>
                     <p className="text-gray-400">Hesabınıza giriş yapın</p>
                 </div>
 
@@ -105,7 +108,7 @@ const LoginForm = ({
                     <ForgotPasswordForm onBackToLogin={() => setShowForgotPassword(false)} />
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="relative space-y-4">
                     <fieldset disabled={isLoading} className={isLoading ? "opacity-50 cursor-not-allowed" : ""}>
                         {/* Email Input */}
                         <Input
@@ -120,7 +123,7 @@ const LoginForm = ({
                         />
 
                         {/* Password Input */}
-                        <div className="relative">
+                        <div className="relative mt-4">
                             <Input
                                 label="Şifre"
                                 type={showPassword ? 'text' : 'password'}
@@ -135,7 +138,7 @@ const LoginForm = ({
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
                                 disabled={isLoading}
-                                className="absolute right-3 top-9 text-gray-400 hover:text-gray-300 transition-colors"
+                                className="absolute right-3 top-9 text-gray-400 hover:text-[#D3A625] transition-colors"
                             >
                                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
@@ -147,10 +150,10 @@ const LoginForm = ({
                                 <input
                                     type="checkbox"
                                     disabled={isLoading}
-                                    className="peer appearance-none h-5 w-5 border border-gray-500 bg-gray-800 rounded transition-colors checked:bg-blue-600 checked:border-blue-600 focus:ring-2 focus:ring-blue-500"
+                                    className="peer appearance-none h-5 w-5 border border-[#740001]/50 bg-[#12131a] rounded transition-colors checked:bg-[#740001] checked:border-[#D3A625] focus:ring-2 focus:ring-[#D3A625]/30"
                                 />
                                 <span className="ml-2 text-sm font-medium text-gray-400">Beni hatırla</span>
-                                <svg className="absolute left-0.5 top-0.5 w-4 h-4 text-white hidden peer-checked:block pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <svg className="absolute left-0.5 top-0.5 w-4 h-4 text-[#D3A625] hidden peer-checked:block pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                 </svg>
                             </label>
@@ -159,7 +162,7 @@ const LoginForm = ({
                                 type="button"
                                 onClick={() => setShowForgotPassword(true)}
                                 disabled={isLoading}
-                                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                                className="text-sm text-[#D3A625] hover:text-[#EEBA30] transition-colors"
                             >
                                 Şifremi unuttum
                             </button>
@@ -169,22 +172,34 @@ const LoginForm = ({
                         {formError && <p className="text-sm text-red-400 mb-4 text-center">{formError}</p>}
                         {error && <p className="text-sm text-red-400 mb-4 text-center">{error}</p>}
 
-                        {/* Submit Button */}
-                        <Button type="submit" loading={isLoading} size={'login'}>
-                            {isLoading ? "Giriş Yapılıyor..." : "Giriş Yap"}
-                        </Button>
+                        {/* Submit Button - Gryffindor Theme */}
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full py-3 px-4 bg-gradient-to-r from-[#740001] to-[#8B1A1A] hover:from-[#8B1A1A] hover:to-[#9f2020] text-white font-semibold rounded-lg transition-all duration-300 shadow-lg border border-[#D3A625]/20 hover:shadow-[#740001]/30 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-[#D3A625] border-t-transparent rounded-full animate-spin" />
+                                    <span>Giriş Yapılıyor...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles className="w-5 h-5 text-[#D3A625]" />
+                                    <span>Giriş Yap</span>
+                                </>
+                            )}
+                        </button>
                     </fieldset>
                 </form>
 
                 {/* Divider */}
-                <div className="my-6">
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-700" />
-                        </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-gray-900 text-gray-500">veya</span>
-                        </div>
+                <div className="my-6 relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-[#740001]/30" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-[#0f1015] text-gray-500">veya</span>
                     </div>
                 </div>
 
@@ -192,7 +207,7 @@ const LoginForm = ({
                 <button
                     type="button"
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center px-4 py-3 border border-gray-600 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors text-gray-300"
+                    className="w-full flex items-center justify-center px-4 py-3 border border-[#740001]/30 bg-[#12131a] rounded-lg hover:bg-[#1a1b24] hover:border-[#D3A625]/30 transition-all text-gray-300"
                 >
                     <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                         <path fill="#4285F4"
@@ -208,14 +223,14 @@ const LoginForm = ({
                 </button>
 
                 {/* Register Link */}
-                <div className="text-center mt-6">
+                <div className="text-center mt-6 relative">
                     <p className="text-gray-400">
                         Hesabınız yok mu?{' '}
                         <button
                             type="button"
                             onClick={onSwitchToRegister}
                             disabled={isLoading}
-                            className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                            className="text-[#D3A625] hover:text-[#EEBA30] font-medium transition-colors"
                         >
                             Kayıt Ol
                         </button>

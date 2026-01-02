@@ -1,17 +1,17 @@
 'use client';
 
-import React, {useEffect} from 'react';
+import React, { useEffect } from 'react';
 import { useAuthStore } from '@/src/hooks/login/authStore';
 import { RefreshCw } from 'lucide-react';
-import {useNotificationStore} from "@/src/hooks/notification/notificationStore";
-import {usePathname} from "next/navigation";
+import { useNotificationStore } from "@/src/hooks/notification/notificationStore";
+import { usePathname } from "next/navigation";
 
 interface AuthProviderProps {
     children: React.ReactNode;
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-    const {isLoading,getCurrentUser,setLoading} = useAuthStore();
+    const { isLoading, getCurrentUser, setLoading } = useAuthStore();
     const { showNotification } = useNotificationStore();
     const pathname = usePathname();
 
@@ -26,14 +26,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('isLoading: ', isLoading);
         const initAuth = async () => {
             try {
-                if (isPublicPage){
+                if (isPublicPage) {
                     setLoading(false);
                     return;
                 }
                 await getCurrentUser();
-                showNotification("Authentication completed","success");
+                showNotification("Authentication completed", "success");
             } catch (error) {
-                showNotification("Authentication failed","error");
+                showNotification("Authentication failed", "error");
                 console.error('AuthProvider: Auth check failed:', error);
             }
         };
@@ -43,9 +43,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     if (isLoading && !isPublicPage) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
+            <div className="min-h-screen bg-[#0a0b0f] flex items-center justify-center">
                 <div className="text-center">
-                    <RefreshCw className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-4" />
+                    <RefreshCw className="w-8 h-8 text-[#D3A625] animate-spin mx-auto mb-4" />
                     <p className="text-white">Uygulama yükleniyor...</p>
                 </div>
             </div>

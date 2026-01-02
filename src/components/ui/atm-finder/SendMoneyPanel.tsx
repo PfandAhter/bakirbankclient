@@ -12,7 +12,8 @@ import {
     FileText,
     Send,
     ChevronDown,
-    Loader2
+    Loader2,
+    Sparkles
 } from "lucide-react";
 
 interface Atm {
@@ -191,20 +192,23 @@ const AtmPanel: React.FC<AtmPanelProps> = ({ isOpen, togglePanel, selectedAtm, i
 
     return (
         <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all duration-300">
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 transition-all duration-300">
             <div
-                className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-gray-200 animate-in fade-in zoom-in-95 duration-200">
+                className="w-full max-w-lg overflow-hidden rounded-2xl bg-[#0f1015] border border-[#740001]/30 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
 
                 {/* Header */}
-                <div className="relative bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+                <div className="relative bg-gradient-to-r from-[#740001] to-[#8B1A1A] px-6 py-4 border-b border-[#D3A625]/20">
                     <div className="flex items-center justify-between text-white">
                         <div>
-                            <h2 className="text-lg font-bold">{selectedAtm.name}</h2>
-                            <p className="text-xs text-blue-100 opacity-80">Para Transfer İşlemi</p>
+                            <h2 className="text-lg font-bold flex items-center gap-2">
+                                <Sparkles className="w-5 h-5 text-[#D3A625]" />
+                                {selectedAtm.name}
+                            </h2>
+                            <p className="text-xs text-[#D3A625]/80">Para Transfer İşlemi</p>
                         </div>
                         <button
                             onClick={togglePanel}
-                            className="rounded-full p-1 hover:bg-white/20 transition-colors"
+                            className="rounded-full p-1 hover:bg-[#740001]/50 text-white transition-colors"
                         >
                             <X className="h-5 w-5" />
                         </button>
@@ -217,12 +221,12 @@ const AtmPanel: React.FC<AtmPanelProps> = ({ isOpen, togglePanel, selectedAtm, i
                     {/* Hesap Seçimi */}
                     <div className="space-y-1.5">
                         <label
-                            className="text-xs font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-1">
+                            className="text-xs font-semibold uppercase tracking-wide text-[#D3A625] flex items-center gap-1">
                             <CreditCard className="w-3.5 h-3.5" /> Gönderen Hesap
                         </label>
                         <div className="relative">
                             <select
-                                className="w-full appearance-none rounded-xl border border-gray-300 bg-gray-50 p-3 pl-4 pr-10 text-sm font-medium text-gray-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all disabled:opacity-60"
+                                className="w-full appearance-none rounded-xl border border-[#740001]/30 bg-[#12131a] p-3 pl-4 pr-10 text-sm font-medium text-white focus:border-[#D3A625] focus:outline-none focus:ring-1 focus:ring-[#D3A625] transition-all disabled:opacity-60"
                                 onChange={(e) => {
                                     const account = accounts?.find(acc => acc.iban === e.target.value);
                                     if (account) setSelectedAccount(account);
@@ -243,7 +247,7 @@ const AtmPanel: React.FC<AtmPanelProps> = ({ isOpen, togglePanel, selectedAtm, i
                                 )}
                             </select>
                             <div
-                                className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                                className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#D3A625]">
                                 {isAccountsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> :
                                     <ChevronDown className="h-4 w-4" />}
                             </div>
@@ -253,7 +257,7 @@ const AtmPanel: React.FC<AtmPanelProps> = ({ isOpen, togglePanel, selectedAtm, i
                     {/* Alıcı Bilgisi */}
                     <div className="space-y-1.5">
                         <label
-                            className="text-xs font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-1">
+                            className="text-xs font-semibold uppercase tracking-wide text-[#D3A625] flex items-center gap-1">
                             <User className="w-3.5 h-3.5" /> Alıcı TC / IBAN
                         </label>
                         <div className="relative">
@@ -263,16 +267,16 @@ const AtmPanel: React.FC<AtmPanelProps> = ({ isOpen, togglePanel, selectedAtm, i
                                 onChange={handleIdentifierChange}
                                 maxLength={26}
                                 placeholder="TR00 0000..."
-                                className="w-full rounded-xl border border-gray-300 p-3 pl-10 text-sm font-medium focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                className="w-full rounded-xl border border-[#740001]/30 bg-[#12131a] p-3 pl-10 text-sm font-medium text-white placeholder-gray-500 focus:border-[#D3A625] focus:outline-none focus:ring-1 focus:ring-[#D3A625] transition-all"
                             />
                             <div
-                                className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                                className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-[#D3A625]/70">
                                 {isIbanLoading ? <Loader2 className="h-4 w-4 animate-spin" /> :
                                     <span className="font-mono text-xs">ID</span>}
                             </div>
                         </div>
                         {ibanNotFound && (
-                            <div className="flex items-center gap-1.5 mt-1.5 text-red-600 animate-in fade-in slide-in-from-top-1 duration-200">
+                            <div className="flex items-center gap-1.5 mt-1.5 text-red-400 animate-in fade-in slide-in-from-top-1 duration-200">
                                 <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                 </svg>
@@ -284,18 +288,18 @@ const AtmPanel: React.FC<AtmPanelProps> = ({ isOpen, togglePanel, selectedAtm, i
                     {/* Dinamik İsim Alanı (IBAN Modunda) */}
                     {isIbanMode && namePreview && (
                         <div
-                            className="rounded-xl bg-blue-50 border border-blue-100 p-4 animate-in slide-in-from-top-2 duration-300">
+                            className="rounded-xl bg-[#740001]/10 border border-[#740001]/30 p-4 animate-in slide-in-from-top-2 duration-300">
                             <div className="mb-3 flex items-start gap-2">
-                                <div className="mt-0.5 rounded-full bg-blue-100 p-1">
-                                    <User className="h-3 w-3 text-blue-600" />
+                                <div className="mt-0.5 rounded-full bg-[#740001]/20 p-1">
+                                    <User className="h-3 w-3 text-[#D3A625]" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-blue-600 font-semibold">Alıcı Doğrulandı</p>
-                                    <p className="text-sm font-bold text-gray-800">{namePreview}</p>
+                                    <p className="text-xs text-[#D3A625] font-semibold">Alıcı Doğrulandı</p>
+                                    <p className="text-sm font-bold text-white">{namePreview}</p>
                                 </div>
                             </div>
 
-                            <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                            <label className="block text-xs font-medium text-gray-400 mb-1.5">
                                 Alıcının Tam Adı (Güvenlik için gereklidir)
                             </label>
                             <input
@@ -303,7 +307,7 @@ const AtmPanel: React.FC<AtmPanelProps> = ({ isOpen, togglePanel, selectedAtm, i
                                 placeholder="Ad Soyad giriniz"
                                 value={nameInput}
                                 onChange={(e) => setNameInput(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm focus:border-blue-500 focus:outline-none transition-colors"
+                                className="w-full rounded-lg border border-[#740001]/30 bg-[#12131a] p-2.5 text-sm text-white focus:border-[#D3A625] focus:outline-none transition-colors"
                             />
                         </div>
                     )}
@@ -312,7 +316,7 @@ const AtmPanel: React.FC<AtmPanelProps> = ({ isOpen, togglePanel, selectedAtm, i
                         {/* Tutar */}
                         <div className="space-y-1.5">
                             <label
-                                className="text-xs font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-1">
+                                className="text-xs font-semibold uppercase tracking-wide text-[#D3A625] flex items-center gap-1">
                                 <Banknote className="w-3.5 h-3.5" /> Tutar
                             </label>
                             <div className="relative">
@@ -322,11 +326,11 @@ const AtmPanel: React.FC<AtmPanelProps> = ({ isOpen, togglePanel, selectedAtm, i
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
                                     placeholder="0.00"
-                                    className="w-full rounded-xl border border-gray-300 p-3 pl-10 text-sm font-medium focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full rounded-xl border border-[#740001]/30 bg-[#12131a] p-3 pl-10 text-sm font-medium text-white placeholder-gray-500 focus:border-[#D3A625] focus:outline-none focus:ring-1 focus:ring-[#D3A625] transition-all"
                                 />
                                 <div
-                                    className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                                    <span className="font-sans font-bold text-gray-500">₺</span>
+                                    className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-[#D3A625]">
+                                    <span className="font-sans font-bold">₺</span>
                                 </div>
                             </div>
                         </div>
@@ -334,7 +338,7 @@ const AtmPanel: React.FC<AtmPanelProps> = ({ isOpen, togglePanel, selectedAtm, i
                         {/* Açıklama */}
                         <div className="space-y-1.5">
                             <label
-                                className="text-xs font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-1">
+                                className="text-xs font-semibold uppercase tracking-wide text-[#D3A625] flex items-center gap-1">
                                 <FileText className="w-3.5 h-3.5" /> Açıklama
                             </label>
                             <input
@@ -343,24 +347,24 @@ const AtmPanel: React.FC<AtmPanelProps> = ({ isOpen, togglePanel, selectedAtm, i
                                 maxLength={50}
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder="Örn: Kira"
-                                className="w-full rounded-xl border border-gray-300 p-3 text-sm font-medium focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                className="w-full rounded-xl border border-[#740001]/30 bg-[#12131a] p-3 text-sm font-medium text-white placeholder-gray-500 focus:border-[#D3A625] focus:outline-none focus:ring-1 focus:ring-[#D3A625] transition-all"
                             />
                         </div>
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="border-t border-gray-100 bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 flex gap-2 sm:gap-3">
+                <div className="border-t border-[#740001]/30 bg-[#0a0b0f] px-4 sm:px-6 py-3 sm:py-4 flex gap-2 sm:gap-3">
                     <button
                         onClick={togglePanel}
-                        className="flex-1 rounded-xl bg-white border border-gray-300 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 active:translate-y-0.5 transition-all"
+                        className="flex-1 rounded-xl bg-[#12131a] border border-[#740001]/30 py-2.5 text-sm font-semibold text-gray-300 shadow-sm hover:bg-[#740001]/20 hover:text-white active:translate-y-0.5 transition-all"
                     >
                         İptal
                     </button>
                     <button
                         onClick={handleSend}
                         disabled={isTransferLoading}
-                        className="flex-[2] flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-200 hover:bg-blue-700 active:translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+                        className="flex-[2] flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#D3A625] to-[#EEBA30] py-2.5 text-sm font-semibold text-[#0a0b0f] shadow-md hover:from-[#EEBA30] hover:to-[#D3A625] active:translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
                     >
                         {isTransferLoading ? (
                             <>

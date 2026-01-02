@@ -11,7 +11,8 @@ import {
     CheckCircle2,
     Wallet,
     Loader2,
-    AlertTriangle
+    AlertTriangle,
+    Shield
 } from "lucide-react";
 import { useAlert } from "@/src/hooks/notification/useAlert";
 import AlertBox from "@/src/components/ui/notification/AlertBox";
@@ -184,22 +185,22 @@ export default function DepositMoneyPanel({
                 />
             )}
 
-            <div className="bg-[#0c0d13] border border-[#1e222d] rounded-2xl shadow-2xl w-full max-w-lg text-white relative flex flex-col">
+            <div className="bg-[#0f1015] border border-[#740001]/30 rounded-2xl shadow-2xl w-full max-w-lg text-white relative flex flex-col">
 
                 {/* Header */}
-                <div className="flex justify-between items-center border-b border-[#1e222d] p-6">
+                <div className="flex justify-between items-center border-b border-[#D3A625]/20 p-6 bg-gradient-to-r from-[#740001] to-[#8B1A1A] rounded-t-2xl">
                     <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-lg flex items-center justify-center shadow-lg">
-                            <Wallet className="w-5 h-5 text-white" />
+                        <div className="w-10 h-10 bg-[#0f1015]/30 rounded-lg flex items-center justify-center shadow-lg border border-[#D3A625]/30">
+                            <Wallet className="w-5 h-5 text-[#D3A625]" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold tracking-tight">Para Yatır</h2>
-                            <p className="text-xs text-gray-400">Kredi/Banka Kartı ile Bakiye Yükle</p>
+                            <h2 className="text-xl font-bold tracking-tight text-white">Para Yatır</h2>
+                            <p className="text-xs text-[#D3A625]/80">Kredi/Banka Kartı ile Bakiye Yükle</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-white hover:bg-[#1e293b] p-2 rounded-lg transition-all"
+                        className="text-white/80 hover:text-white hover:bg-[#740001] p-2 rounded-lg transition-all"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -207,7 +208,7 @@ export default function DepositMoneyPanel({
 
                 {/* Error Display - Panel içi hata gösterimi */}
                 {error && (
-                    <div className="mx-6 mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
+                    <div className="mx-6 mt-4 p-4 bg-[#740001]/20 border border-[#740001]/50 rounded-lg">
                         <div className="flex items-start space-x-3">
                             <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                             <div>
@@ -221,16 +222,16 @@ export default function DepositMoneyPanel({
                 {success ? (
                     // --- BAŞARILI EKRANI ---
                     <div className="p-10 text-center flex flex-col items-center justify-center h-full min-h-[400px]">
-                        <div className="w-24 h-24 bg-green-600/20 rounded-full flex items-center justify-center mb-6 animate-bounce">
-                            <CheckCircle2 className="w-12 h-12 text-green-500" />
+                        <div className="w-24 h-24 bg-[#2e7d32]/20 rounded-full flex items-center justify-center mb-6 animate-bounce border border-[#2e7d32]/50">
+                            <CheckCircle2 className="w-12 h-12 text-[#4caf50]" />
                         </div>
                         <h2 className="text-2xl font-bold mb-2">Ödeme Başarılı!</h2>
                         <p className="text-gray-400 mb-6">
-                            <span className="text-white font-semibold">{formData.amount || "0"} ₺</span> tutarındaki bakiye hesabınıza eklendi.
+                            <span className="text-[#D3A625] font-semibold">{formData.amount || "0"} ₺</span> tutarındaki bakiye hesabınıza eklendi.
                         </p>
                         <button
                             onClick={onClose}
-                            className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold w-full transition-all shadow-lg shadow-green-900/20"
+                            className="bg-gradient-to-r from-[#2e7d32] to-[#1b5e20] hover:from-[#1b5e20] hover:to-[#2e7d32] text-white px-8 py-3 rounded-lg font-bold w-full transition-all shadow-lg border border-[#4caf50]/30"
                         >
                             Tamam
                         </button>
@@ -246,26 +247,26 @@ export default function DepositMoneyPanel({
                                     }`}
                             >
                                 {/* --- KART ÖN YÜZ --- */}
-                                <div className="absolute w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 text-white shadow-2xl backface-hidden border border-white/10 flex flex-col justify-between overflow-hidden">
+                                <div className="absolute w-full h-full bg-gradient-to-br from-[#740001] via-[#8B1A1A] to-[#0f1015] rounded-xl p-6 text-white shadow-2xl backface-hidden border border-[#D3A625]/30 flex flex-col justify-between overflow-hidden">
                                     {/* Dekoratif Arkaplan Efektleri */}
-                                    <div className="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
-                                    <div className="absolute bottom-0 left-0 -ml-10 -mb-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl"></div>
+                                    <div className="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-[#D3A625]/10 rounded-full blur-3xl"></div>
+                                    <div className="absolute bottom-0 left-0 -ml-10 -mb-10 w-40 h-40 bg-[#000]/30 rounded-full blur-3xl"></div>
 
                                     {/* Kart Üst Kısım: Chip ve Logo */}
                                     <div className="flex justify-between items-start z-10">
-                                        <div className="w-12 h-9 bg-gradient-to-r from-yellow-200 to-yellow-500 rounded-md border border-yellow-600 shadow-sm opacity-90 relative overflow-hidden">
+                                        <div className="w-12 h-9 bg-gradient-to-r from-[#D3A625] to-[#EEBA30] rounded-md border border-[#B8941F] shadow-sm opacity-90 relative overflow-hidden">
                                             <div className="absolute top-1/2 left-0 w-full h-[1px] bg-black/20"></div>
                                             <div className="absolute top-0 left-1/2 w-[1px] h-full bg-black/20"></div>
                                             <div className="absolute top-2 left-2 w-3 h-5 border border-black/20 rounded-full"></div>
                                         </div>
-                                        <div className="text-xl font-bold italic tracking-wider opacity-90">
-                                            {cardType === "visa" ? "VISA" : cardType === "mastercard" ? "MasterCard" : "BANK"}
+                                        <div className="text-xl font-bold italic tracking-wider opacity-90 text-[#D3A625]">
+                                            {cardType === "visa" ? "VISA" : cardType === "mastercard" ? "MasterCard" : "BAKIRBANK"}
                                         </div>
                                     </div>
 
                                     {/* Kart Numarası */}
                                     <div className="space-y-1 z-10 mt-4">
-                                        <div className="text-2xl font-mono tracking-widest drop-shadow-md">
+                                        <div className="text-2xl font-mono tracking-widest drop-shadow-md text-white">
                                             {formData.cardNumber || "#### #### #### ####"}
                                         </div>
                                     </div>
@@ -273,14 +274,14 @@ export default function DepositMoneyPanel({
                                     {/* Kart Alt Kısım: İsim ve Tarih */}
                                     <div className="flex justify-between items-end z-10">
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] text-gray-400 uppercase tracking-wider">Kart Sahibi</span>
-                                            <span className="font-medium tracking-wide uppercase truncate max-w-[200px]">
+                                            <span className="text-[10px] text-[#D3A625]/70 uppercase tracking-wider">Kart Sahibi</span>
+                                            <span className="font-medium tracking-wide uppercase truncate max-w-[200px] text-[#D3A625]">
                                                 {formData.cardHolder || "AD SOYAD"}
                                             </span>
                                         </div>
                                         <div className="flex flex-col items-end">
-                                            <span className="text-[10px] text-gray-400 uppercase tracking-wider">SKT</span>
-                                            <span className="font-mono">
+                                            <span className="text-[10px] text-[#D3A625]/70 uppercase tracking-wider">SKT</span>
+                                            <span className="font-mono text-white">
                                                 {formData.expiryMonth || "AA"}/{formData.expiryYear || "YY"}
                                             </span>
                                         </div>
@@ -288,7 +289,7 @@ export default function DepositMoneyPanel({
                                 </div>
 
                                 {/* --- KART ARKA YÜZ --- */}
-                                <div className="absolute w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shadow-2xl backface-hidden rotate-y-180 border border-white/10 overflow-hidden">
+                                <div className="absolute w-full h-full bg-gradient-to-br from-[#5C0001] to-[#0f1015] rounded-xl shadow-2xl backface-hidden rotate-y-180 border border-[#D3A625]/30 overflow-hidden">
                                     {/* Manyetik Şerit */}
                                     <div className="w-full h-12 bg-black/80 mt-6 relative">
                                         <div className="absolute w-full h-full bg-repeat opacity-20" style={{ backgroundImage: 'linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000), linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000)', backgroundSize: '4px 4px', backgroundPosition: '0 0, 2px 2px' }}></div>
@@ -297,16 +298,16 @@ export default function DepositMoneyPanel({
                                     {/* İmza ve CVV */}
                                     <div className="p-6 mt-2">
                                         <div className="flex flex-col items-end space-y-2">
-                                            <span className="text-[10px] text-gray-400 uppercase pr-1">CVV / CVC</span>
+                                            <span className="text-[10px] text-[#D3A625]/70 uppercase pr-1">CVV / CVC</span>
                                             <div className="w-full flex items-center justify-end">
-                                                <div className="bg-white text-black font-mono font-bold py-2 px-4 rounded w-full max-w-[80px] text-right tracking-widest shadow-inner">
+                                                <div className="bg-white text-black font-mono font-bold py-2 px-4 rounded w-full max-w-[80px] text-right tracking-widest shadow-inner border border-[#D3A625]">
                                                     {formData.cvv || "***"}
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="mt-8 flex items-center justify-center opacity-30">
-                                            <CreditCard className="w-12 h-12 text-white" />
+                                            <Shield className="w-12 h-12 text-[#D3A625]" />
                                         </div>
                                     </div>
                                 </div>
@@ -318,7 +319,7 @@ export default function DepositMoneyPanel({
 
                             {/* Kart Numarası */}
                             <div className="group">
-                                <label className="flex items-center space-x-2 text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
+                                <label className="flex items-center space-x-2 text-xs font-semibold text-[#D3A625] mb-1.5 uppercase tracking-wide">
                                     <CreditCard className="w-3.5 h-3.5" />
                                     <span>Kart Numarası</span>
                                 </label>
@@ -330,14 +331,14 @@ export default function DepositMoneyPanel({
                                     value={formData.cardNumber}
                                     onChange={handleChange}
                                     onFocus={() => setIsFlipped(false)}
-                                    className="w-full bg-[#1e293b] border border-[#1e222d] text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-600 font-mono"
+                                    className="w-full bg-[#12131a] border border-[#740001]/30 text-white px-4 py-3 rounded-lg focus:ring-1 focus:ring-[#D3A625] focus:border-[#D3A625] outline-none transition-all placeholder-gray-600 font-mono"
                                     required
                                 />
                             </div>
 
                             {/* İsim Soyisim */}
                             <div>
-                                <label className="flex items-center space-x-2 text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
+                                <label className="flex items-center space-x-2 text-xs font-semibold text-[#D3A625] mb-1.5 uppercase tracking-wide">
                                     <User className="w-3.5 h-3.5" />
                                     <span>Kart Üzerindeki İsim</span>
                                 </label>
@@ -348,7 +349,7 @@ export default function DepositMoneyPanel({
                                     value={formData.cardHolder}
                                     onChange={(e) => setFormData({ ...formData, cardHolder: e.target.value.toUpperCase() })}
                                     onFocus={() => setIsFlipped(false)}
-                                    className="w-full bg-[#1e293b] border border-[#1e222d] text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-600"
+                                    className="w-full bg-[#12131a] border border-[#740001]/30 text-white px-4 py-3 rounded-lg focus:ring-1 focus:ring-[#D3A625] focus:border-[#D3A625] outline-none transition-all placeholder-gray-600"
                                     required
                                 />
                             </div>
@@ -356,7 +357,7 @@ export default function DepositMoneyPanel({
                             {/* Tarih ve CVV Satırı */}
                             <div className="flex gap-4">
                                 <div className="flex-1">
-                                    <label className="flex items-center space-x-2 text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
+                                    <label className="flex items-center space-x-2 text-xs font-semibold text-[#D3A625] mb-1.5 uppercase tracking-wide">
                                         <Calendar className="w-3.5 h-3.5" />
                                         <span>Son Kul. (Ay/Yıl)</span>
                                     </label>
@@ -369,7 +370,7 @@ export default function DepositMoneyPanel({
                                             value={formData.expiryMonth}
                                             onChange={handleChange}
                                             onFocus={() => setIsFlipped(false)}
-                                            className="w-full bg-[#1e293b] border border-[#1e222d] text-white px-3 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-center font-mono placeholder-gray-600"
+                                            className="w-full bg-[#12131a] border border-[#740001]/30 text-white px-3 py-3 rounded-lg focus:ring-1 focus:ring-[#D3A625] focus:border-[#D3A625] outline-none text-center font-mono placeholder-gray-600"
                                             required
                                         />
                                         <input
@@ -380,14 +381,14 @@ export default function DepositMoneyPanel({
                                             value={formData.expiryYear}
                                             onChange={handleChange}
                                             onFocus={() => setIsFlipped(false)}
-                                            className="w-full bg-[#1e293b] border border-[#1e222d] text-white px-3 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-center font-mono placeholder-gray-600"
+                                            className="w-full bg-[#12131a] border border-[#740001]/30 text-white px-3 py-3 rounded-lg focus:ring-1 focus:ring-[#D3A625] focus:border-[#D3A625] outline-none text-center font-mono placeholder-gray-600"
                                             required
                                         />
                                     </div>
                                 </div>
 
                                 <div className="flex-1">
-                                    <label className="flex items-center space-x-2 text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
+                                    <label className="flex items-center space-x-2 text-xs font-semibold text-[#D3A625] mb-1.5 uppercase tracking-wide">
                                         <Lock className="w-3.5 h-3.5" />
                                         <span>CVV</span>
                                     </label>
@@ -400,15 +401,15 @@ export default function DepositMoneyPanel({
                                         onChange={handleChange}
                                         onFocus={() => setIsFlipped(true)}
                                         onBlur={() => setIsFlipped(false)}
-                                        className="w-full bg-[#1e293b] border border-[#1e222d] text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-center font-mono placeholder-gray-600"
+                                        className="w-full bg-[#12131a] border border-[#740001]/30 text-white px-4 py-3 rounded-lg focus:ring-1 focus:ring-[#D3A625] focus:border-[#D3A625] outline-none text-center font-mono placeholder-gray-600"
                                         required
                                     />
                                 </div>
                             </div>
 
                             {/* Tutar */}
-                            <div className="pt-2 border-t border-[#1e222d]">
-                                <label className="flex items-center space-x-2 text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
+                            <div className="pt-2 border-t border-[#740001]/30">
+                                <label className="flex items-center space-x-2 text-xs font-semibold text-[#D3A625] mb-1.5 uppercase tracking-wide">
                                     <DollarSign className="w-3.5 h-3.5" />
                                     <span>Yatırılacak Tutar</span>
                                 </label>
@@ -422,10 +423,10 @@ export default function DepositMoneyPanel({
                                         value={formData.amount}
                                         onChange={handleChange}
                                         onFocus={() => setIsFlipped(false)}
-                                        className="w-full bg-[#111827] border border-[#1e222d] text-white px-4 py-4 rounded-lg focus:ring-2 focus:ring-green-600 text-lg font-bold placeholder-gray-600 pl-10"
+                                        className="w-full bg-[#12131a] border border-[#740001]/30 text-white px-4 py-4 rounded-lg focus:ring-1 focus:ring-[#D3A625]  text-lg font-bold placeholder-gray-600 pl-10"
                                         required
                                     />
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">₺</span>
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#D3A625] text-lg">₺</span>
                                 </div>
                             </div>
 
@@ -433,7 +434,7 @@ export default function DepositMoneyPanel({
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full bg-gradient-to-r from-emerald-600 to-emerald-800 hover:from-emerald-500 hover:to-emerald-700 text-white py-4 rounded-lg font-bold text-sm shadow-lg shadow-emerald-900/30 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2"
+                                className="w-full bg-gradient-to-r from-[#D3A625] to-[#EEBA30] hover:from-[#EEBA30] hover:to-[#D3A625] text-[#0a0b0f] py-4 rounded-lg font-bold text-sm shadow-lg shadow-[#D3A625]/20 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2"
                             >
                                 {loading ? (
                                     <>

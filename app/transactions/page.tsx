@@ -82,7 +82,7 @@ export default function TransactionPage() {
         return (
             <div className="min-h-screen bg-[#0a0b0f] flex items-center justify-center">
                 <div className="text-center">
-                    <RefreshCw className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-4" />
+                    <RefreshCw className="w-8 h-8 text-[#D3A625] animate-spin mx-auto mb-4" />
                     <p className="text-gray-300 text-base font-normal tracking-wide">Hesap bilgileri yükleniyor...</p>
                 </div>
             </div>

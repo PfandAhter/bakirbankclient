@@ -13,8 +13,8 @@ interface TransactionListProps {
 }
 
 export default function TransactionList({
-                                            transactions, isLoading, filterType, setFilterType, filterDate, setFilterDate, onInvoiceClick, loadingInvoiceId
-                                        }: TransactionListProps) {
+    transactions, isLoading, filterType, setFilterType, filterDate, setFilterDate, onInvoiceClick, loadingInvoiceId
+}: TransactionListProps) {
 
     const FilterButton = ({ active, label, onClick, colorClass }: any) => (
         <button
@@ -47,7 +47,7 @@ export default function TransactionList({
             {/* List Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
                 {isLoading ? (
-                    <div className="flex justify-center items-center h-40"><RefreshCw className="w-8 h-8 animate-spin text-blue-500" /></div>
+                    <div className="flex justify-center items-center h-40"><RefreshCw className="w-8 h-8 animate-spin text-[#D3A625]" /></div>
                 ) : transactions.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-gray-500 opacity-60">
                         <FileText className="w-12 h-12 mb-2" />
@@ -73,7 +73,7 @@ export default function TransactionList({
                                         disabled={loadingInvoiceId === t.id}
                                         className={`hidden group-hover:flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${t.invoiceStatus === 'COMPLETED' ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20' : 'bg-amber-500/10 text-amber-400'}`}
                                     >
-                                        {loadingInvoiceId === t.id ? <RefreshCw className="w-3 h-3 animate-spin"/> : <Download className="w-3 h-3"/>}
+                                        {loadingInvoiceId === t.id ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
                                         {t.invoiceStatus === 'COMPLETED' ? 'Dekont' : 'Hazırlanıyor'}
                                     </button>
                                 )}

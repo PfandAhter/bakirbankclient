@@ -1,8 +1,8 @@
 // TypeScript React (TSX)
-import {useState} from 'react';
-import {Lock, Unlock, Download} from 'lucide-react';
+import { useState } from 'react';
+import { Lock, Unlock, Download } from 'lucide-react';
 import Image from 'next/image';
-import {Card} from '@/src/types/card';
+import { Card } from '@/src/types/card';
 
 // --- AYARLAR ---
 const CARD_BACKGROUNDS: Record<string, string> = {
@@ -26,7 +26,7 @@ interface CardItemProps {
     onToggleBlock: (id: string, status: string) => void;
 }
 
-export default function CardItem({card, onToggleBlock}: CardItemProps) {
+export default function CardItem({ card, onToggleBlock }: CardItemProps) {
     const [showNumber, setShowNumber] = useState(false);
 
     const getCardBackgroundImage = (network?: string, type?: string) => {
@@ -43,15 +43,15 @@ export default function CardItem({card, onToggleBlock}: CardItemProps) {
         return `#### #### #### ${num.slice(-4)}`; //•••• •••• ••••
     };*/
 
-    const formatCardNumber = (lastFour: string, show: boolean ) => {
+    const formatCardNumber = (lastFour: string, show: boolean) => {
         console.log("formatCardNumber called with:", lastFour, show);
-        if(show) return `#### #### #### ${lastFour}`;
+        if (show) return `#### #### #### ${lastFour}`;
         return `#### #### #### ${lastFour}`;//•••• •••• ••••
     }
 
     const downloadDetails = () => {
         const text = `BAKIRBANK - ${card.type}\nKart No: ${card.cardNumber}\nSKT: ${card.expiryDate}\nCVV: ${card.cvv}`;
-        const blob = new Blob([text], {type: 'text/plain'});
+        const blob = new Blob([text], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -65,9 +65,8 @@ export default function CardItem({card, onToggleBlock}: CardItemProps) {
     return (
         <div className="group w-full max-w-md mx-auto relative z-0">
             <div
-                className={`relative isolate rounded-2xl p-6 shadow-2xl h-56 transition-all duration-300 hover:scale-[1.02] border border-white/10 overflow-hidden flex flex-col justify-between ${
-                    card.status === 'BLOCKED' ? 'grayscale opacity-80' : ''
-                }`}
+                className={`relative isolate rounded-2xl p-6 shadow-2xl h-56 transition-all duration-300 hover:scale-[1.02] border border-white/10 overflow-hidden flex flex-col justify-between ${card.status === 'BLOCKED' ? 'grayscale opacity-80' : ''
+                    }`}
             >
                 <div className="absolute inset-0 z-[-1] bg-gray-900">
                     <Image
@@ -77,7 +76,7 @@ export default function CardItem({card, onToggleBlock}: CardItemProps) {
                         className="object-cover"
                         priority
                     />
-                    <div className="absolute inset-0 bg-black/10"/>
+                    <div className="absolute inset-0 bg-black/10" />
                 </div>
 
                 <div className="relative z-10 my-auto mt-24 pointer-events-none">
@@ -129,8 +128,8 @@ export default function CardItem({card, onToggleBlock}: CardItemProps) {
                     {card.status === 'BLOCKED' && (
                         <span
                             className="bg-red-600/90 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg backdrop-blur-sm border border-red-400/30">
-                                                    BLOKELİ
-                                                </span>
+                            BLOKELİ
+                        </span>
                     )}
                 </div>
             </div>
@@ -138,20 +137,19 @@ export default function CardItem({card, onToggleBlock}: CardItemProps) {
             <div className="mt-4 flex gap-3 relative z-10">
                 <button
                     onClick={() => onToggleBlock(card.id, card.status)}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all border ${
-                        card.status === 'ACTIVE'
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all border ${card.status === 'ACTIVE'
                             ? 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20'
                             : 'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20'
-                    }`}
+                        }`}
                 >
-                    {card.status === 'ACTIVE' ? <><Lock size={16}/> Blokle</> : <><Unlock size={16}/> Aktifleştir</>}
+                    {card.status === 'ACTIVE' ? <><Lock size={16} /> Blokle</> : <><Unlock size={16} /> Aktifleştir</>}
                 </button>
 
                 <button
                     onClick={downloadDetails}
                     className="flex-1 flex items-center justify-center gap-2 bg-[#1e222d] text-gray-300 border border-[#2e3440] hover:bg-[#2e3440] hover:text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-all"
                 >
-                    <Download size={16}/> Bilgi
+                    <Download size={16} /> Bilgi
                 </button>
             </div>
 
@@ -159,14 +157,14 @@ export default function CardItem({card, onToggleBlock}: CardItemProps) {
                 <div className="mt-4 px-1 relative z-10">
                     <div className="flex justify-between text-xs text-gray-400 mb-1">
                         <span>Limit: <span className="text-gray-300 font-medium">{card.limitAmount}₺</span></span>
-                        <span className="text-blue-400 font-medium">
-                                                    {(card.limitAmount || 0) - (card.availableAmount || 0)}₺ Müsait
-                                                </span>
+                        <span className="text-[#D3A625] font-medium">
+                            {(card.limitAmount || 0) - (card.availableAmount || 0)}₺ Müsait
+                        </span>
                     </div>
                     <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden border border-white/5">
                         <div
-                            className="h-full bg-gradient-to-r from-blue-600 to-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
-                            style={{width: `${((card.availableAmount || 0) / (card.limitAmount || 1)) * 100}%`}}
+                            className="h-full bg-gradient-to-r from-[#D3A625] to-[#EEBA30] shadow-[0_0_10px_rgba(211,166,37,0.5)]"
+                            style={{ width: `${((card.availableAmount || 0) / (card.limitAmount || 1)) * 100}%` }}
                         />
                     </div>
                 </div>

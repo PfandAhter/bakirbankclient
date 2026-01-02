@@ -24,9 +24,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
+            <div className="min-h-screen bg-[#0a0b0f] flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D3A625] mx-auto mb-4"></div>
                     <p className="text-white">Doğrulama yapılıyor...</p>
                 </div>
             </div>
@@ -35,7 +35,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
     if (!isAuthenticated) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
+            <div className="min-h-screen bg-[#0a0b0f] flex items-center justify-center">
                 <div className="text-white">Yönlendiriliyor...</div>
             </div>
         );

@@ -97,7 +97,7 @@ export default function DashboardPage() {
 
     if (!isAuthenticated) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
+            <div className="min-h-screen bg-[#0a0b0f] flex items-center justify-center">
                 <div className="text-white">Yönlendiriliyor...</div>
             </div>
         );
@@ -105,9 +105,9 @@ export default function DashboardPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
+            <div className="min-h-screen bg-[#0a0b0f] flex items-center justify-center">
                 <div className="text-center">
-                    <RefreshCw className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-4" />
+                    <RefreshCw className="w-8 h-8 text-[#D3A625] animate-spin mx-auto mb-4" />
                     <p className="text-white">Hesap bilgileri yükleniyor...</p>
                 </div>
             </div>
@@ -115,7 +115,7 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+        <div className="min-h-screen bg-[#0a0b0f]">
             {/* Header */}
             <header className="bg-black/50 backdrop-blur-md border-b border-gray-800">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -342,7 +342,7 @@ export default function DashboardPage() {
                         <div className="p-6">
                             {isLoadingTransactions ? (
                                 <div className="flex items-center justify-center py-12">
-                                    <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+                                    <Loader2 className="w-8 h-8 text-[#D3A625] animate-spin" />
                                 </div>
                             ) : transactions.length === 0 ? (
                                 <div className="text-center py-12">
@@ -405,7 +405,7 @@ export default function DashboardPage() {
                         <div className="p-6">
                             {isLoadingAnalysis ? (
                                 <div className="flex items-center justify-center py-12">
-                                    <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+                                    <Loader2 className="w-8 h-8 text-[#D3A625] animate-spin" />
                                 </div>
                             ) : analysisReports.length === 0 ? (
                                 <div className="text-center py-12">

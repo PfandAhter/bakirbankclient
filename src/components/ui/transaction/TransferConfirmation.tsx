@@ -20,16 +20,16 @@ interface TransferConfirmationProps {
 }
 
 export default function TransferConfirmation({
-                                                 amount,
-                                                 currencySymbol,
-                                                 fromAccountName,
-                                                 recipientName,
-                                                 toIban,
-                                                 description,
-                                                 loading,
-                                                 onBack,
-                                                 onConfirm
-                                             }: TransferConfirmationProps) {
+    amount,
+    currencySymbol,
+    fromAccountName,
+    recipientName,
+    toIban,
+    description,
+    loading,
+    onBack,
+    onConfirm
+}: TransferConfirmationProps) {
 
     // İsmi maskeleme fonksiyonunu burada da kullanabiliriz veya dışarıdan utils'den çekebiliriz.
     // Görsel tutarlılık için buraya ekledim.
@@ -48,11 +48,13 @@ export default function TransferConfirmation({
         <div className="p-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
 
             {/* Tutar Gösterimi */}
-            <div className="bg-[#1e293b]/50 rounded-xl p-6 border border-[#1e222d] flex flex-col items-center text-center">
-                <span className="text-gray-400 text-sm mb-1">Gönderilecek Tutar</span>
-                <div className="text-3xl font-bold text-white flex items-center gap-2">
+            <div className="bg-[#12131a] rounded-xl p-6 border border-[#740001]/30 flex flex-col items-center text-center shadow-lg relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-[#D3A625]/10 rounded-full blur-xl -mr-10 -mt-10 transition-all group-hover:bg-[#D3A625]/20"></div>
+                <div className="absolute bottom-0 left-0 w-20 h-20 bg-[#740001]/10 rounded-full blur-xl -ml-10 -mb-10 transition-all group-hover:bg-[#740001]/20"></div>
+                <span className="text-[#D3A625] text-sm mb-1 uppercase tracking-wide font-semibold relative z-10">Gönderilecek Tutar</span>
+                <div className="text-4xl font-bold text-white flex items-center gap-2 relative z-10 drop-shadow-md">
                     {amount}
-                    <span className="text-blue-400">
+                    <span className="text-[#D3A625]">
                         {currencySymbol}
                     </span>
                 </div>
@@ -60,35 +62,37 @@ export default function TransferConfirmation({
 
             <div className="space-y-4">
                 {/* Gönderen */}
-                <div className="flex items-center justify-between p-3 rounded-lg hover:bg-[#1e293b] transition-colors">
+                <div className="flex items-center justify-between p-4 rounded-xl border border-[#740001]/20 bg-[#12131a] hover:bg-[#740001]/10 transition-colors">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-900/30 rounded-lg">
-                            <Wallet className="w-5 h-5 text-blue-400"/>
+                        <div className="p-2.5 bg-[#740001]/20 rounded-lg border border-[#740001]/30">
+                            <Wallet className="w-5 h-5 text-[#D3A625]" />
                         </div>
                         <div>
-                            <p className="text-xs text-gray-400">Gönderen Hesap</p>
-                            <p className="text-sm font-medium">{fromAccountName || "Hesap Seçilmedi"}</p>
+                            <p className="text-xs text-[#D3A625]/70 uppercase font-semibold">Gönderen Hesap</p>
+                            <p className="text-sm font-bold text-white tracking-wide">{fromAccountName || "Hesap Seçilmedi"}</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Ok İşareti */}
-                <div className="flex justify-center -my-2">
-                    <ArrowRight className="w-5 h-5 text-gray-500 transform rotate-90"/>
+                <div className="flex justify-center -my-3 relative z-10">
+                    <div className="bg-[#0f1015] p-1.5 rounded-full border border-[#D3A625]/30 shadow-md">
+                        <ArrowRight className="w-5 h-5 text-[#D3A625] transform rotate-90" />
+                    </div>
                 </div>
 
                 {/* Alıcı */}
-                <div className="flex items-center justify-between p-3 rounded-lg hover:bg-[#1e293b] transition-colors">
+                <div className="flex items-center justify-between p-4 rounded-xl border border-[#D3A625]/20 bg-[#12131a] hover:bg-[#D3A625]/5 transition-colors">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-900/30 rounded-lg">
-                            <Building2 className="w-5 h-5 text-purple-400"/>
+                        <div className="p-2.5 bg-[#D3A625]/10 rounded-lg border border-[#D3A625]/30">
+                            <Building2 className="w-5 h-5 text-[#D3A625]" />
                         </div>
                         <div className="overflow-hidden">
-                            <p className="text-xs text-gray-400">Alıcı</p>
-                            <p className="text-sm font-medium truncate w-full">
+                            <p className="text-xs text-[#D3A625]/70 uppercase font-semibold">Alıcı</p>
+                            <p className="text-sm font-bold text-white truncate w-full tracking-wide">
                                 {recipientName ? maskName(recipientName) : "Bilinmiyor"}
                             </p>
-                            <p className="text-xs text-gray-500 font-mono truncate">{toIban}</p>
+                            <p className="text-[10px] text-gray-500 font-mono truncate">{toIban}</p>
                         </div>
                     </div>
                 </div>
@@ -96,8 +100,8 @@ export default function TransferConfirmation({
 
             {/* Açıklama */}
             {description && (
-                <div className="bg-[#111827] p-4 rounded-lg border border-[#1e222d]">
-                    <p className="text-xs text-gray-400 mb-1">Açıklama</p>
+                <div className="bg-[#111827]/50 p-4 rounded-xl border border-[#740001]/20">
+                    <p className="text-xs text-gray-400 mb-1 uppercase tracking-wider font-semibold">Açıklama</p>
                     <p className="text-sm text-gray-200 italic">"{description}"</p>
                 </div>
             )}
@@ -107,23 +111,23 @@ export default function TransferConfirmation({
                 <button
                     onClick={onBack}
                     disabled={loading}
-                    className="flex-1 bg-[#1e293b] hover:bg-[#334155] text-white px-6 py-3 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50"
+                    className="flex-1 bg-[#12131a] hover:bg-[#740001]/20 border border-[#740001]/30 text-white px-6 py-3 rounded-lg font-bold text-sm transition-all disabled:opacity-50"
                 >
                     Geri Dön
                 </button>
                 <button
                     onClick={onConfirm}
                     disabled={loading}
-                    className="flex-[2] bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900 text-white px-6 py-3 rounded-lg font-semibold text-sm shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                    className="flex-[2] bg-gradient-to-r from-[#2ecc71] to-[#27ae60] hover:from-[#27ae60] hover:to-[#2ecc71] text-white px-6 py-3 rounded-lg font-bold text-sm shadow-lg shadow-green-900/30 transition-all flex items-center justify-center gap-2 disabled:opacity-70 border border-green-500/30"
                 >
                     {loading ? (
                         <>
-                            <RefreshCw className="w-4 h-4 animate-spin"/>
+                            <RefreshCw className="w-4 h-4 animate-spin" />
                             <span>İşleniyor...</span>
                         </>
                     ) : (
                         <>
-                            <CheckCircle2 className="w-4 h-4"/>
+                            <CheckCircle2 className="w-4 h-4" />
                             <span>Onayla ve Gönder</span>
                         </>
                     )}

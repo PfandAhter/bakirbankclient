@@ -44,16 +44,16 @@ const RouteTypeSelector = ({ selectedRouteType, onRouteTypeChange, disabled = fa
                 disabled={disabled}
                 className={`
                     w-11 h-11 sm:w-14 sm:h-14 rounded-full 
-                    bg-[#ccccc] backdrop-blur-md border border-white/20
+                    bg-[#0f1015]/90 backdrop-blur-md border border-[#D3A625]/40
                     flex items-center justify-center
                     transition-all duration-300 ease-out
                     ${disabled
                         ? 'opacity-50 cursor-not-allowed'
-                        : 'hover:bg-black/90 hover:border-white/30 hover:scale-105 cursor-pointer'
+                        : 'hover:bg-[#740001]/90 hover:border-[#D3A625] hover:scale-105 cursor-pointer'
                     }
-                    ${isOpen ? 'bg-black/90 border-white/40 scale-105' : ''}
-                    shadow-lg hover:shadow-xl
-                    relative z-20
+                    ${isOpen ? 'bg-[#740001]/90 border-[#D3A625] scale-105' : ''}
+                    shadow-lg hover:shadow-[#D3A625]/30
+                    relative z-20 text-white
                 `}
                 title={`Rota Tipi: ${currentType.label}`}
             >
@@ -75,7 +75,7 @@ const RouteTypeSelector = ({ selectedRouteType, onRouteTypeChange, disabled = fa
                     }
                 `}
             >
-                <div className="bg-black/80 backdrop-blur-md border border-white/20 rounded-full shadow-xl overflow-hidden">
+                <div className="bg-[#0f1015]/90 backdrop-blur-md border border-[#D3A625]/30 rounded-full shadow-xl overflow-hidden">
                     <div className="pt-12"> {/* Ana butonun altında boşluk bırak */}
                         {filteredTypes.map((type, index) => (
                             <button
@@ -84,7 +84,7 @@ const RouteTypeSelector = ({ selectedRouteType, onRouteTypeChange, disabled = fa
                                 className={`
                                     w-14 h-14 flex items-center justify-center text-2xl text-white/90
                                     transition-all duration-300 ease-out
-                                    hover:bg-white/20 hover:text-white hover:scale-110
+                                    hover:bg-[#740001]/50 hover:text-[#D3A625] hover:scale-110
                                     transform
                                     ${isOpen
                                         ? 'translate-y-0 opacity-100'

@@ -35,7 +35,7 @@ const MiniMap: React.FC<MiniMapProps> = ({
 
         const miniMapInstance = new mapboxgl.Map({
             container: miniMapRef.current,
-            style: 'mapbox://styles/mapbox/streets-v11',
+            style: 'mapbox://styles/mapbox/dark-v11', // Dark tema
             center: userPosition ? [userPosition.longitude, userPosition.latitude] : [29.0335, 41.0082],
             zoom: 14,
             interactive: false
@@ -71,8 +71,8 @@ const MiniMap: React.FC<MiniMapProps> = ({
                 el.style.width = '12px';
                 el.style.height = '12px';
                 el.style.borderRadius = '50%';
-                el.style.backgroundColor = '#4285F4';
-                el.style.border = '2px solid #fff';
+                el.style.backgroundColor = '#D3A625'; // Gryffindor Gold
+                el.style.border = '2px solid #740001'; // Gryffindor Red
                 const marker = new mapboxgl.Marker(el)
                     .setLngLat([userPosition.longitude, userPosition.latitude])
                     .addTo(miniMapInstance);
@@ -85,8 +85,8 @@ const MiniMap: React.FC<MiniMapProps> = ({
                 el.style.width = '12px';
                 el.style.height = '12px';
                 el.style.borderRadius = '50%';
-                el.style.backgroundColor = '#FF5252';
-                el.style.border = '2px solid #fff';
+                el.style.backgroundColor = '#740001'; // Gryffindor Red
+                el.style.border = '2px solid #D3A625'; // Gryffindor Gold
                 const marker = new mapboxgl.Marker(el)
                     .setLngLat([selectedAtm.longitude, selectedAtm.latitude])
                     .addTo(miniMapInstance);
@@ -110,7 +110,7 @@ const MiniMap: React.FC<MiniMapProps> = ({
                     type: 'line',
                     source: 'route',
                     layout: { 'line-join': 'round', 'line-cap': 'round' },
-                    paint: { 'line-color': '#4285F4', 'line-width': 3 }
+                    paint: { 'line-color': '#D3A625', 'line-width': 3 } // Gold rota rengi
                 });
 
                 if (routeData.geometry.coordinates.length > 0) {
@@ -151,9 +151,9 @@ const MiniMap: React.FC<MiniMapProps> = ({
                 source: 'current-position',
                 paint: {
                     'circle-radius': 6,
-                    'circle-color': '#4285F4',
+                    'circle-color': '#EEBA30', // Gold v2
                     'circle-stroke-width': 2,
-                    'circle-stroke-color': '#ffffff'
+                    'circle-stroke-color': '#740001' // Red
                 }
             });
         } else {
@@ -186,10 +186,10 @@ const MiniMap: React.FC<MiniMapProps> = ({
                 left: '20px',
                 width: 'clamp(200px, 25vw, 300px)',
                 height: 'clamp(200px, 25vw, 300px)',
-                borderRadius: '8px',
+                borderRadius: '16px', // Rounded corners arttırıldı
                 overflow: 'hidden',
-                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
-                border: '2px solid white',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+                border: '2px solid rgba(211, 166, 37, 0.4)', // Gold border
                 zIndex: 999
             }}
         >
@@ -198,7 +198,8 @@ const MiniMap: React.FC<MiniMapProps> = ({
                 <div style={{
                     position: 'absolute',
                     top: 0, left: 0, width: '100%', height: '100%',
-                    background: 'rgba(255,255,255,0.8)',
+                    background: 'rgba(15, 16, 21, 0.9)', // Dark background
+                    color: '#D3A625',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     padding: '10px', textAlign: 'center'
                 }}>

@@ -3,7 +3,7 @@
 
 import React, { useState, KeyboardEvent } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import {Loader2, MapPin, Send} from 'lucide-react';
+import { Loader2, MapPin, Send } from 'lucide-react';
 import { InputAttachment } from '@/src/types/chat';
 import { AttachmentChip } from '@/src/components/ui/chat/AttachmentChip';
 
@@ -16,12 +16,12 @@ interface InputAreaProps {
 }
 
 export const InputArea: React.FC<InputAreaProps> = ({
-                                                        attachments,
-                                                        onRemoveAttachment,
-                                                        onAddAttachment,
-                                                        onSendMessage,
-                                                        disabled
-                                                    }) => {
+    attachments,
+    onRemoveAttachment,
+    onAddAttachment,
+    onSendMessage,
+    disabled
+}) => {
     const [input, setInput] = useState('');
     const [isGettingLocation, setIsGettingLocation] = useState(false);
 
@@ -81,7 +81,7 @@ export const InputArea: React.FC<InputAreaProps> = ({
     };
 
     return (
-        <div className="p-4 bg-black/30 border-t border-white/[0.08]">
+        <div className="p-4 bg-[#0a0b0f]/80 border-t border-[#D3A625]/15">
             {/* Attachment Chips */}
             {attachments.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-3 px-1">
@@ -97,17 +97,17 @@ export const InputArea: React.FC<InputAreaProps> = ({
                 </div>
             )}
 
-            {/* Input Field */}
-            <div className="flex gap-2 items-center bg-white/[0.08] rounded-[14px] p-1.5 border border-white/10 transition-all duration-200 focus-within:border-indigo-500/50 focus-within:shadow-[0_0_0_3px_rgba(99,102,241,0.15)]">
+            {/* Input Field - Gryffindor Theme */}
+            <div className="flex gap-2 items-center bg-[#12131a]/80 rounded-[14px] p-1.5 border border-[#740001]/30 transition-all duration-200 focus-within:border-[#D3A625]/50 focus-within:shadow-[0_0_0_3px_rgba(211,166,37,0.1)]">
                 {/* Location Button */}
                 <button
                     onClick={handleGetLocation}
                     disabled={disabled || isGettingLocation || hasLocationAttachment}
-                    className="w-9 h-9 rounded-lg border-none bg-transparent text-white/50 cursor-pointer flex items-center justify-center transition-all duration-200 hover:enabled:bg-white/10 hover:enabled:text-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-9 h-9 rounded-lg border-none bg-transparent text-[#D3A625]/50 cursor-pointer flex items-center justify-center transition-all duration-200 hover:enabled:bg-[#740001]/20 hover:enabled:text-[#D3A625] disabled:opacity-40 disabled:cursor-not-allowed"
                     title={hasLocationAttachment ? 'Konum zaten eklendi' : 'Konum paylaş'}
                 >
                     {isGettingLocation ? (
-                        <Loader2 size={18} className="animate-spin" />
+                        <Loader2 size={18} className="animate-spin text-[#D3A625]" />
                     ) : (
                         <MapPin size={18} />
                     )}
@@ -120,14 +120,14 @@ export const InputArea: React.FC<InputAreaProps> = ({
                     onKeyDown={handleKeyDown}
                     placeholder={attachments.length > 0
                         ? "Mesajınızı yazın veya Enter'a basın..."
-                        : "Type your message..."}
+                        : "Mesajınızı yazın..."}
                     disabled={disabled}
                     className="flex-1 bg-transparent border-none text-slate-50 py-2.5 px-3 text-[0.9375rem] outline-none placeholder:text-white/40"
                 />
                 <button
                     onClick={handleSend}
                     disabled={!canSend}
-                    className="w-11 h-11 rounded-xl border-none bg-gradient-to-br from-indigo-500 to-purple-500 text-white cursor-pointer flex items-center justify-center transition-all duration-200 hover:enabled:scale-105 hover:enabled:shadow-[0_4px_12px_rgba(99,102,241,0.4)] disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
+                    className="w-11 h-11 rounded-xl border border-[#D3A625]/20 bg-gradient-to-br from-[#740001] to-[#5C0001] text-[#D3A625] cursor-pointer flex items-center justify-center transition-all duration-200 hover:enabled:scale-105 hover:enabled:shadow-[0_4px_12px_rgba(116,0,1,0.4)] hover:enabled:border-[#D3A625]/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-700"
                 >
                     <Send size={20} />
                 </button>

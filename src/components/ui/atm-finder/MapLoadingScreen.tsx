@@ -21,10 +21,6 @@ export default function MapLoadingScreen() {
             setCurrentText((prev) => (prev < loadingTexts.length - 1 ? prev + 1 : prev));
         }, 700);
 
-        /*const progressInterval = setInterval(() => {
-            setProgress((prev) => (prev < 100 ? prev + (100 / 30) : 100));
-        }, 100);*/
-
         const progressInterval = setInterval(() => {
             setProgress((prev) => (prev < 100 ? prev + 1 : 100));
         }, 25);
@@ -36,13 +32,13 @@ export default function MapLoadingScreen() {
     }, []);
 
     return (
-        <div className="w-screen h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-black flex flex-col items-center justify-center relative overflow-hidden">
+        <div className="w-screen h-screen bg-gradient-to-br from-[#0a0b0f] via-[#1a0505] to-black flex flex-col items-center justify-center relative overflow-hidden">
             {/* Background Grid */}
             <div className="absolute inset-0 opacity-10">
                 <div className="w-full h-full" style={{
                     backgroundImage: `
-            linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px)
+            linear-gradient(rgba(211, 166, 37, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(211, 166, 37, 0.1) 1px, transparent 1px)
           `,
                     backgroundSize: '50px 50px'
                 }} />
@@ -52,7 +48,7 @@ export default function MapLoadingScreen() {
                 <Canvas camera={{ position: [0, 0, 4], fov: 60 }}>
                     <ambientLight intensity={0.3} />
                     <directionalLight position={[10, 10, 5]} intensity={0.5} />
-                    <pointLight position={[-10, -10, -5]} intensity={0.3} color="#00ffff" />
+                    <pointLight position={[-10, -10, -5]} intensity={0.5} color="#D3A625" />
 
                     <NetworkEarth />
                     <FloatingParticles />
@@ -66,13 +62,13 @@ export default function MapLoadingScreen() {
             <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 w-96">
                 {/* Progress Bar */}
                 <div className="mb-6">
-                    <div className="w-full bg-slate-800/50 rounded-full h-2 backdrop-blur-sm border border-cyan-500/20">
+                    <div className="w-full bg-[#12131a] rounded-full h-2 backdrop-blur-sm border border-[#740001]/40">
                         <div
-                            className="bg-gradient-to-r from-cyan-400 to-blue-500 h-2 rounded-full transition-all duration-300 shadow-lg shadow-cyan-400/20"
+                            className="bg-gradient-to-r from-[#740001] to-[#D3A625] h-2 rounded-full transition-all duration-300 shadow-lg shadow-[#D3A625]/20"
                             style={{ width: `${Math.min(progress, 100)}%` }}
                         />
                     </div>
-                    <div className="flex justify-between mt-2 text-xs text-cyan-300">
+                    <div className="flex justify-between mt-2 text-xs text-[#D3A625]">
                         <span>0%</span>
                         <span className="font-mono">{progress}%</span>
                         <span>100%</span>
@@ -82,11 +78,11 @@ export default function MapLoadingScreen() {
                 {/* Loading Text */}
                 <div className="text-center">
                     <div className="relative h-8 flex items-center justify-center">
-                        <p className="text-cyan-400 text-lg font-mono tracking-wider relative">
+                        <p className="text-[#D3A625] text-lg font-mono tracking-wider relative">
                             <span className="relative z-10 drop-shadow-lg">
                                 {loadingTexts[currentText]}
                             </span>
-                            <span className="absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent blur-sm" />
+                            <span className="absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-[#D3A625]/30 to-transparent blur-sm" />
                         </p>
                     </div>
 
@@ -96,8 +92,8 @@ export default function MapLoadingScreen() {
                             <div
                                 key={i}
                                 className={`w-2 h-2 rounded-full transition-all duration-500 ${i <= Math.floor(currentText / 2)
-                                    ? 'bg-green-400 shadow-lg shadow-green-400/50'
-                                    : 'bg-slate-600'
+                                    ? 'bg-[#EEBA30] shadow-lg shadow-[#EEBA30]/50'
+                                    : 'bg-[#740001]/40'
                                     }`}
                             />
                         ))}
@@ -106,7 +102,7 @@ export default function MapLoadingScreen() {
             </div>
 
             {/* Corner Info */}
-            <div className="absolute top-6 left-6 text-cyan-400/60 font-mono text-sm">
+            <div className="absolute top-6 left-6 text-[#D3A625]/60 font-mono text-sm">
                 <div>SYS_STATUS: LOADING</div>
                 <div>NET_CONN: ACTIVE</div>
                 <div>DATA_SYNC: {progress}%</div>
@@ -119,7 +115,7 @@ function NetworkEarth() {
     const earthRef = useRef<THREE.Group>(null);
     const wireframeRef = useRef<THREE.Mesh>(null);
 
-    useFrame(() => { //State kaldirdim burada
+    useFrame(() => {
         if (earthRef.current) {
             earthRef.current.rotation.y += 0.005;
         }
@@ -134,8 +130,8 @@ function NetworkEarth() {
             <mesh>
                 <sphereGeometry args={[1.5, 64, 64]} />
                 <meshPhongMaterial
-                    color="#0a1a2a"
-                    emissive="#001122"
+                    color="#0f0505" // Çok koyu bordo/siyah
+                    emissive="#1a0505"
                     emissiveIntensity={0.3}
                     shininess={100}
                     transparent
@@ -147,10 +143,10 @@ function NetworkEarth() {
             <mesh ref={wireframeRef}>
                 <sphereGeometry args={[1.51, 32, 32]} />
                 <meshBasicMaterial
-                    color="#00aaff"
+                    color="#D3A625" // Gold
                     wireframe
                     transparent
-                    opacity={0.4}
+                    opacity={0.3}
                 />
             </mesh>
 
@@ -187,7 +183,8 @@ function ContinentOutlines() {
                 const z = 1.52 * Math.sin(phi) * Math.sin(theta);
 
                 vertices.push(x, y, z);
-                colors.push(0.2, 1, 1); // Daha parlak mavi-turkuaz
+                // Gold rengi varyasyonları (R: ~0.8-1.0, G: ~0.6-0.8, B: ~0.1-0.3)
+                colors.push(0.9, 0.7, 0.2);
             }
         });
 
@@ -197,7 +194,7 @@ function ContinentOutlines() {
     useFrame((state) => {
         if (pointsRef.current) {
             const time = state.clock.elapsedTime;
-            pointsRef.current.material.size = 0.03 + Math.sin(time * 2) * 0.015; // Daha büyük
+            pointsRef.current.material.size = 0.03 + Math.sin(time * 2) * 0.015;
         }
     });
 
@@ -218,10 +215,10 @@ function ContinentOutlines() {
                 />
             </bufferGeometry>
             <pointsMaterial
-                size={0.03} // Daha belirgin
+                size={0.03}
                 vertexColors
                 transparent
-                opacity={1} // Tam görünür
+                opacity={1}
                 sizeAttenuation
             />
         </points>
@@ -242,9 +239,9 @@ function GlowingSphere() {
         <mesh ref={glowRef}>
             <sphereGeometry args={[1.6, 32, 32]} />
             <meshBasicMaterial
-                color="#00aaff"
+                color="#740001" // Burgundy Glow
                 transparent
-                opacity={0.1}
+                opacity={0.15}
                 side={THREE.BackSide}
             />
         </mesh>
@@ -270,7 +267,8 @@ function FloatingParticles() {
             vertices.push(x, y, z);
 
             const intensity = Math.random();
-            colors.push(intensity, intensity * 0.8, 1);
+            // Gold to Red particles
+            colors.push(1, 0.6 * intensity, 0.1 * intensity);
         }
 
         return { vertices: new Float32Array(vertices), colors: new Float32Array(colors) };
@@ -322,17 +320,17 @@ function DataOrbitRings() {
 
     return (
         <group ref={groupRef}>
-            {[1.8, 2.1, 2.4].map((radius, i) => ( // Dünya'ya daha yakın
+            {[1.8, 2.1, 2.4].map((radius, i) => (
                 <group key={i} rotation={[Math.PI / 4 * i, 0, Math.PI / 6 * i]}>
                     <mesh>
                         <torusGeometry args={[radius, 0.008, 8, 64]} />
                         <meshBasicMaterial
-                            color={i === 0 ? "#00ffff" : i === 1 ? "#0080ff" : "#ff8000"}
+                            color={i === 0 ? "#D3A625" : i === 1 ? "#EEBA30" : "#740001"}
                             transparent
                             opacity={0.6}
                         />
                     </mesh>
-                    <RingParticles radius={radius} color={i === 0 ? "#00ffff" : i === 1 ? "#0080ff" : "#ff8000"} />
+                    <RingParticles radius={radius} color={i === 0 ? "#D3A625" : i === 1 ? "#EEBA30" : "#740001"} />
                 </group>
             ))}
         </group>
@@ -412,9 +410,9 @@ function ConnectionLines() {
 
         for (let i = 0; i < cities.length; i++) {
             for (let j = i + 1; j < cities.length; j++) {
-                if (Math.random() > 0.7) { // Sadece bazı bağlantıları göster
+                if (Math.random() > 0.7) {
                     vertices.push(...cities[i], ...cities[j]);
-                    colors.push(0, 1, 1, 1, 0, 1, 1, 1); // Cyan
+                    colors.push(1, 0.8, 0.2, 0.5, 1, 0.8, 0.2, 0.5); // Gold
                 }
             }
         }
