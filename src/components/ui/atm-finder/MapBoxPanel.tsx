@@ -296,16 +296,16 @@ const MapCanvas = forwardRef<
                 });
 
                 // Seçili marker stil güncellemesi
-                document.querySelectorAll('[data-atm-id]').forEach(el => {
+                /*document.querySelectorAll('[data-atm-id]').forEach(el => {
                     const htmlEl = el as HTMLDivElement;
                     if (el.getAttribute('data-atm-id') === atm.id) {
-                        htmlEl.style.filter = 'drop-shadow(0 0 5px rgba(0,0,255,0.7))';
+                        //htmlEl.style.filter = 'drop-shadow(0 0 5px rgba(0,0,255,0.7))';
                         htmlEl.style.transition = 'all 0.3s ease';
                     } else {
-                        htmlEl.style.transform = 'scale(1)';
+                        //htmlEl.style.transform = 'scale(1)';
                         htmlEl.style.filter = 'none';
                     }
-                });
+                });*/
             });
         });
 
@@ -524,11 +524,11 @@ const MapCanvas = forwardRef<
         marker.on('drag', () => {
             // Only update marker visual position, don't trigger React re-renders
             // This prevents the trembling effect
-        });
+        });*/
 
         marker.on('dragend', () => {
             setIsDragging(false);
-            markerElement.className = 'w-10 h-10 cursor-grab transition-transform';
+            //markerElement.className = 'w-10 h-10 cursor-grab transition-transform';
 
 
             if (mapRef.current) {
@@ -541,11 +541,13 @@ const MapCanvas = forwardRef<
                 longitude: lngLat.lng
             });
 
+            // Update parent component's userPosition so routes use the new position
             setUserPosition({
                 latitude: lngLat.lat,
                 longitude: lngLat.lng
             });
-        });*/
+        });
+
 
 
         return () => {
