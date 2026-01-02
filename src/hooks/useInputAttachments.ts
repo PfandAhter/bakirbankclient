@@ -17,8 +17,20 @@ export function useInputAttachments(): UseInputAttachmentsReturn {
 
     const addAttachment = useCallback((attachment: InputAttachment) => {
         setAttachments(prev => {
-            // Prevent duplicate attachments of the same type
-            const filtered = prev.filter(a => a.type !== attachment.type);
+            // Generate unique key based on type and account identifier
+            const getAttachmentKey = (att: InputAttachment) => {
+                // For account/saved_account types, use the account id or iban as unique key
+                if (att.type === 'account' || att.type === 'saved_account') {
+                    const id = att.data?.id || att.data?.iban || att.data?.accountIBAN || att.id;
+                    return `${att.type}-${id}`;
+                }
+                // For other types (bank, location, recipient), prevent duplicate types
+                return att.type;
+            };
+
+            const newKey = getAttachmentKey(attachment);
+            // Filter out any attachment with the same unique key
+            const filtered = prev.filter(a => getAttachmentKey(a) !== newKey);
             return [...filtered, attachment];
         });
     }, []);
