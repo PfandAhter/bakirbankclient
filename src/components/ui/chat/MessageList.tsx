@@ -14,6 +14,25 @@ interface MessageListProps {
     onWidgetAction: (action: string, payload: any) => void;
 }
 
+// Patterns to detect transfer rejection in subsequent messages
+const REJECTION_PATTERNS = [
+    /transfer.*iptal/i,
+    /iptal.*edildi/i,
+    /onaylamıyorum/i,
+    /reddedildi/i,
+    /vazgeçtim/i
+];
+
+// Patterns to detect transfer confirmation in subsequent messages
+const CONFIRMATION_PATTERNS = [
+    /transfer.*başarı/i,
+    /başarıyla.*tamamlandı/i,
+    /transfer.*tamamlandı/i,
+    /onaylandı/i,
+    /gönderildi/i,
+    /işlem.*başarılı/i
+];
+
 export const MessageList: React.FC<MessageListProps> = ({ messages, onWidgetAction }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -24,7 +43,37 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, onWidgetActi
         }
     }, [messages]);
 
-    const renderContent = (msg: ChatMessage) => {
+    // Check if a transfer confirmation at given index has been responded to
+    const getTransferResponseType = (confirmationIndex: number): 'confirmed' | 'rejected' | null => {
+        // Look at messages after the confirmation message
+        for (let i = confirmationIndex + 1; i < messages.length; i++) {
+            const msg = messages[i];
+            const content = msg.content?.toLowerCase() || '';
+
+            // Check user messages for rejection intent
+            if (msg.role === 'user') {
+                if (REJECTION_PATTERNS.some(pattern => pattern.test(content))) {
+                    return 'rejected';
+                }
+                if (content.includes('onayla') || content.includes('evet') || content.includes('transferi onaylıyorum')) {
+                    return 'confirmed';
+                }
+            }
+
+            // Check assistant messages for confirmation/rejection responses
+            if (msg.role === 'assistant') {
+                if (REJECTION_PATTERNS.some(pattern => pattern.test(content))) {
+                    return 'rejected';
+                }
+                if (CONFIRMATION_PATTERNS.some(pattern => pattern.test(content))) {
+                    return 'confirmed';
+                }
+            }
+        }
+        return null;
+    };
+
+    const renderContent = (msg: ChatMessage, msgIndex: number) => {
         // Render widget based on type
         const renderWidget = () => {
             switch (msg.type) {
@@ -66,10 +115,14 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, onWidgetActi
 
                 case 'transfer_confirmation':
                     if (msg.data) {
+                        // Check if this confirmation has already been responded to
+                        const initialResponseType = getTransferResponseType(msgIndex);
+
                         return (
                             <div className="mt-3">
                                 <TransferConfirmation
                                     preview={msg.data}
+                                    initialResponseType={initialResponseType}
                                     onConfirm={() => onWidgetAction('transfer_confirmed', msg.data)}
                                     onReject={() => onWidgetAction('transfer_rejected', msg.data)}
                                 />
@@ -142,7 +195,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, onWidgetActi
 
     return (
         <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 scroll-smooth" ref={scrollRef}>
-            {messages.map((msg) => (
+            {messages.map((msg, index) => (
                 <div
                     key={msg.id}
                     className={`flex gap-3 animate-fade-in ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
@@ -158,7 +211,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, onWidgetActi
                         ? 'bg-gradient-to-br from-indigo-500 to-purple-500 text-white rounded-br-sm'
                         : 'bg-white/10 text-slate-50 rounded-bl-sm border border-white/5'
                         }`}>
-                        {renderContent(msg)}
+                        {renderContent(msg, index)}
                     </div>
                 </div>
             ))}

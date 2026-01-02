@@ -13,20 +13,22 @@ interface TransferPreview {
     description?: string;
 }
 
+type ResponseType = 'confirmed' | 'rejected' | null;
+
 interface TransferConfirmationProps {
     preview: TransferPreview;
+    initialResponseType?: ResponseType;
     onConfirm: () => void;
     onReject: () => void;
 }
 
-type ResponseType = 'confirmed' | 'rejected' | null;
-
 export const TransferConfirmation: React.FC<TransferConfirmationProps> = ({
     preview,
+    initialResponseType = null,
     onConfirm,
     onReject
 }) => {
-    const [responseType, setResponseType] = useState<ResponseType>(null);
+    const [responseType, setResponseType] = useState<ResponseType>(initialResponseType);
 
     const handleConfirm = () => {
         if (responseType) return;
