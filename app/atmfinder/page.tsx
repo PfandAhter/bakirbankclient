@@ -44,6 +44,7 @@ export default function AtmFinderPage() {
 
     // 3. Page Local State
     const [selectedAtm, setSelectedAtm] = useState<Atm | null>(null);
+    const [showLoading, setShowLoading] = useState(true);
     const [isSelectedAtmChanged, setIsSelectedAtmChanged] = useState(false);
 
     // Panel States
@@ -65,6 +66,15 @@ export default function AtmFinderPage() {
 
     const mapCanvasRef = useRef<MapCanvasHandle | null>(null);
     const animationRef = useRef(null);
+
+    // Loading timeout effect
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setShowLoading(false);
+        }, 5000);
+
+        return () => clearTimeout(timer);
+    }, []);
 
     // ATM Selection Change Handler
     useEffect(() => {
@@ -161,7 +171,9 @@ export default function AtmFinderPage() {
     if (!isAuthenticated) return <div>Yönlendiriliyor...</div>;
 
     // Hook'tan gelen loading durumunu kullanıyoruz
-    if (atmLoading) return <MapLoadingScreen />;
+
+
+    if (atmLoading || showLoading) return <MapLoadingScreen />;
 
     // Debug logging
     console.log('[AtmFinderPage] Render:', {
