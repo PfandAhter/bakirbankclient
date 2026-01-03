@@ -149,14 +149,15 @@ export async function getCurrentUser() {
         const res = await axios.post(`${API_BASE_URL}/account/api/v1/user/get/info`, {}, { headers, withCredentials: true });
         return res.data.user;
     } catch (err: any) {
-        console.log("Get current user error:", err);
-        //console.log("TEST ERRR RESPONSE:", err.response);
-        //console.log("TEST ERRR RESPONSE data:", err.response?.data);
-        //console.log("TEST ERRR RESPONSE data message:", err.response?.data?.message);
+        // 401 = Beklenen durum (oturum yok veya süresi dolmuş), sessizce null dön
         if (err.response?.status === 401) {
+            console.log("[Auth] Oturum bulunamadı veya süresi dolmuş");
             await deleteUserSessionToken();
+            return null;
         }
-        console.log("Get current user error caught:", err.message);
+
+        // Diğer hatalar = Beklenmeyen (network, server error vb.), throw et
+        console.error("[Auth] getCurrentUser beklenmeyen hata:", err.message);
         throw new Error(err.response?.data?.message || "Kullanıcı bilgileri alınamadı");
     }
 }
