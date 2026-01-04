@@ -183,7 +183,7 @@ const ControlPanel = ({
                 </div>
             </div>
 
-            {/* QR Code Button - only when no ATM is selected */}
+            {/* QR Code Button - only when no ATM is selected
             {!selectedAtm && (
                 <button
                     onClick={toggleQRCodePanel}
@@ -197,7 +197,7 @@ const ControlPanel = ({
                     <QrCode className="w-5 h-5" />
                     QR KOD
                 </button>
-            )}
+            )}*/}
 
             {/* Selected ATM Information */}
             {selectedAtm && (
