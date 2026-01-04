@@ -138,7 +138,7 @@ export default function CardItem({ card, onToggleBlock }: CardItemProps) {
                     <div className="flex justify-between text-xs text-gray-400 mb-1">
                         <span>Limit: <span className="text-gray-300 font-medium">{card.limitAmount}₺</span></span>
                         <span className="text-[#D3A625] font-medium">
-                            {(card.limitAmount || 0) - (card.availableAmount || 0)}₺ Müsait
+                            {(card.availableAmount || 0)}₺ Müsait
                         </span>
                     </div>
                     <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden border border-white/5">
