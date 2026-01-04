@@ -49,19 +49,6 @@ export default function CardItem({ card, onToggleBlock }: CardItemProps) {
         return `#### #### #### ${lastFour}`;//•••• •••• ••••
     }
 
-    const downloadDetails = () => {
-        const text = `BAKIRBANK - ${card.type}\nKart No: ${card.cardNumber}\nSKT: ${card.expiryDate}\nCVV: ${card.cvv}`;
-        const blob = new Blob([text], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `card-${card.id}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    };
-
     return (
         <div className="group w-full max-w-md mx-auto relative z-0">
             <div
@@ -143,13 +130,6 @@ export default function CardItem({ card, onToggleBlock }: CardItemProps) {
                         }`}
                 >
                     {card.status === 'ACTIVE' ? <><Lock size={16} /> Blokle</> : <><Unlock size={16} /> Aktifleştir</>}
-                </button>
-
-                <button
-                    onClick={downloadDetails}
-                    className="flex-1 flex items-center justify-center gap-2 bg-[#1e222d] text-gray-300 border border-[#2e3440] hover:bg-[#2e3440] hover:text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-all"
-                >
-                    <Download size={16} /> Bilgi
                 </button>
             </div>
 
