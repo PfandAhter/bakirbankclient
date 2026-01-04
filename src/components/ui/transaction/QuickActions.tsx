@@ -10,7 +10,7 @@ export default function QuickActions({ onTransfer, onDeposit, onRecipients }: Pr
     return (
         <div className="bg-gradient-to-r from-[#740001] to-[#8B1A1A] rounded-2xl p-8 mb-8 shadow-xl relative overflow-hidden border border-[#D3A625]/20">
             <div className="absolute top-0 right-0 p-8 opacity-10"><Wallet className="w-32 h-32 text-[#D3A625]" /></div>
-            <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+            <div className="relative z-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                 <div>
                     <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-[#D3A625]" />

@@ -162,13 +162,16 @@ export default function DashboardPage() {
 
                     <div className="flex flex-wrap gap-3">
                         <button
-                            onClick={() => router.push('/')}
+                            onClick={() => router.push('/transactions')}
                             className="bg-[#D3A625]/20 hover:bg-[#D3A625]/30 px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 border border-[#D3A625]/30"
                         >
                             <Send className="w-4 h-4 text-[#D3A625]" />
                             <span>Para Gönder</span>
                         </button>
-                        <button className="bg-[#D3A625]/20 hover:bg-[#D3A625]/30 px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 border border-[#D3A625]/30">
+                        <button
+                            onClick={() => router.push('/transactions')}
+                            className="bg-[#D3A625]/20 hover:bg-[#D3A625]/30 px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 border border-[#D3A625]/30"
+                        >
                             <ArrowDownLeft className="w-4 h-4 text-[#D3A625]" />
                             <span>Para Yatır</span>
                         </button>

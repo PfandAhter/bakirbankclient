@@ -11,7 +11,7 @@ interface HeaderProps {
 export default function Header({ user, pageName, logout, onLogoClick }: HeaderProps) {
 
     return (
-        <header className="bg-[#0c0d13]/90 backdrop-blur-xl border-b border-[#740001]/20">
+        <header className="bg-[#0c0d13]/90 backdrop-blur-xl border-b border-[#740001]/20 relative z-[100]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-14 sm:h-16">
                     <div className="flex items-center space-x-2 sm:space-x-4">

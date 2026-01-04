@@ -292,7 +292,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
                     .notification-scrollbar::-webkit-scrollbar-thumb { background: rgba(116, 0, 1, 0.4); border-radius: 3px; }
                     .notification-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(211, 166, 37, 0.6); }
                 `}</style>
-            <div className="fixed z-50" style={position || defaultPosition}>
+            <div className="fixed z-[9999]" style={position || defaultPosition}>
                 {/* Notification Bell Button - Gryffindor Theme */}
                 <button
                     className={`relative group flex items-center justify-center w-12 h-12

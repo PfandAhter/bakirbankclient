@@ -15,7 +15,7 @@ export default function ActiveAccountCard({ accounts, selectedAccount, onAccount
     const [showBalance, setShowBalance] = useState(true);
 
     return (
-        <div className="mb-8 relative z-20">
+        <div className="mb-8 relative z-10">
             <div className="bg-gradient-to-br from-[#0f1015] to-[#12131a] border border-[#740001]/30 rounded-2xl p-6 shadow-xl">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4 flex-1">

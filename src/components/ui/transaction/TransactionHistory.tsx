@@ -29,7 +29,7 @@ export default function TransactionHistory({
 
     return (
         <>
-            <div className="bg-[#0f1015]/80 backdrop-blur-md border border-[#740001]/30 rounded-2xl shadow-xl flex flex-col min-h-[600px]">
+            <div className="bg-[#0f1015]/80 backdrop-blur-md border border-[#740001]/30 rounded-2xl shadow-xl flex flex-col min-h-[600px] relative z-0">
                 {/* Header */}
                 <div className="p-6 border-b border-[#740001]/30 flex justify-between items-center">
                     <h3 className="text-xl font-bold text-white flex items-center gap-2">

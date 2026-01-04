@@ -71,7 +71,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                     </div>
                     <div className="flex flex-col gap-0.5">
                         <h2 className="text-base font-semibold text-slate-50 flex items-center gap-1.5 m-0">
-                            BAKIRBANK Kişisel Bankacılık Asistanı
+                            BAKIRBANK Asistanı
                             <Sparkles size={14} className="text-[#D3A625]" />
                         </h2>
                         <div className="text-xs">
