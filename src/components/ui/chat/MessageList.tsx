@@ -5,6 +5,7 @@ import { AccountSelector } from './renderers/AccountSelector';
 import { TransactionList } from './renderers/TransactionList';
 import { TransferConfirmation } from './renderers/TransferConfirmation';
 import { BankNameList } from './renderers/BankNameList';
+import { NearestAtmInfo } from './renderers/NearestAtmInfo';
 import { Bot, User } from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -126,6 +127,16 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, onWidgetActi
                                     onConfirm={() => onWidgetAction('transfer_confirmed', msg.data)}
                                     onReject={() => onWidgetAction('transfer_rejected', msg.data)}
                                 />
+                            </div>
+                        );
+                    }
+                    return null;
+
+                case 'atm_list':
+                    if (msg.data?.atm) {
+                        return (
+                            <div className="mt-3">
+                                <NearestAtmInfo atm={msg.data.atm} />
                             </div>
                         );
                     }

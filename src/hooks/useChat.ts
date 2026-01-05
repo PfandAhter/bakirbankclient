@@ -115,6 +115,9 @@ export function useChat(): UseChatReturn {
                     } else if (fnName === 'transaction_list') {
                         botMsg.type = 'transaction_list';
                         botMsg.data = args;
+                    } else if (fnName === 'get_nearest_atm') {
+                        botMsg.type = 'atm_list';
+                        botMsg.data = { atm: args };
                     } else if (fnName === 'transfer_money') {
                         // Only show confirmation for VALIDATION_SUCCESS (pending confirmation)
                         // H-0001 and other success codes mean transfer is complete, don't show confirmation again
@@ -164,6 +167,9 @@ export function useChat(): UseChatReturn {
                     } else if (fnName === 'transaction_list' && result.transactions) {
                         botMsg.type = 'transaction_list';
                         botMsg.data = { transactions: result.transactions };
+                    } else if (fnName === 'get_nearest_atm' && result.selectedAtmId) {
+                        botMsg.type = 'atm_list';
+                        botMsg.data = { atm: result };
                     } else if (fnName === 'transfer_money') {
                         // Only show confirmation for VALIDATION_SUCCESS
                         if (result.processCode === 'VALIDATION_SUCCESS') {
