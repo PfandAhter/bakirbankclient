@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios, { AxiosError } from 'axios';
+import * as authService from '@/src/services/authService';
 import { BaseResponse } from '@/src/types/response';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -18,6 +19,15 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
+
+        const authHeaders = await authService.getAuthHeaders();
+        if (!authHeaders) {
+            return NextResponse.json<BaseResponse>({
+                status: 'ERROR',
+                processCode: 'AUTH_ERR',
+                processMessage: 'Oturum süresi dolmuş.'
+            }, { status: 401 });
+        }
 
         // Validate request body
         if (!body.atmId) {
@@ -46,9 +56,7 @@ export async function POST(request: NextRequest) {
         console.log(`[ATM_WITHDRAW_PROXY][${requestId}] Backend'e istek atılıyor: ${TARGET_URL}`);
 
         const response = await axios.post(TARGET_URL, atmWithdrawRequest, {
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: authHeaders,
             timeout: 20000
         });
 

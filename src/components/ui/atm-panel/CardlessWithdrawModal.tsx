@@ -122,7 +122,7 @@ export const CardlessWithdrawModal: React.FC<CardlessWithdrawModalProps> = ({
                             <span className="text-2xl">💳</span>
                             <div>
                                 <h2 className="text-white font-bold text-lg">Kartsız Para Çekme</h2>
-                                <p className="text-gryffindor-gold text-sm">{atmName}</p>
+                                <p className="text-white text-sm">{atmName}</p>
                             </div>
                         </div>
                         <button
